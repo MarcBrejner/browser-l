@@ -12,12 +12,24 @@
   <body>
     <textarea id="editorWindow" cols="30" rows="10"></textarea>
     <textarea id="prettyWindow" cols="30" rows="10"></textarea>
+    <script src="pretty.js"></script>
+    <script src="vm.js"></script>
     <script src="editor.js"></script>
 
-    <button id="runbutton" onclick="clickclick()" >
+    <button id="runbutton" onclick="run_all()" >
       RUN
     </button>
 
+    <button id="debugbutton" onclick="debug()" >
+      DEBUG
+    </button>
+
+    <button id="stepbutton" >
+      STEP
+    </button>
+    <script>
+      document.querySelector('#stepbutton').disabled = true;
+    </script>
   </body>
   <body>
     hallooo

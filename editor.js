@@ -1,19 +1,23 @@
+//Editable window
 var codeMirrorEditor = CodeMirror.fromTextArea(document.getElementById('editorWindow'), {
     lineNumbers: true,
     value: ""
 })
 
+//Non editable display window
 var codeMirrorPretty = CodeMirror.fromTextArea(document.getElementById('prettyWindow'), {
     lineNumbers: true,
     value: "",
-    editable: false
+    readOnly: true
 })
 
-codeMirrorEditor.on('change',function(cMirror){
-    // get value right from instance
-    codeMirrorPretty.setValue(cMirror.getValue());
-    console.log(cMirror.getValue());
+//Fires whenever the editable window changes
+codeMirrorEditor.on('change',async function(cMirror){
+    var source_code = cMirror.getValue();
+    codeMirrorPretty.setValue(await parse_and_pretty_print(source_code));
 });
+
+//Load parser
 
 const Parser = window.TreeSitter;
 async function initialize_parser() {
@@ -24,13 +28,49 @@ async function initialize_parser() {
   return parser;
 }
 
-async function print_parse(source_code){
-    var p = await initialize_parser();
-    var t = p.parse(source_code)
-    console.log(t.rootNode.toString())
+//Pretty print input sourcecode
+async function parse_and_pretty_print(source_code){
+    let parser = await initialize_parser();
+    let tree = await parser.parse(source_code)
+
+    //p_source from pretty.js pretty prints the code using the input parse tree
+    return await p_source(tree);
 }
 
+async function parse_and_read(source_code){
+    let parser = await initialize_parser();
+    let tree = await parser.parse(source_code)
+    console.log(tree.rootNode.childCount);
 
-function clickclick(parser){
-    print_parse(myCodeMirror.getValue());
+    //p_source from pretty.js pretty prints the code using the input parse tree
+    return await read_program(tree);
+}
+async function run_all(){
+    var source_code = await codeMirrorEditor.getValue();
+    let instructions = await parse_and_read(source_code);
+    await execute_all(instructions);
+}
+
+async function pauseUntilEvent (clickListenerPromise) {
+    await clickListenerPromise
+  }
+
+
+async function createClickListenerPromise (target) {
+    return new Promise((resolve) => target.addEventListener('click', resolve))
+}
+async function debug(){
+    document.querySelector('#debugbutton').disabled = true;
+    document.querySelector('#stepbutton').disabled = false;
+    var source_code = await codeMirrorEditor.getValue();
+    let instructions = await parse_and_read(source_code);
+
+    while(true){
+        await pauseUntilEvent(createClickListenerPromise(document.querySelector('#stepbutton')))
+        if(await execute_step(instructions) == -1){
+            document.querySelector('#debugbutton').disabled = false;
+            document.querySelector('#stepbutton').disabled = true;
+            return;
+        }
+    }
 }
