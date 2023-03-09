@@ -125,7 +125,8 @@ function handle_writer(statement){
             if (startIndex + bytes < state.memory.length) {
                 for (var i = 0; i < bytes; i++) {
                     state.memory[i+startIndex] = expression_result.charAt(i);
-                }      
+                }
+                state.memory[bytes]=null; // string terminal    
             }
             break;
         case 'register':
@@ -135,7 +136,22 @@ function handle_writer(statement){
 }
 
 function handle_syscall(){
-    return 0;
+    switch(state.registers["$x"]) {
+        case 0: // print int
+            console.log(state.registers["$y"]);
+            break;
+        case 1: // print str
+            var idx = state.registers["$y"];
+            var str = "";
+            while(state.memory[idx] != null) {
+                str += state.memory[idx];
+                idx++;
+            }
+            console.log(str);
+            break;
+        default:
+            console.log("Some kind of meaningful error msg");
+    }
 }
 
 function handle_statement(statement){
