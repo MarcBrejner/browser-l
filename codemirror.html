@@ -6,32 +6,32 @@
     <title>CodeMirror</title>
     <script src="codemirror/lib/codemirror.js"></script>
     <link href="codemirror/lib/codemirror.css" rel="stylesheet"/>
+    <link href="style.css" rel="stylesheet"/>
     <script src="codemirror/mode/xml/xml.js"></script>
     
   </head>
   <body>
-    <textarea id="editorWindow" cols="30" rows="10"></textarea>
-    <textarea id="prettyWindow" cols="30" rows="10"></textarea>
+    <div class="EditorWindows">
+      <textarea id="editorWindow" cols="30" rows="10"></textarea>
+      <textarea id="prettyWindow" cols="30" rows="10"></textarea>
+    </div>
     <script src="pretty.js"></script>
     <script src="vm.js"></script>
     <script src="editor.js"></script>
 
-    <button id="runbutton" onclick="run_all()" >
+    <button class="button" id="runbutton" onclick="run_all()" >
       RUN
     </button>
 
-    <button id="debugbutton" onclick="debug()" >
+    <button class="button" id="debugbutton" onclick="debug()" >
       DEBUG
     </button>
 
-    <button id="stepbutton" >
+    <button class="button" id="stepbutton" >
       STEP
     </button>
     <script>
       document.querySelector('#stepbutton').disabled = true;
     </script>
-  </body>
-  <body>
-    hallooo
   </body>
 </html>
