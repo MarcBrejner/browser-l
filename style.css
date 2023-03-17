@@ -1,0 +1,22 @@
+.EditorWindows {
+    display: flex;
+}
+
+.CodeMirror {
+    border: 1px solid #eee;
+    height: 400px;
+    width: 50%;
+    border-radius: 5px;
+}
+
+#runbutton {
+    cursor: pointer;
+}
+
+#debugbutton:not(:disabled) {
+    cursor: pointer;
+}
+
+#stepbutton:not(:disabled) {
+    cursor: pointer;
+}

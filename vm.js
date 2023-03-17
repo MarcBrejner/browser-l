@@ -1,3 +1,6 @@
+const _writable_memory = 7000;
+const _free_memory_pointer = 7000;
+
 var state = {
     labels: {},
     cs: {},
@@ -9,7 +12,9 @@ var state = {
         "$y":0,
         "$j":0
     },
-    memory: new Array(10000)
+    memory: new Array(10000),
+    writable_memory: _writable_memory,
+    free_memory_pointer: _free_memory_pointer
 }
 
 var program = [];
@@ -117,17 +122,19 @@ function handle_writer(statement){
             var bytes = parseInt(writer.child(3).text);
             var expression_result = handle_expression(expression);
             var is_number = parseInt(expression_result);
+            var startIndex = state.registers[register];
+            if (startIndex + bytes > state.writable_memory) { 
+                console.warn("Memory out of bounds");
+                break;
+            }
             if (!isNaN(is_number)) {
                 state.memory[state.registers[register]] = expression_result;
                 return;
             }
-            var startIndex = state.registers[register];
-            if (startIndex + bytes < state.memory.length) {
-                for (var i = 0; i < bytes; i++) {
-                    state.memory[i+startIndex] = expression_result.charAt(i);
-                }
-                state.memory[bytes]=null; // string terminal    
+            for (var i = 0; i < bytes; i++) {
+                state.memory[i+startIndex] = expression_result.charAt(i);
             }
+            state.memory[bytes]=null; // string terminal    
             break;
         case 'register':
             state.registers[writer.text.toString()] = handle_expression(expression);
@@ -138,7 +145,7 @@ function handle_writer(statement){
 function handle_syscall(){
     switch(state.registers["$x"]) {
         case 0: // print int
-            console.log(state.registers["$y"]);
+            console.log(state.memory[state.registers["$y"]]);
             break;
         case 1: // print str
             var idx = state.registers["$y"];
@@ -193,11 +200,28 @@ function read_statements(statements){
 
 function handle_declaration(declaration){
     let type = declaration.child(0).text;
-    let dec = declaration.child(1).text.split(' ');
+    let [declarator, value] = declaration.child(1).text.split(' ');
+    let bytes = value.split("").length;
+
+    if (bytes + state.free_memory_pointer > state.memory.length) {
+        console.warn("Declation: Memory out of bounds")
+        return;
+    }
+
     if(type == 'const'){
-        state.cs[dec[0]] = dec[1];
+        if (isNaN(parseInt(value))) {
+            console.error("Const can only be assigned numbers.");
+            return;
+        }
+        state.memory[state.free_memory_pointer] = value;
+        state.cs[declarator] = state.free_memory_pointer;
+        state.free_memory_pointer++;
     }else if(type == 'data'){
-        state.data[dec[0]] = dec[1];
+        state.data[declarator] = state.free_memory_pointer;
+        for (var i = 0; i < bytes; i++) {
+            state.memory[state.free_memory_pointer+i] = value.charAt(i);
+        }
+        state.free_memory_pointer+=bytes;
     }
 }
 
@@ -220,6 +244,11 @@ function wipe_data(){
     for (let key in state.registers) {
         state.registers[key] = 0;
     }
+    state.cs = {};
+    state.data = {};
+    state.labels = {};
+    state.writable_memory = _writable_memory;
+    state.free_memory_pointer = _free_memory_pointer;
 }
 
 function read_program(tree){

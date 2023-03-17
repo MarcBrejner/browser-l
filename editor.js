@@ -1,7 +1,7 @@
 //Editable window
 var codeMirrorEditor = CodeMirror.fromTextArea(document.getElementById('editorWindow'), {
     lineNumbers: true,
-    value: ""
+    value: "",
 })
 
 //Non editable display window
@@ -94,5 +94,5 @@ function execute_step(state, program){
     console.log("labels: ",JSON.stringify(state.labels, undefined, 2))
     console.log("conts: ",JSON.stringify(state.cs, undefined, 2))
     console.log("data: ",JSON.stringify(state.data, undefined, 2))
-    console.log("mem", JSON.stringify(state.memory[0], undefined, 2));
+    console.log("mem", JSON.stringify(state.memory[7000], undefined, 2));
 }
