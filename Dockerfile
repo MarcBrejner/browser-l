@@ -8,7 +8,7 @@ RUN apt-get install -y nodejs
 RUN npm install tree-sitter-cli@0.20.0
 ENV PATH=$PATH:/node_modules/.bin
 # Get input language
-COPY . tree-sitter-l
+COPY ./tree-sitter-l tree-sitter-l
 WORKDIR "/tree-sitter-l"
 RUN tree-sitter generate
 WORKDIR "/"
