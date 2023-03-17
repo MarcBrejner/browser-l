@@ -19,51 +19,17 @@ codeMirrorEditor.on('change',async function(cMirror){
 
 //Load parser
 const Parser = window.TreeSitter;
-async function initialize_parser(source_code) {
+async function initialize_parser() {
   await Parser.init();
   const parser = new Parser();
-  const L = await Parser.Language.load('tree-sitter-l.wasm');
-  parser.setLanguage(L);
-  let response = await fetch('/tree-sitter-L/queries/highlighting.scm');
-    let highlights = await response.text();
-    const query = L.query(highlights);
-
-    const codeBlocks = document.querySelectorAll('.CodeMirror-line');
-    
-    codeBlocks.forEach((el) => {
-      const tree = parser.parse(source_code);
-
-      var adjusted = "";
-      var lastEnd = 0;
-
-      query.matches(tree.rootNode).forEach((match) => {
-        const name = match.captures[0].name;
-        const text = match.captures[0].node.text;
-        const start = match.captures[0].node.startIndex;
-        const end = match.captures[0].node.endIndex;
-
-        if (start < lastEnd) {
-          return;
-        }
-        if (start > lastEnd) {
-          adjusted += source_code.substring(lastEnd, start);
-        }
-        adjusted += `<span class="${name}">${text}</span>`;
-        lastEnd = end;
-      });
-
-      if (lastEnd < source_code.length) {
-        adjusted += source_code.substring(lastEnd);
-      }
-
-      el.innerHTML = adjusted;
-    });
+  const Javascript = await Parser.Language.load('tree-sitter-l.wasm');
+  parser.setLanguage(Javascript);
   return parser;
 }
 
 //Pretty print input sourcecode
 async function parse_and_pretty_print(source_code){
-    let parser = await initialize_parser(source_code);
+    let parser = await initialize_parser();
     let tree = await parser.parse(source_code)
 
     //p_source from pretty.js pretty prints the code using the input parse tree
@@ -71,7 +37,7 @@ async function parse_and_pretty_print(source_code){
 }
 
 async function parse_and_read(source_code){
-    let parser = await initialize_parser(source_code);
+    let parser = await initialize_parser();
     let tree = await parser.parse(source_code)
     console.log(tree.rootNode.childCount);
 
