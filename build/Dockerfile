@@ -8,8 +8,12 @@ RUN apt-get install -y nodejs
 RUN npm install tree-sitter-cli@0.20.0
 ENV PATH=$PATH:/node_modules/.bin
 # Get input language
-COPY assets/treesitter/tree-sitter-l tree-sitter-l
-WORKDIR "/tree-sitter-l"
+COPY assets/tree-sitter/L0 tree-sitter-l0
+COPY assets/tree-sitter/L1 tree-sitter-l1
+WORKDIR "/tree-sitter-l0"
+RUN tree-sitter generate
+WORKDIR "/"
+WORKDIR "/tree-sitter-l1"
 RUN tree-sitter generate
 WORKDIR "/"
 # Install Emscripten
@@ -24,5 +28,6 @@ ENV EM_CONFIG=/emsdk/.emscripten
 ENV EMSDK_NODE=/emsdk/node/14.15.5_64bit/bin/node
 # Compile input language to wasm
 WORKDIR "/"
-RUN npx tree-sitter build-wasm tree-sitter-l
+RUN npx tree-sitter build-wasm tree-sitter-l0
+RUN npx tree-sitter build-wasm tree-sitter-l1
 

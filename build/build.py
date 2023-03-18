@@ -9,11 +9,12 @@ def compile_wasm():
     client.images.build(path="./", tag=image_tag, rm=True)
     container = client.containers.create(image_tag)
     container_id = container.id
-    os.system("docker cp {}:/tree-sitter-L.wasm ./out/tree-sitter-l.wasm".format(container_id))
+    os.system("docker cp {}:/tree-sitter-L0.wasm ./out/tree-sitter-l0.wasm".format(container_id))
+    os.system("docker cp {}:/tree-sitter-L1.wasm ./out/tree-sitter-l1.wasm".format(container_id))
     container.remove()
 
 def encode_wasm():
-    with open("./out/tree-sitter-l.wasm","rb") as wasm_file:
+    with open("./out/tree-sitter-l1.wasm","rb") as wasm_file:
         encoded = base64.b64encode(wasm_file.read())
         encoded_l = encoded.decode('utf-8')
 
