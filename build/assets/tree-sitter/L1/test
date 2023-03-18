@@ -1,0 +1,16 @@
+const @MSG_LENGTH 14;
+const @SYS_WRITE 4;
+const @STD_OUT 1;
+data &MSG "Hello world!\n";
+data &ACC 123;
+
+#HERE
+$x:=@STD_OUT;
+$y:=@MSG_LENGTH;
+[$i,4]:=@SYS_WRITE;
+$j:=[$i,4] + 1;
+$j:=[$i,4] - 2;
+$x:=-5;
+$? := 1;
+$! ?= #HERE - 1;
+$! := #HERE - 1;

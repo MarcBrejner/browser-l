@@ -1,5 +1,5 @@
 module.exports = grammar({
-	name: 'L',
+	name: 'L0',
 	
 	rules: {
 		source_file: $ => seq(optional($.declarations), $.statements),

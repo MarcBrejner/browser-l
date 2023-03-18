@@ -314,7 +314,7 @@
     },
     "operator": {
       "type": "PATTERN",
-      "value": "[+-/\\*|&><=]+"
+      "value": "[+-\\/\\*|&><=]+"
     },
     "number": {
       "type": "PATTERN",
