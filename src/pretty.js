@@ -68,7 +68,12 @@ async function p_statements(statements){
 async function p_statement(statement){
     if(statement.text == 'syscall'){
         return statement.text;
-    }else{
+    } 
+    else if (statement.text.includes('goto')){
+        var label = statement.text.split(/\s+/)[1];
+        return `$! ?= ${label} - 1`
+    }
+    else{
         return await p_assignment(statement)
     }
 }
