@@ -1,3 +1,10 @@
+var registerDiv = document.getElementById("registers");
+var labelsDiv = document.getElementById("labels");
+var constantsDiv = document.getElementById("constants");
+var dataDiv = document.getElementById("data");
+var memoryDiv = document.getElementById("memory");
+
+
 //Editable window
 var codeMirrorEditor = CodeMirror.fromTextArea(document.getElementById('editorWindow'), {
     lineNumbers: true,
@@ -90,9 +97,10 @@ function execute_step(state, program){
     }
     handle_statement(program[state.registers['$!']])
     state.registers['$!']++;
-    console.log("registers: ",JSON.stringify(state.registers, undefined, 2)); 
-    console.log("labels: ",JSON.stringify(state.labels, undefined, 2))
-    console.log("conts: ",JSON.stringify(state.cs, undefined, 2))
-    console.log("data: ",JSON.stringify(state.data, undefined, 2))
-    console.log("mem", JSON.stringify(state.memory[7000], undefined, 2));
+    
+    registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
+    labelsDiv.innerHTML = "Labels: " + JSON.stringify(state.labels, undefined, 2).replaceAll("\"", "");
+    constantsDiv.innerHTML = "Constants: " + JSON.stringify(state.cs, undefined, 2).replaceAll("\"", "");
+    dataDiv.innerHTML = "Data: " + JSON.stringify(state.data, undefined, 2).replaceAll("\"", "");
+    //memoryDiv.innerHTML = "memory: " + JSON.stringify(state.memory, undefined, 2);
 }
