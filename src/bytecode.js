@@ -12,12 +12,12 @@ const OP = {
     COND: 9 // (OP.COND, int: line_number, (writer: writer, string: reader))
 }
 
-const WRITER_TYPE = {
+const WT = {
     REGISTER: 0,
     MEMORY: 1
 }
 
-const READER_TYPE = {
+const RT = {
     REGISTER: 0,
     MEMORY: 1,
     CONSTANT: 2,

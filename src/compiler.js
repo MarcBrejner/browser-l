@@ -1,9 +1,45 @@
-function compile_reader(){
-    
+function get_reader_type(reader){
+    if(reader.child(0).type == 'assign' || reader.child(0).type == 'datavar'){
+        return reader.child(0).child(0).type;
+    } else {
+        return reader.child(0).type;
+    }
 }
 
+function compile_reader(reader_node){
+    var reader_id = reader_node.text;
+    var reader_type = get_reader_type(reader_node);
+    switch(reader_type){
+        case 'register':
+            return new reader(RT.REGISTER, reader_id);
+        case 'memory':
+            return new reader(RT.MEMORY, reader_id);
+        case 'constant':
+            return new reader(RT.CONSTANT, reader_id);
+        case 'data':
+            return new reader(RT.DATA, reader_id);
+        case 'label':
+            return new reader(RT.LABEL, reader_id);
+        case 'number':
+            return new reader(RT.NUMBER, parseInt(reader_id));
+    }
+}
+
+function compile_writer(statement){
+    var writer = statement.child(0).child(0).child(0);
+    var writer_id = writer.text;
+    switch(writer.type){
+        case 'memory':
+            return new writer(WT.MEMORY, writer_id)
+        case 'register':
+            return new writer(WT.REGISTER, writer_id)
+    }
+}
+
+
+
 function compile_assign(statement, l_pc, assign_type){
-    var writer = statement.child(0).text;
+    var writer = compile_writer(statement);
     var assign_type = statement.child(1).text;
     var expression = statement.child(2);
     var numOfChildren = expression.childCount;
@@ -11,18 +47,18 @@ function compile_assign(statement, l_pc, assign_type){
     switch(numOfChildren){
         case 1: // reader
             var op = assign_type === ":=" ? OP.ASSIGN : OP.COND;
-            var reader = expression.child(0).text;
+            var reader = compile_reader(expression.child(0));
             return [op, l_pc, [writer, reader]];
         case 2: // oper, reader
             var op = assign_type === ":=" ? OP.ASSIGN_UN : OP.COND_UN;
-            var reader = expression.child(1).text;
+            var reader = compile_reader(expression.child(1));
             var opr = expression.child(0).text;
             return [op, l_pc, [writer, opr, reader]];
         case 3: // reader, oper, reader
             var op = assign_type === ":=" ? OP.ASSIGN_BIN : OP.COND_BIN;
-            var reader1 = expression.child(0).text;
+            var reader1 = compile_reader(expression.child(0));
             var opr = expression.child(1).text;
-            var reader2 = expression.child(2).text;
+            var reader2 = compile_reader(expression.child(2));
             return [op, l_pc, [writer, reader1, opr, reader2]];
     }
 }
