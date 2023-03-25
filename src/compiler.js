@@ -7,8 +7,8 @@ function get_reader_type(reader){
 }
 
 function compile_reader(reader_node){
-    var reader_id = reader_node.text;
-    var reader_type = get_reader_type(reader_node);
+    let reader_id = reader_node.text;
+    let reader_type = get_reader_type(reader_node);
     switch(reader_type){
         case 'register':
             return new reader(RT.REGISTER, reader_id);
@@ -21,14 +21,15 @@ function compile_reader(reader_node){
         case 'label':
             return new reader(RT.LABEL, reader_id);
         case 'number':
+            //the number that the reader holds, is the id in this case
             return new reader(RT.NUMBER, parseInt(reader_id));
     }
 }
 
 function compile_writer(statement){
-    var writer = statement.child(0).child(0).child(0);
-    var writer_id = writer.text;
-    switch(writer.type){
+    let writer_node = statement.child(0).child(0).child(0);
+    let writer_id = writer_node.text;
+    switch(writer_node.type){
         case 'memory':
             return new writer(WT.MEMORY, writer_id)
         case 'register':

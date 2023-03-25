@@ -4,8 +4,10 @@ var pc = 0;
 var running = true
 
 // bytecode: (enum: OP, int: line_number, array?: operands)
-function execute_bytecode(bytecode){
-    switch(bytecode[0]){
+function execute_bytecode(instruction){
+    let op_code = instruction[0];
+    let operands = instruction[2];
+    switch(op_code){
         case BC.DEC_CONST:
             break;
         case BC.DEC_DATA:
@@ -19,6 +21,7 @@ function execute_bytecode(bytecode){
         case BC.ASSIGN_UN:
             break;
         case BC.ASSIGN:
+            assign(operands)
             break;
         case BC.COND_BIN:
             break;
@@ -49,7 +52,7 @@ function execute_syscall(instruction){
 
 // (BC.ASSIGN_BIN, int: instruction_number, (string: writer, string: reader1, string: opr, string: reader2))
 function assign_binary(instruction){
-
+    
 }
 
 function assign(operands){
@@ -58,15 +61,10 @@ function assign(operands){
     write(writer, RHS);
 }
 
-function read(reader){
-    return
-}
-
 function write(writer, RHS){
-    state.registers[writer] = RHS
-    return;
     switch(writer.type){
-        case 'memory':
+        case WT.MEMORY:
+            throw new Error("Memory cannot be written to, as it is not implemented");
             // var register = writer.child(1).text;
             // var bytes = parseInt(writer.child(3).text);
             // var expression_result = handle_expression(expression);
@@ -85,8 +83,12 @@ function write(writer, RHS){
             // }
             // state.memory[bytes]=null; // string terminal    
             break;
-        case 'register':
-            
+        case WT.REGISTER:
+            if (writer.id in state.registers){
+                state.registers[reader.id] = RHS;
+            }else {
+                throw new Error("Tried to write to a register that does not exist");
+            } 
             break;
     }
 }
@@ -123,43 +125,42 @@ function get_reader_type(reader){
     }
 }
 
-function handle_reader(reader){
-    var reader_content = reader.text;
-    var reader_type = get_reader_type(reader);
-    switch(reader_type){
-        case 'register':
-            if (reader_content in state.registers){
-                return state.registers[reader_content];
+function read(reader){
+    switch(reader.type){
+        case RT.REGISTER:
+            if (reader.id in state.registers){
+                return state.registers[reader.id];
             }
-            throw new Error("Register ",reader_content," not found");
-        case 'memory':
-            var startIndex = state.registers[reader.child(0).child(0).child(1).text];
-            var stopIndex = startIndex + parseInt(reader.child(0).child(0).child(3).text);
-            var result = "";
-            if (stopIndex < state.memory.length) {
-                for (var i = startIndex; i < stopIndex; i++) {
-                    result += state.memory[i];
-                }
-                return result;        
+            throw new Error("Register ",reader.id," not found");
+        case RT.MEMORY:
+            // var startIndex = state.registers[reader.child(0).child(0).child(1).text];
+            // var stopIndex = startIndex + parseInt(reader.child(0).child(0).child(3).text);
+            // var result = "";
+            // if (stopIndex < state.memory.length) {
+            //     for (var i = startIndex; i < stopIndex; i++) {
+            //         result += state.memory[i];
+            //     }
+            //     return result;        
+            // }
+            throw new Error("Memory out of bounds (NOT IMPLEMENTED)");
+        case RT.CONSTANT:
+            if (reader.id in state.cs){
+                return parseInt(state.cs[reader.id]);
             }
-            throw new Error("Memory out of bounds");
-        case 'constant':
-            if (reader_content in state.cs){
-                return parseInt(state.cs[reader_content]);
+            throw new Error("Constant ",reader.id," not found");
+        case RT.DATA:
+            if (reader.id in state.data){
+                return state.data[reader.id];
             }
-            throw new Error("Constant ",reader_content," not found");
-        case 'data':
-            if (reader_content in state.data){
-                return state.data[reader_content];
+            throw new Error("Data ",reader.id," not found")
+        case RT.LABEL:
+            if (reader.id in state.labels){
+                return state.labels[reader.id];
             }
-            throw new Error("Data ",reader_content," not found")
-        case 'label':
-            if (reader_content in state.labels){
-                return state.labels[reader_content];
-            }
-            throw new Error("Label ",reader_content," not found")
-        case 'number':
-            return parseInt(reader_content);
+            throw new Error("Label ",reader.id," not found")
+        case RT.NUMBER:
+            //the number that the reader holds, is the id in this case
+            return reader.id;
     }
 }
 

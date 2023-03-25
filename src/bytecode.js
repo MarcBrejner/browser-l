@@ -28,14 +28,14 @@ const RT = {
 
 class writer{
     constructor(writer_type, writer_id){
-        this.writer_type = writer_type;
-        this.writer_id = writer_id;
+        this.type = writer_type;
+        this.id = writer_id;
     }
 }
 
 class reader{
     constructor(reader_type, reader_id){
-        this.reader_type = reader_type;
-        this.reader_id = reader_id;
+        this.type = reader_type;
+        this.id = reader_id;
     }
 }
