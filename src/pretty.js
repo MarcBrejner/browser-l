@@ -54,30 +54,30 @@ function parse_syscall() {
 
 function parse_assign_bin(operands) {
     var [writer, reader1, opr, reader2] = operands;
-    return `${writer} := ${reader1} ${opr} ${reader2};\n` 
+    return `${writer.writer_id} := ${reader1.reader_id} ${opr} ${reader2.reader_id};\n` 
 }
 
 function parse_assign_un(operands) {
     var [writer, opr, reader] = operands;
-    return `${writer} := ${opr} ${reader};\n` 
+    return `${writer.writer_id} := ${opr} ${reader.reader_id};\n` 
 }
 
 function parse_assign(operands) {
     var [writer, reader] = operands;
-    return `${writer} := ${reader};\n` 
+    return `${writer.writer_id} := ${reader.reader_id};\n` 
 }
 
 function parse_cond_bin(operands) {
     var [writer, reader1, opr, reader2] = operands;
-    return `${writer} ?= ${reader1} ${opr} ${reader2};\n` 
+    return `${writer.writer_id} ?= ${reader1.reader_id} ${opr} ${reader2.reader_id};\n` 
 }
 
 function parse_cond_un(operands) {
     var [writer, opr, reader] = operands;
-    return `${writer} ?= ${opr} ${reader};\n` 
+    return `${writer.writer_id} ?= ${opr} ${reader.reader_id};\n` 
 }
 
 function parse_cond(operands) {
     var [writer, reader] = operands;
-    return `${writer} ?= ${reader};\n` 
+    return `${writer.writer_id} ?= ${reader.reader_id};\n` 
 }
