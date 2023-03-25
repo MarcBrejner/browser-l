@@ -1,6 +1,6 @@
 function compile_assign(statement, l_pc, assign_type){
     var writer = statement.child(0).text;
-    var assign_type = statement.child(1);
+    var assign_type = statement.child(1).text;
     var expression = statement.child(2);
     var numOfChildren = expression.childCount;
     

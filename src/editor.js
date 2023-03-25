@@ -30,11 +30,11 @@ async function initialize_parser() {
 //Pretty print input sourcecode
 async function parse_and_pretty_print(source_code){
     let parser = await initialize_parser();
-    let tree = await parser.parse(source_code)
+    let tree = await parser.parse(source_code);
     console.log(tree.rootNode.toString());
-
-    //p_source from pretty.js pretty prints the code using the input parse tree
-    return await p_source(tree);
+    let program = read_program(tree);
+    // parse_byte_code from pretty.js pretty prints the byte_code
+    return parse_byte_code(program);
 }
 
 async function parse_and_read(source_code){
