@@ -1,5 +1,3 @@
-const fileUtils = require("convert-csv-to-json/src/util/fileUtils");
-
 var pc = 0;
 var running = true
 
@@ -7,28 +5,39 @@ var running = true
 function execute_bytecode(instruction){
     let op_code = instruction[0];
     let operands = instruction[2];
+    let skip_conditional = !state.registers["$?"];
     switch(op_code){
-        case BC.DEC_CONST:
-            break;
-        case BC.DEC_DATA:
-            break;
-        case BC.LABEL:
-            break;
-        case BC.SYSCALL:
-            break;
-        case BC.ASSIGN_BIN:
-            break;
-        case BC.ASSIGN_UN:
-            break;
-        case BC.ASSIGN:
-            assign(operands)
-            break;
-        case BC.COND_BIN:
-            break;
-        case BC.COND_UN:
-            break;
-        case BC.COND:
-            break;
+        case OP.DEC_CONST:
+            return;
+        case OP.DEC_DATA:
+            return;
+        case OP.LABEL:
+            set_label(operands)
+            return;
+        case OP.SYSCALL:
+            handle_syscall();
+            return;
+        case OP.ASSIGN_BIN:
+            assign_binary(operands);
+            return;
+        case OP.ASSIGN_UN:
+            assign_unary(operands);
+            return;
+        case OP.ASSIGN:
+            assign(operands);
+            return;
+        case OP.COND_BIN:
+            if(skip_conditional) return;
+            assign_binary(operands);
+            return;
+        case OP.COND_UN:
+            if(skip_conditional) return;
+            assign_unary(operands);
+            return;
+        case OP.COND:
+            if(skip_conditional) return;
+            assign(operands);
+            return;
     }
 }
 
@@ -40,25 +49,35 @@ function declare_constant(instruction){
 
 }
 
-// (BC.LABEL, int: instruction_number, (string: label, int: PC_pointer))
-function set_label(instruction){
-
-}
-
-// (BC.SYSCALL, int: instruction_number)
-function execute_syscall(instruction){
-
-}
-
-// (BC.ASSIGN_BIN, int: instruction_number, (string: writer, string: reader1, string: opr, string: reader2))
-function assign_binary(instruction){
+// (OP.LABEL, int: instruction_number, (string: label, int: PC_pointer))
+function set_label(operands){
     
+}
+
+function assign_binary(operands){
+    let [writer, reader1, opr, reader2] = operands;
+    let RHS = evaluate_binary(reader1,opr,reader2);
+    write(writer, RHS);
+}
+
+function assign_unary(operands){
+    let [writer, opr, reader] = operands;
+    let RHS = evaluate_unary(opr,reader);
+    write(writer, RHS);
 }
 
 function assign(operands){
     let [writer, reader] = operands;
     let RHS = read(reader);
     write(writer, RHS);
+}
+
+function evaluate_binary(v1, opr, v2){
+    return eval(`${read(v1)} ${opr} ${read(v2)}`);
+}
+
+function evaluate_unary(opr, v){
+    return eval(`${opr} ${read(v)}`);
 }
 
 function write(writer, RHS){
@@ -93,37 +112,27 @@ function write(writer, RHS){
     }
 }
 
-
-
 /////////
-// const _writable_memory = 7000;
-// const _free_memory_pointer = 7000;
+const _writable_memory = 7000;
+const _free_memory_pointer = 7000;
 
-// var state = {
-//     labels: {},
-//     cs: {},
-//     data: {},
-//     registers: {
-//         "$!":0, //PC
-//         "$?":0, //Bool
-//         "$x":0,
-//         "$y":0,
-//         "$j":0
-//     },
-//     memory: new Array(10000),
-//     writable_memory: _writable_memory,
-//     free_memory_pointer: _free_memory_pointer
-// }
+var state = {
+    labels: {},
+    cs: {},
+    data: {},
+    registers: {
+        "$!":0, //PC
+        "$?":0, //Bool
+        "$x":0,
+        "$y":0,
+        "$j":0
+    },
+    memory: new Array(10000),
+    writable_memory: _writable_memory,
+    free_memory_pointer: _free_memory_pointer
+}
 
 var program = [];
-
-function get_reader_type(reader){
-    if(reader.child(0).type == 'assign' || reader.child(0).type == 'datavar'){
-        return reader.child(0).child(0).type;
-    } else {
-        return reader.child(0).type;
-    }
-}
 
 function read(reader){
     switch(reader.type){
@@ -164,81 +173,6 @@ function read(reader){
     }
 }
 
-function handle_binary(v_left,oper,v_right){
-    switch(oper.text){
-        case '+':
-            return v_left + v_right;
-        case '-':
-            return v_left - v_right;
-        case '*':
-            return v_left * v_right;
-        case '/':
-            return v_left / v_right;
-        case '|':
-            return v_left || v_right ;
-        case '&':
-            return v_left && v_right;
-        case '>':
-            return v_left > v_right;
-        case '<':
-            return v_left < v_right;
-        case '=':
-            return v_left == v_right;
-    }
-    console.log(console.error("reeee"));
-    throw new Error("Operator:",oper," unknown")
-}
-
-function handle_unary(oper,v){
-    switch(oper.text){
-        case '-':
-            return -v;
-        case '&':
-            return 0; //Not implemented
-    }
-}
-
-function handle_expression(expression){
-    var numOfChildren = expression.childCount;
-    switch(numOfChildren){
-        case 1: // reader
-            return handle_reader(expression.child(0));
-        case 2: // oper, reader
-            return handle_unary(expression.child(0),handle_reader(expression.child(1)));
-        case 3: // reader, oper, reader
-            return handle_binary(handle_reader(expression.child(0)), expression.child(1), handle_reader(expression.child(2)))
-    }
-}
-
-function handle_writer(statement){
-    var writer = statement.child(0).child(0).child(0);
-    var expression = statement.child(2); 
-    switch(writer.type){
-        case 'memory':
-            var register = writer.child(1).text;
-            var bytes = parseInt(writer.child(3).text);
-            var expression_result = handle_expression(expression);
-            var is_number = parseInt(expression_result);
-            var startIndex = state.registers[register];
-            if (startIndex + bytes > state.writable_memory) { 
-                console.warn("Memory out of bounds");
-                break;
-            }
-            if (!isNaN(is_number)) {
-                state.memory[state.registers[register]] = expression_result;
-                return;
-            }
-            for (var i = 0; i < bytes; i++) {
-                state.memory[i+startIndex] = expression_result.charAt(i);
-            }
-            state.memory[bytes]=null; // string terminal    
-            break;
-        case 'register':
-            state.registers[writer.text.toString()] = handle_expression(expression);
-            break;
-    }
-}
-
 function handle_syscall(){
     switch(state.registers["$x"]) {
         case 0: // print int
@@ -258,57 +192,127 @@ function handle_syscall(){
     }
 }
 
-function handle_statement(statement){
-    if(statement.childCount == 1 && statement.text == 'syscall'){
-        handle_syscall(statement.child(0));
-    }else{
-        if(statement.child(1).type.toString() == ':='){
-            handle_writer(statement);
-        }else if(statement.child(1).type.toString() == '?='){
-            if(!state.registers['$?']) return;
-            handle_writer(statement);
-        }
-    }
-}
-
-function handle_declaration(declaration){
-    let type = declaration.child(0).text;
-    let [declarator, value] = declaration.child(1).text.split(' ');
-    let bytes = value.split("").length;
-
-    if (bytes + state.free_memory_pointer > state.memory.length) {
-        console.warn("Declation: Memory out of bounds")
-        return;
-    }
-
-    if(type == 'const'){
-        if (isNaN(parseInt(value))) {
-            console.error("Const can only be assigned numbers.");
-            return;
-        }
-        state.memory[state.free_memory_pointer] = value;
-        state.cs[declarator] = state.free_memory_pointer;
-        state.free_memory_pointer++;
-    }else if(type == 'data'){
-        state.data[declarator] = state.free_memory_pointer;
-        for (var i = 0; i < bytes; i++) {
-            state.memory[state.free_memory_pointer+i] = value.charAt(i);
-        }
-        state.free_memory_pointer+=bytes;
-    }
-}
 
 
+// function handle_binary(v_left,opr,v_right){
+//     switch(opr){
+//         case '+':
+//             return v_left + v_right;
+//         case '-':
+//             return v_left - v_right;
+//         case '*':
+//             return v_left * v_right;
+//         case '/':
+//             return v_left / v_right;
+//         case '|':
+//             return v_left || v_right ;
+//         case '&':
+//             return v_left && v_right;
+//         case '>':
+//             return v_left > v_right;
+//         case '<':
+//             return v_left < v_right;
+//         case '=':
+//             return v_left == v_right;
+//     }
+//     console.log(console.error("reeee"));
+//     throw new Error("Operator:",oper," unknown")
+// }
+
+// function handle_unary(oper,v){
+//     switch(oper.text){
+//         case '-':
+//             return -v;
+//         case '&':
+//             return 0; //Not implemented
+//     }
+// }
+
+// function handle_expression(expression){
+//     var numOfChildren = expression.childCount;
+//     switch(numOfChildren){
+//         case 1: // reader
+//             return handle_reader(expression.child(0));
+//         case 2: // oper, reader
+//             return handle_unary(expression.child(0),handle_reader(expression.child(1)));
+//         case 3: // reader, oper, reader
+//             return handle_binary(handle_reader(expression.child(0)), expression.child(1), handle_reader(expression.child(2)))
+//     }
+// }
+
+// function handle_writer(statement){
+//     var writer = statement.child(0).child(0).child(0);
+//     var expression = statement.child(2); 
+//     switch(writer.type){
+//         case 'memory':
+//             var register = writer.child(1).text;
+//             var bytes = parseInt(writer.child(3).text);
+//             var expression_result = handle_expression(expression);
+//             var is_number = parseInt(expression_result);
+//             var startIndex = state.registers[register];
+//             if (startIndex + bytes > state.writable_memory) { 
+//                 console.warn("Memory out of bounds");
+//                 break;
+//             }
+//             if (!isNaN(is_number)) {
+//                 state.memory[state.registers[register]] = expression_result;
+//                 return;
+//             }
+//             for (var i = 0; i < bytes; i++) {
+//                 state.memory[i+startIndex] = expression_result.charAt(i);
+//             }
+//             state.memory[bytes]=null; // string terminal    
+//             break;
+//         case 'register':
+//             state.registers[writer.text.toString()] = handle_expression(expression);
+//             break;
+//     }
+// }
 
 
-function wipe_data(){
-    for (let key in state.registers) {
-        state.registers[key] = 0;
-    }
-    state.cs = {};
-    state.data = {};
-    state.labels = {};
-    state.writable_memory = _writable_memory;
-    state.free_memory_pointer = _free_memory_pointer;
-}
+
+// function handle_statement(statement){
+//     if(statement.childCount == 1 && statement.text == 'syscall'){
+//         handle_syscall(statement.child(0));
+//     }else{
+//         if(statement.child(1).type.toString() == ':='){
+//             handle_writer(statement);
+//         }else if(statement.child(1).type.toString() == '?='){
+//             if(!state.registers['$?']) return;
+//             handle_writer(statement);
+//         }
+//     }
+// }
+
+// function handle_declaration(declaration){
+//     let type = declaration.child(0).text;
+//     let [declarator, value] = declaration.child(1).text.split(' ');
+//     let bytes = value.split("").length;
+
+//     if (bytes + state.free_memory_pointer > state.memory.length) {
+//         console.warn("Declation: Memory out of bounds")
+//         return;
+//     }
+
+//     if(type == 'const'){
+//         if (isNaN(parseInt(value))) {
+//             console.error("Const can only be assigned numbers.");
+//             return;
+//         }
+//         state.memory[state.free_memory_pointer] = value;
+//         state.cs[declarator] = state.free_memory_pointer;
+//         state.free_memory_pointer++;
+//     }else if(type == 'data'){
+//         state.data[declarator] = state.free_memory_pointer;
+//         for (var i = 0; i < bytes; i++) {
+//             state.memory[state.free_memory_pointer+i] = value.charAt(i);
+//         }
+//         state.free_memory_pointer+=bytes;
+//     }
+// }
+
+
+
+
+
 

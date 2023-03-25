@@ -67,7 +67,7 @@ async function debug(){
     document.querySelector('#debugbutton').disabled = true;
     document.querySelector('#stepbutton').disabled = false;
     var source_code = await codeMirrorEditor.getValue();
-    await parse_and_read(source_code);
+    let program = await parse_and_read(source_code);
 
     while(true){
         await pauseUntilEvent(createClickListenerPromise(document.querySelector('#stepbutton')))
@@ -92,7 +92,7 @@ function execute_step(state, program){
         console.log("EOF");
         return -1;
     }
-    execute_instruction(program[state.registers['$!']])
+    execute_bytecode(program[state.registers['$!']])
     state.registers['$!']++;
     console.log("registers: ",JSON.stringify(state.registers, undefined, 2)); 
     console.log("labels: ",JSON.stringify(state.labels, undefined, 2))
