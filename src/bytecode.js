@@ -12,18 +12,30 @@ const OP = {
     COND: 9 // (OP.COND, int: line_number, (writer: writer, string: reader))
 }
 
-const READERTYPE = {
+const WRITER_TYPE = {
     REGISTER: 0,
     MEMORY: 1
 }
 
-const WRITER = {
+const READER_TYPE = {
     REGISTER: 0,
-    MEMORY: 1
+    MEMORY: 1,
+    CONSTANT: 2,
+    DATA: 3,
+    LABEL: 4,
+    NUMBER: 5
 }
 
-class bytecode{
-    constructor(opcode, line_number, operands = []){
-        
+class writer{
+    constructor(writer_type, writer_id){
+        this.writer_type = writer_type;
+        this.writer_id = writer_id;
+    }
+}
+
+class reader{
+    constructor(reader_type, reader_id){
+        this.reader_type = reader_type;
+        this.reader_id = reader_id;
     }
 }
