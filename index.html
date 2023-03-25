@@ -15,12 +15,6 @@
       <textarea id="editorWindow" cols="30" rows="10"></textarea>
       <textarea id="prettyWindow" cols="30" rows="10"></textarea>
     </div>
-    
-    <script src="src/bytecode.js"></script>
-    <script src=src/compiler.js></script>
-    <script src="src/pretty.js"></script>
-    <script src="src/vm.js"></script>
-    <script src="src/editor.js"></script>
 
     <button class="button" id="runbutton" onclick="run_all()" >
       RUN
@@ -36,5 +30,28 @@
     <script>
       document.querySelector('#stepbutton').disabled = true;
     </script>
+    <div class="results">
+      <div id="registers">
+        Registers: { $!: 0, $?: 0, $x: 0, $y: 0, $j: 0 }
+      </div>
+      <div id="labels">
+        Labels: {}
+      </div>
+      <div id="constants">
+        Constants: {}
+      </div>
+      <div id="data">
+        Data: {}
+      </div>
+      <div id="memory">
+
+      </div>
+    </div>
+
+    <script src="src/bytecode.js"></script>
+    <script src="src/compiler.js"></script>
+    <script src="src/pretty.js"></script>
+    <script src="src/vm.js"></script>
+    <script src="src/editor.js"></script>
   </body>
 </html>

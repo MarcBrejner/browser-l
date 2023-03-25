@@ -104,7 +104,7 @@ function write(writer, RHS){
             break;
         case WT.REGISTER:
             if (writer.id in state.registers){
-                state.registers[reader.id] = RHS;
+                state.registers[writer.id] = RHS;
             }else {
                 throw new Error("Tried to write to a register that does not exist");
             } 
