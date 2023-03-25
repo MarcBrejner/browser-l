@@ -6,26 +6,26 @@ function compile_assign(statement, l_pc, assign_type){
     
     switch(numOfChildren){
         case 1: // reader
-            var bc = assign_type === ":=" ? BC.ASSIGN : BC.COND;
+            var op = assign_type === ":=" ? OP.ASSIGN : OP.COND;
             var reader = expression.child(0).text;
-            return [bc, l_pc, [writer, reader]];
+            return [op, l_pc, [writer, reader]];
         case 2: // oper, reader
-            var bc = assign_type === ":=" ? BC.ASSIGN_UN : BC.COND_UN;
+            var op = assign_type === ":=" ? OP.ASSIGN_UN : OP.COND_UN;
             var reader = expression.child(1).text;
             var opr = expression.child(0).text;
-            return [bc, l_pc, [writer, opr, reader]];
+            return [op, l_pc, [writer, opr, reader]];
         case 3: // reader, oper, reader
-            var bc = assign_type === ":=" ? BC.ASSIGN_BIN : BC.COND_BIN;
+            var op = assign_type === ":=" ? OP.ASSIGN_BIN : OP.COND_BIN;
             var reader1 = expression.child(0).text;
             var opr = expression.child(1).text;
             var reader2 = expression.child(2).text;
-            return [bc, l_pc, [writer, reader1, opr, reader2]];
+            return [op, l_pc, [writer, reader1, opr, reader2]];
     }
 }
 
 function compile_statement(statement, l_pc){
     if(statement.childCount == 1 && statement.text == 'syscall'){
-        return [BC.SYSCALL,l_pc];
+        return [OP.SYSCALL,l_pc];
     }else{
         return compile_assign(statement, l_pc, "assign")
     }
@@ -40,7 +40,7 @@ function read_statements(statements){
 
         switch(statement.type){
             case 'label':
-                instructions.push([BC.LABEL, line_number, [statement.text, l_pc]])
+                instructions.push([OP.LABEL, line_number, [statement.text, l_pc]])
                 break;
             case 'statement':
                 var bytecode = compile_statement(statement, line_number)

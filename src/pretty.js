@@ -1,92 +1,83 @@
-async function p_source(tree){
-    if(tree.rootNode.toString().includes("ERROR")){
-        //console.log("Syntax Error, see parse below:");
-        //console.log(tree.rootNode.toString());
-        return "";
+function parse_byte_code(program){
+    let pretty_source_code = "";
+    for(let i = 0; i < program.length; i++) {
+        pretty_source_code += parse_instruction(program[i])
     }
-    const declarations = tree.rootNode.childCount > 1 ? tree.rootNode.child(0) : [];
-    const statements = tree.rootNode.childCount > 1 ? tree.rootNode.child(1) : tree.rootNode.child(0);
-    
-    return await p_declarations(declarations)+await p_statements(statements);
+    return pretty_source_code;
 }
 
-async function p_declarations(declarations){
-    let p_declarations = "";
-    if(declarations == []){
-        return p_declarations;
-    }
-    for(let c_i = 0; c_i < declarations.childCount; c_i++){
-        let declaration = declarations.child(c_i);
-        switch(declaration.type){
-            case 'declaration':
-                p_declarations += await p_declaration(declaration);
-                break;
-            case ';':
-                p_declarations += declaration.text;
-                break;
-            case '\n':
-                p_declarations += declaration.text;
-                break;
-        }
-    }
-    return p_declarations;     
-}
-
-async function p_declaration(declaration){
-    let type = declaration.child(0).text;
-    let dec = declaration.child(1).text.split(' ');
-    if(type == 'const'){
-        return ".const "+dec[0]+" "+dec[1];
-    }else if(type == 'data'){
-        return ".data "+dec[0]+" "+dec[1];
+function parse_instruction(instruction) {
+    let op_code = instruction[0];
+    let operands = instruction[2];
+    switch(op_code){
+        case OP.DEC_CONST:
+            return parse_declaration_const(operands);
+        case OP.DEC_DATA:
+            return parse_declaration_data(operands);
+        case OP.LABEL:
+            return parse_label(operands);
+        case OP.SYSCALL:
+            return parse_syscall();
+        case OP.ASSIGN_BIN:
+            return parse_assign_bin(operands);
+        case OP.ASSIGN_UN:
+            return parse_assign_un(operands);
+        case OP.ASSIGN:
+            return parse_assign(operands);
+        case OP.COND_BIN:
+            return parse_cond_bin(operands);
+        case OP.COND_UN:
+            return parse_cond_un(operands);
+        case OP.COND:
+            return parse_cond(operands);
     }
 }
 
-async function p_statements(statements){
-    let p_statements = "";
-
-    for(let c_i = 0; c_i < statements.childCount; c_i++){
-        let statement = statements.child(c_i);
-        switch(statement.type){
-            case 'label':
-                p_statements += statement.text+'\n';
-                break;
-            case 'statement':
-                p_statements += await p_statement(statement);
-                break;
-            case ';':
-                p_statements += statement.text;
-                break;
-            case '\n':
-                p_statements += statement.text;
-                break;
-        }
-    }
-    return p_statements;
+function parse_declaration_const(operands) {
+    var [identifier, data] = operands;
+    return `const ${identifier} ${data};\n` 
 }
 
-async function p_statement(statement){
-    if(statement.text == 'syscall'){
-        return statement.text;
-    } 
-    else if (statement.text.includes('goto')){
-        var label = statement.text.split(/\s+/)[1];
-        return `$! ?= ${label} - 1`
-    }
-    else{
-        return await p_assignment(statement)
-    }
+function parse_declaration_data(operands) {
+    var [identifier, data] = operands;
+    return `data ${identifier} ${data};\n` 
 }
 
-async function p_assignment(statement){
-    return statement.child(0).text+" "+statement.child(1).text+" "+await p_expression(statement.child(2));
+function parse_label(operands) {
+    var [label, pc_pointer] = operands;
+    return `#${label}\n` 
 }
 
-async function p_expression(expression){
-    var numOfChildren = expression.childCount;
-    if(numOfChildren > 2){
-        return expression.child(0).text+" "+expression.child(1).text+" "+expression.child(2).text;
-    }else{
-        return expression.text;
-    }
+function parse_syscall() {
+    return `syscall;\n` 
+}
+
+function parse_assign_bin(operands) {
+    var [writer, reader1, opr, reader2] = operands;
+    return `${writer} := ${reader1} ${opr} ${reader2};\n` 
+}
+
+function parse_assign_un(operands) {
+    var [writer, opr, reader] = operands;
+    return `${writer} := ${opr} ${reader};\n` 
+}
+
+function parse_assign(operands) {
+    var [writer, reader] = operands;
+    return `${writer} := ${reader};\n` 
+}
+
+function parse_cond_bin(operands) {
+    var [writer, reader1, opr, reader2] = operands;
+    return `${writer} ?= ${reader1} ${opr} ${reader2};\n` 
+}
+
+function parse_cond_un(operands) {
+    var [writer, opr, reader] = operands;
+    return `${writer} ?= ${opr} ${reader};\n` 
+}
+
+function parse_cond(operands) {
+    var [writer, reader] = operands;
+    return `${writer} ?= ${reader};\n` 
 }
