@@ -4,7 +4,6 @@ var constantsDiv = document.getElementById("constants");
 var dataDiv = document.getElementById("data");
 var memoryDiv = document.getElementById("memory");
 
-
 //Editable window
 var codeMirrorEditor = CodeMirror.fromTextArea(document.getElementById('editorWindow'), {
     lineNumbers: true,
@@ -41,9 +40,10 @@ async function parse_and_pretty_print(source_code){
     if(tree.rootNode.toString().includes("ERROR")){
         return "";
     }
-    let program = read_program(tree);
+    let program = compile(tree);
     // parse_byte_code from pretty.js pretty prints the byte_code
-    return parse_byte_code(program);
+    var pretty_printer = new PrettyPrinter(program);
+    return pretty_printer.print_program();
 }
 
 async function parse_and_read(source_code){
@@ -51,14 +51,15 @@ async function parse_and_read(source_code){
     let compiled_L0_code = await parse_and_pretty_print(source_code);
     let tree = await parser.parse(compiled_L0_code);
     //p_source from pretty.js pretty prints the code using the input parse tree
-    return read_program(tree);
+    return compile(tree);
 }
 async function run_all(){
     var source_code = await codeMirrorEditor.getValue();
 
     let program = await parse_and_read(source_code);
     console.log(program)
-    //execute_all(state, program);
+    var VM = new VirtualMachine(program, null, null);
+    execute_all(VM);
 }
 
 async function pauseUntilEvent (clickListenerPromise) {
@@ -75,10 +76,11 @@ async function debug(){
     document.querySelector('#stepbutton').disabled = false;
     var source_code = await codeMirrorEditor.getValue();
     let program = await parse_and_read(source_code);
+    var VM = new VM(program, null, null);
 
     while(true){
         await pauseUntilEvent(createClickListenerPromise(document.querySelector('#stepbutton')))
-        if(execute_step(state, program) == -1){
+        if(execute_step(VM) == -1){
             document.querySelector('#debugbutton').disabled = false;
             document.querySelector('#stepbutton').disabled = true;
             return;
@@ -86,25 +88,24 @@ async function debug(){
     }
 }
 
-function execute_all(state, program){
+function execute_all(VM){
     while(true){ //step
-        if (execute_step(state, program) == -1) {
+        if (execute_step(VM) == -1) {
             break;
         }
     }
 }
 
-function execute_step(state, program){
-    if(state.registers['$!'] >= program.length){
+function execute_step(VM){
+    if(VM.state.registers['$!'] >= VM.program.instructions.length){
         console.log("EOF");
         return -1;
     }
-    execute_bytecode(program[state.registers['$!']])
-    state.registers['$!']++;
     
-    registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
-    labelsDiv.innerHTML = "Labels: " + JSON.stringify(state.labels, undefined, 2).replaceAll("\"", "");
-    constantsDiv.innerHTML = "Constants: " + JSON.stringify(state.cs, undefined, 2).replaceAll("\"", "");
-    dataDiv.innerHTML = "Data: " + JSON.stringify(state.data, undefined, 2).replaceAll("\"", "");
+    VM.execute_bytecode()
+    registerDiv.innerHTML = "Registers: " + JSON.stringify(VM.state.registers, undefined, 2).replaceAll("\"", "");
+    labelsDiv.innerHTML = "Labels: " + JSON.stringify(VM.state.labels, undefined, 2).replaceAll("\"", "");
+    constantsDiv.innerHTML = "Constants: " + JSON.stringify(VM.state.cs, undefined, 2).replaceAll("\"", "");
+    dataDiv.innerHTML = "Data: " + JSON.stringify(VM.state.data, undefined, 2).replaceAll("\"", "");
     //memoryDiv.innerHTML = "memory: " + JSON.stringify(state.memory, undefined, 2);
 }
