@@ -6,10 +6,7 @@ const OP = {
     SYSCALL: 3, // (OP.SYSCALL, int: line_number)
     ASSIGN_BIN: 4, // (OP.ASSIGN_BIN, int: line_number, (string: writer, string: reader1, string: opr, string: reader2))
     ASSIGN_UN: 5, // (OP.ASSIGN_UN, int: line_number, (string: writer, string: opr string: reader))
-    ASSIGN: 6, // (OP.ASSIGN, int: line_number, (enum: writer, string: reader))
-    COND_BIN: 7, // (OP.COND_BIN, int: line_number, (enum: writer, string: reader1, string: opr, string: reader2))
-    COND_UN: 8, // (OP.COND_UN, int: line_number, (enum: writer, string: opr, string: reader))
-    COND: 9 // (OP.COND, int: line_number, (writer: writer, string: reader))
+    ASSIGN: 6 // (OP.ASSIGN, int: line_number, (enum: writer, string: reader))
 }
 
 const WT = {
@@ -37,23 +34,19 @@ class bytecode{
             case OP.SYSCALL: 
                return handler.syscall();
             case OP.ASSIGN_BIN:
-                return handler.assign_binary(false, w, reader1, reader2);
+                var [conditional, w, reader1, opr, reader2] = this.operands;
+                return handler.assign_binary(conditional, w, reader1, opr, reader2);
+            case OP.ASSIGN_UN:
+                var [conditional, w, opr, r] = this.operands;
+                return handler.assign_un(conditional, w, opr, r);
+            case OP.ASSIGN:
+                var [conditional, w, r] = this.operands;
+                return handler.assign(conditional, w, r);
+            default:
+                throw new Error("Unknown Opcode")
         }
     }
 }
-
-/*
-function handle(bytecode) {
-    bytecode.handle({
-    syscall:() => {
-
-    },
-    assign_binary: (cond, w, r1, r2) => {
-
-    }
-    })
-}
-*/
 
 class writer{
     constructor(writer_type, writer_id){
@@ -77,3 +70,16 @@ class program{
         this.labels = labels;
     }
 }
+
+/*
+function handle(bytecode) {
+    bytecode.handle({
+    syscall:() => {
+
+    },
+    assign_binary: (cond, w, r1, r2) => {
+
+    }
+    })
+}
+*/
