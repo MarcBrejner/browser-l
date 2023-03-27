@@ -9,6 +9,8 @@ function parse_byte_code(program){
 function parse_instruction(instruction) {
     let op_code = instruction[0];
     let operands = instruction[2];
+
+    
     switch(op_code){
         case OP.DEC_CONST:
             return parse_declaration_const(operands);
@@ -30,6 +32,8 @@ function parse_instruction(instruction) {
             return parse_cond_un(operands);
         case OP.COND:
             return parse_cond(operands);
+        default:
+            throw new Error("Unknown Opcode")
     }
 }
 

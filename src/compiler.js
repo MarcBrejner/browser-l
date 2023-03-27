@@ -72,16 +72,45 @@ function compile_statement(statement, l_pc){
     }
 }
 
-function read_statements(statements){
-    let instructions = new Array();
-    let l_pc = 0;
-    for(let c_i = 0; c_i < statements.childCount; c_i++){
-        let statement = statements.child(c_i);
-        let line_number = parseInt(statement.startPosition.row);
+function compile_program(statements, declarations){
 
+    let [constants, data] = compile_declarations(declarations);
+    let [instructions, labels] = compile_statements(statements);
+
+    return new program(instructions, data, constants, labels);
+}
+
+function compile_declarations(declarations){
+    let constants = {};
+    let data = {};
+
+    for(let d_i = 0; d_i < declarations.childCount; d_i++){
+        let declaration = declarations.child(s_i);
+        let type = declaration.child(0).text;
+        let [id, value] = declaration.child(1).text.split(' ');
+        switch(type){
+            case 'const':
+                constants[id] = value;
+                break;
+            case 'data':
+                data[id] = value;
+                break;
+        }
+    }
+
+    return [constants, data];
+}
+
+function compile_statements(statements){
+    let instructions = new Array();
+    let labels = {};
+    let l_pc = 0;
+    for(let s_i = 0; s_i < statements.childCount; s_i++){
+        let statement = statements.child(s_i);
+        let line_number = parseInt(statement.startPosition.row);
         switch(statement.type){
             case 'label':
-                instructions.push([OP.LABEL, line_number, [statement.text, l_pc]])
+                labels[statement.text] = l_pc;
                 break;
             case 'statement':
                 var bytecode = compile_statement(statement, line_number)
@@ -94,11 +123,11 @@ function read_statements(statements){
                 break;
         }
     }
-    
-    return instructions;
+
+    return [instructions, labels];
 }
 
-function read_program(tree){
+function compile(tree){
     // wipe_data();
     if(tree.rootNode.toString().includes("ERROR")){
         console.log("Syntax Error, see parse below:");
@@ -107,8 +136,7 @@ function read_program(tree){
     }
     const declarations = tree.rootNode.childCount > 1 ? tree.rootNode.child(0) : [];
     const statements = tree.rootNode.childCount > 1 ? tree.rootNode.child(1) : tree.rootNode.child(0);
-    //read_declarations(declarations)
-    let program = read_statements(statements);
+    let program = compile_program(statements, declarations);
     return program;
 }
 

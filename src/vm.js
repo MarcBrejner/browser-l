@@ -1,8 +1,44 @@
-var pc = 0;
-var running = true
+/////////
+const _writable_memory = 7000;
+const _free_memory_pointer = 7000;
+
+var state = {
+    labels: {},
+    cs: {},
+    data: {},
+    registers: {
+        "$!":0, //PC
+        "$?":0, //Bool
+        "$x":0,
+        "$y":0,
+        "$j":0
+    },
+    memory: new Array(10000),
+    writable_memory: _writable_memory,
+    free_memory_pointer: _free_memory_pointer
+}
+
+class VM {
+
+    constructor(program, memory, registers) {
+        this.registers = registers
+        this.memory + memory
+        this.program = program
+
+        l = this.program.data
+        10 == this.program.data_pointers["hello_world_string"]
+        this.memory[10] == this.program.data[10]
+        // copyt this.program.data to memory
+
+
+    }
+
+}
 
 // bytecode: (enum: OP, int: line_number, array?: operands)
 function execute_bytecode(instruction){
+    instruction.handle(this)
+    )
     let op_code = instruction[0];
     let operands = instruction[2];
     let skip_conditional = !state.registers["$?"];
@@ -15,13 +51,15 @@ function execute_bytecode(instruction){
             set_label(operands)
             return;
         case OP.SYSCALL:
-            handle_syscall();
+            instruction.handle(handle_syscall())
+            ;
             return;
         case OP.ASSIGN_BIN:
             assign_binary(operands);
             return;
         case OP.ASSIGN_UN:
-            assign_unary(operands);
+            let [writer, opr, reader] = operands;
+            assign_unary(writer, opr, reader);
             return;
         case OP.ASSIGN:
             assign(operands);
@@ -54,14 +92,14 @@ function set_label(operands){
     
 }
 
-function assign_binary(operands){
-    let [writer, reader1, opr, reader2] = operands;
+function assign_binary(cond, writer, reader1, opr, reader2){
+    if (cond && !this.check_condition()) return;
     let RHS = evaluate_binary(reader1,opr,reader2);
     write(writer, RHS);
 }
 
-function assign_unary(operands){
-    let [writer, opr, reader] = operands;
+function assign_unary(writer, opr, reader){
+    
     let RHS = evaluate_unary(opr,reader);
     write(writer, RHS);
 }
@@ -83,7 +121,7 @@ function evaluate_unary(opr, v){
 function write(writer, RHS){
     switch(writer.type){
         case WT.MEMORY:
-            throw new Error("Memory cannot be written to, as it is not implemented");
+            throw new Error("Memorye error");
             // var register = writer.child(1).text;
             // var bytes = parseInt(writer.child(3).text);
             // var expression_result = handle_expression(expression);
@@ -112,25 +150,7 @@ function write(writer, RHS){
     }
 }
 
-/////////
-const _writable_memory = 7000;
-const _free_memory_pointer = 7000;
 
-var state = {
-    labels: {},
-    cs: {},
-    data: {},
-    registers: {
-        "$!":0, //PC
-        "$?":0, //Bool
-        "$x":0,
-        "$y":0,
-        "$j":0
-    },
-    memory: new Array(10000),
-    writable_memory: _writable_memory,
-    free_memory_pointer: _free_memory_pointer
-}
 
 var program = [];
 
@@ -151,7 +171,7 @@ function read(reader){
             //     }
             //     return result;        
             // }
-            throw new Error("Memory out of bounds (NOT IMPLEMENTED)");
+            throw new Error("Memory out of bounds");
         case RT.CONSTANT:
             if (reader.id in state.cs){
                 return parseInt(state.cs[reader.id]);
@@ -188,7 +208,7 @@ function handle_syscall(){
             console.log(str);
             break;
         default:
-            console.log("Some kind of meaningful error msg");
+            console.log("Syscall Error");
     }
 }
 

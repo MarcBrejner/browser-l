@@ -26,6 +26,35 @@ const RT = {
     NUMBER: 5
 }
 
+class bytecode{
+    constructor(opcode, operands = []){
+        this.opcode = opcode;
+        this.operands = operands;
+    }
+
+    function handle(handler) {
+        switch (this.opcode) {
+            OP.SYSCALL: 
+               return handler.syscall();
+            OP.ASSIGN_BIN:
+                let [w, reader1, reader2] = this.operands;
+                return handler.assign_binary(false, w, reader1, reader2);
+        }
+    }
+}
+
+function handle(inst) {
+   inst.handle({
+    syscall:() => {
+
+    },
+    assign_binary: (cond, w, r1, r2) => {
+
+    }
+    })
+}
+
+
 class writer{
     constructor(writer_type, writer_id){
         this.type = writer_type;
@@ -37,5 +66,14 @@ class reader{
     constructor(reader_type, reader_id){
         this.type = reader_type;
         this.id = reader_id;
+    }
+}
+
+class program{
+    constructor(instructions, data, constants, labels){
+        this.instructions = instructions;
+        this.data = data;
+        this.constants = constants;
+        this.labels = labels;
     }
 }
