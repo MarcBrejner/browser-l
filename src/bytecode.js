@@ -31,20 +31,20 @@ class bytecode{
         this.opcode = opcode;
         this.operands = operands;
     }
-
-    function handle(handler) {
+    
+    handle(handler) {
         switch (this.opcode) {
-            OP.SYSCALL: 
+            case OP.SYSCALL: 
                return handler.syscall();
-            OP.ASSIGN_BIN:
-                let [w, reader1, reader2] = this.operands;
+            case OP.ASSIGN_BIN:
                 return handler.assign_binary(false, w, reader1, reader2);
         }
     }
 }
 
-function handle(inst) {
-   inst.handle({
+/*
+function handle(bytecode) {
+    bytecode.handle({
     syscall:() => {
 
     },
@@ -53,7 +53,7 @@ function handle(inst) {
     }
     })
 }
-
+*/
 
 class writer{
     constructor(writer_type, writer_id){

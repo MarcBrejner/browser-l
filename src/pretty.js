@@ -1,12 +1,55 @@
-function parse_byte_code(program){
-    let pretty_source_code = "";
-    for(let i = 0; i < program.length; i++) {
-        pretty_source_code += parse_instruction(program[i])
+class PrettyPrinter {
+    constructor(program) {
+        this.program = program
     }
-    return pretty_source_code;
+
+    pretty_print_program() {
+        let pretty_source_code = "";
+        let instructions = this.program.instructions;
+        for(let i = 0; i < instructions.length; i++) {
+            pretty_source_code += instructions[i].handle(this)
+        }
+        return pretty_source_code;
+    }
+
+    /*
+    print_declaration_const(operands) {
+        var [identifier, data] = operands;
+        return `const ${identifier} ${data};\n` 
+    }
+    
+    print_declaration_data(operands) {
+        var [identifier, data] = operands;
+        return `data ${identifier} ${data};\n` 
+    }
+    
+    print_label(operands) {
+        var [label, pc_pointer] = operands;
+        return `#${label}\n` 
+    }
+    */
+    syscall() {
+        return `syscall;\n` 
+    }
+    
+    assign_binary(conditional, writer, reader1, opr, reader2) {
+        var cond = conditional ? '?=' : ':=';
+        return `${writer.id} ${cond} ${reader1.id} ${opr} ${reader2.id};\n` 
+    }
+    
+    assign_un(writer, opr, reader) {
+        var cond = conditional ? '?=' : ':=';
+        return `${writer.id} ${cond} ${opr} ${reader.id};\n` 
+    }
+    
+    assign(writer, reader) {
+        var cond = conditional ? '?=' : ':=';
+        return `${writer.id} ${cond} ${reader.id};\n` 
+    }
 }
 
-function parse_instruction(instruction) {
+/*
+function parse_instruction(bytecode) {
     let op_code = instruction[0];
     let operands = instruction[2];
 
@@ -84,4 +127,4 @@ function parse_cond_un(operands) {
 function parse_cond(operands) {
     var [writer, reader] = operands;
     return `${writer.id} ?= ${reader.id};\n` 
-}
+}*/

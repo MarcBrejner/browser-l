@@ -36,12 +36,9 @@ class VM {
 }
 
 // bytecode: (enum: OP, int: line_number, array?: operands)
-function execute_bytecode(instruction){
-    instruction.handle(this)
-    )
-    let op_code = instruction[0];
-    let operands = instruction[2];
-    let skip_conditional = !state.registers["$?"];
+function execute_bytecode(bytecode){
+    bytecode.handle(this);
+    /*let skip_conditional = !state.registers["$?"];
     switch(op_code){
         case OP.DEC_CONST:
             return;
@@ -51,8 +48,7 @@ function execute_bytecode(instruction){
             set_label(operands)
             return;
         case OP.SYSCALL:
-            instruction.handle(handle_syscall())
-            ;
+            handle_syscall();
             return;
         case OP.ASSIGN_BIN:
             assign_binary(operands);
@@ -77,6 +73,7 @@ function execute_bytecode(instruction){
             assign(operands);
             return;
     }
+    */
 }
 
 function declare_constant(instruction){
