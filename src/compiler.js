@@ -44,23 +44,21 @@ function compile_assign(statement){
     var assign_type = statement.child(1).text;
     var expression = statement.child(2);
     var numOfChildren = expression.childCount;
+    var is_conditional = assign_type === "?=" ? true : false;
     
     switch(numOfChildren){
         case 1: // reader
-            var op = assign_type === ":=" ? OP.ASSIGN : OP.COND;
             var reader = compile_reader(expression.child(0));
-            return new bytecode(op, [writer, reader])
+            return new bytecode(OP.ASSIGN, [is_conditional, writer, reader])
         case 2: // oper, reader
-            var op = assign_type === ":=" ? OP.ASSIGN_UN : OP.COND_UN;
             var reader = compile_reader(expression.child(1));
             var opr = expression.child(0).text;
-            return new bytecode(op, [writer, opr, reader])
+            return new bytecode(OP.ASSIGN_UN, [is_conditional, writer, opr, reader])
         case 3: // reader, oper, reader
-            var op = assign_type === ":=" ? OP.ASSIGN_BIN : OP.COND_BIN;
             var reader1 = compile_reader(expression.child(0));
             var opr = expression.child(1).text;
             var reader2 = compile_reader(expression.child(2));
-            return new bytecode(op, [writer, reader1, opr, reader2])
+            return new bytecode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr, reader2])
     }
 }
 
