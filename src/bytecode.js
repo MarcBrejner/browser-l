@@ -38,7 +38,7 @@ class bytecode{
                 return handler.assign_binary(conditional, w, reader1, opr, reader2);
             case OP.ASSIGN_UN:
                 var [conditional, w, opr, r] = this.operands;
-                return handler.assign_un(conditional, w, opr, r);
+                return handler.assign_unary(conditional, w, opr, r);
             case OP.ASSIGN:
                 var [conditional, w, r] = this.operands;
                 return handler.assign(conditional, w, r);

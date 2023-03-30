@@ -76,7 +76,7 @@ async function debug(){
     document.querySelector('#stepbutton').disabled = false;
     var source_code = await codeMirrorEditor.getValue();
     let program = await parse_and_read(source_code);
-    var VM = new VM(program, null, null);
+    var VM = new VirtualMachine(program, null, null);
 
     while(true){
         await pauseUntilEvent(createClickListenerPromise(document.querySelector('#stepbutton')))

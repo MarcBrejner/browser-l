@@ -4,9 +4,9 @@ const _free_memory_pointer = 7000;
 
 class VirtualMachine {
     constructor(program, memory, registers) {
+        this.program = program
         this.registers = registers
         this.memory = memory
-        this.program = program
         /*
         l = this.program.data
         10 == this.program.data_pointers["hello_world_string"]
@@ -40,13 +40,13 @@ class VirtualMachine {
 
     assign_binary(cond, writer, reader1, opr, reader2){
         if (cond && this.check_condition()) return;
-        let RHS = evaluate_binary(reader1,opr,reader2);
+        let RHS = this.evaluate_binary(reader1,opr,reader2);
         this.write(writer, RHS);
     }
     
     assign_unary(cond, writer, opr, reader){
         if (cond && this.check_condition()) return;
-        let RHS = evaluate_unary(opr,reader);
+        let RHS = this.evaluate_unary(opr,reader);
         this.write(writer, RHS);
     }
     
@@ -65,7 +65,7 @@ class VirtualMachine {
     }
 
     check_condition() {
-        return this.state.registers['$?'];
+        return !this.state.registers['$?'];
     }
     
     write(writer, RHS){

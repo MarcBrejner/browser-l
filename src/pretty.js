@@ -21,7 +21,7 @@ class PrettyPrinter {
         return `${writer.id} ${cond} ${reader1.id} ${opr} ${reader2.id};\n` 
     }
     
-    assign_un(conditional, writer, opr, reader) {
+    assign_unary(conditional, writer, opr, reader) {
         var cond = conditional ? '?=' : ':=';
         return `${writer.id} ${cond} ${opr} ${reader.id};\n` 
     }
