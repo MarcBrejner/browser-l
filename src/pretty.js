@@ -1,92 +1,50 @@
-async function p_source(tree){
-    if(tree.rootNode.toString().includes("ERROR")){
-        //console.log("Syntax Error, see parse below:");
-        //console.log(tree.rootNode.toString());
-        return "";
+class PrettyPrinter {
+    constructor(program) {
+        this.program = program
     }
-    const declarations = tree.rootNode.childCount > 1 ? tree.rootNode.child(0) : [];
-    const statements = tree.rootNode.childCount > 1 ? tree.rootNode.child(1) : tree.rootNode.child(0);
+
+    print_program() {
+        let pretty_source_code = "";
+        let instructions = this.program.instructions;
+        for(let i = 0; i < instructions.length; i++) {
+            pretty_source_code += instructions[i].handle(this)
+        }
+        return pretty_source_code;
+    }
+
+    syscall() {
+        return `syscall;\n` 
+    }
     
-    return await p_declarations(declarations)+await p_statements(statements);
-}
-
-async function p_declarations(declarations){
-    let p_declarations = "";
-    if(declarations == []){
-        return p_declarations;
+    assign_binary(conditional, writer, reader1, opr, reader2) {
+        var cond = conditional ? '?=' : ':=';
+        return `${writer.id} ${cond} ${reader1.id} ${opr} ${reader2.id};\n` 
     }
-    for(let c_i = 0; c_i < declarations.childCount; c_i++){
-        let declaration = declarations.child(c_i);
-        switch(declaration.type){
-            case 'declaration':
-                p_declarations += await p_declaration(declaration);
-                break;
-            case ';':
-                p_declarations += declaration.text;
-                break;
-            case '\n':
-                p_declarations += declaration.text;
-                break;
-        }
+    
+    assign_unary(conditional, writer, opr, reader) {
+        var cond = conditional ? '?=' : ':=';
+        return `${writer.id} ${cond} ${opr} ${reader.id};\n` 
     }
-    return p_declarations;     
-}
-
-async function p_declaration(declaration){
-    let type = declaration.child(0).text;
-    let dec = declaration.child(1).text.split(' ');
-    if(type == 'const'){
-        return ".const "+dec[0]+" "+dec[1];
-    }else if(type == 'data'){
-        return ".data "+dec[0]+" "+dec[1];
+    
+    assign(conditional, writer, reader) {
+        var cond = conditional ? '?=' : ':=';
+        return `${writer.id} ${cond} ${reader.id};\n` 
     }
-}
+} 
 
-async function p_statements(statements){
-    let p_statements = "";
-
-    for(let c_i = 0; c_i < statements.childCount; c_i++){
-        let statement = statements.child(c_i);
-        switch(statement.type){
-            case 'label':
-                p_statements += statement.text+'\n';
-                break;
-            case 'statement':
-                p_statements += await p_statement(statement);
-                break;
-            case ';':
-                p_statements += statement.text;
-                break;
-            case '\n':
-                p_statements += statement.text;
-                break;
-        }
+    /*
+    print_declaration_const(operands) {
+        var [identifier, data] = operands;
+        return `const ${identifier} ${data};\n` 
     }
-    return p_statements;
-}
-
-async function p_statement(statement){
-    if(statement.text == 'syscall'){
-        return statement.text;
-    } 
-    else if (statement.text.includes('goto')){
-        var label = statement.text.split(/\s+/)[1];
-        return `$! ?= ${label} - 1`
+    
+    print_declaration_data(operands) {
+        var [identifier, data] = operands;
+        return `data ${identifier} ${data};\n` 
     }
-    else{
-        return await p_assignment(statement)
+    
+    print_label(operands) {
+        var [label, pc_pointer] = operands;
+        return `#${label}\n` 
     }
-}
-
-async function p_assignment(statement){
-    return statement.child(0).text+" "+statement.child(1).text+" "+await p_expression(statement.child(2));
-}
-
-async function p_expression(expression){
-    var numOfChildren = expression.childCount;
-    if(numOfChildren > 2){
-        return expression.child(0).text+" "+expression.child(1).text+" "+expression.child(2).text;
-    }else{
-        return expression.text;
-    }
-}
+    */
