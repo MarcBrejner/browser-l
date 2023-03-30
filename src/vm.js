@@ -1,36 +1,56 @@
-/////////
-const _writable_memory = 7000;
-const _free_memory_pointer = 7000;
+class State {
+    constructor(memory, registers, labels, constants, data){
+        this.memory = memory
+        this.registers = registers;
+        this.labels = labels;
+        this.constants = constants;
+        this.data = data;
+    }
+}
 
 class VirtualMachine {
-    constructor(program, memory, registers) {
-        this.program = program
-        this.registers = registers
-        this.memory = memory
-        /*
-        l = this.program.data
-        10 == this.program.data_pointers["hello_world_string"]
-        this.memory[10] == this.program.data[10]
-        */
-        // copyt this.program.data to memory
-    }
+    constructor(program,
+                memory = new Array(10000),
+                registers = {
+                    "$!":0, //PC
+                    "$?":0, //Bool
+                    "$x":0,
+                    "$y":0
+                })
+    {
+        this.program = program;
+        this.state = init_state();
 
-    state = {
-        labels: {},
-        cs: {},
-        data: {},
-        registers: {
-            "$!":0, //PC
-            "$?":0, //Bool
-            "$x":0,
-            "$y":0,
-            "$j":0
-        },
-        memory: new Array(10000),
-        writable_memory: _writable_memory,
-        free_memory_pointer: _free_memory_pointer
-    }
+        function init_state(){
+            let memory_for_constants = new Array();
+            let state_labels={}, state_constants={}, state_data={};
+            map_integers_to_memory(program.labels, state_labels);
+            map_integers_to_memory(program.constants, state_constants);
+            // map_strings_to_memory(program.data, state_data);
+            let state_memory = memory.concat(memory_for_constants);
 
+            return new State(state_memory,
+                registers, 
+                state_labels, 
+                state_constants, 
+                state_data);
+
+            function map_integers_to_memory(program_constants,target){
+                Object.entries(program_constants).forEach(([id,integer]) =>{
+                    let pointer = memory_for_constants.length;
+                    target[id] = pointer;
+                    memory_for_constants.push(integer);
+                });
+            }
+            function map_strings_to_memory(program_constants){
+                Object.entries(program_constants).forEach(([id,str]) =>{
+                    let pointer = memory_for_constants.length;
+                    target[id] = pointer;
+                    
+                });
+            }
+        }
+    }
 
     execute_bytecode() {
         var pc = this.state.registers['$!'];
@@ -108,15 +128,15 @@ class VirtualMachine {
                 }
                 throw new Error("Register ",reader.id," not found");
             case RT.MEMORY:
-                // var startIndex = state.registers[reader.child(0).child(0).child(1).text];
-                // var stopIndex = startIndex + parseInt(reader.child(0).child(0).child(3).text);
-                // var result = "";
-                // if (stopIndex < state.memory.length) {
-                //     for (var i = startIndex; i < stopIndex; i++) {
-                //         result += state.memory[i];
-                //     }
-                //     return result;        
-                // }
+                    // var startIndex = state.registers[reader.child(0).child(0).child(1).text];
+                    // var stopIndex = startIndex + parseInt(reader.child(0).child(0).child(3).text);
+                    // var result = "";
+                    // if (stopIndex < state.memory.length) {
+                    //     for (var i = startIndex; i < stopIndex; i++) {
+                    //         result += state.memory[i];
+                    //     }
+                    //     return result;        
+                    // }
                 throw new Error("Memory out of bounds");
             case RT.CONSTANT:
                 if (reader.id in this.state.cs){

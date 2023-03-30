@@ -48,8 +48,7 @@ async function parse_and_pretty_print(source_code){
 
 async function parse_and_read(source_code){
     let parser = await initialize_parser();
-    let compiled_L0_code = await parse_and_pretty_print(source_code);
-    let tree = await parser.parse(compiled_L0_code);
+    let tree = await parser.parse(source_code);
     //p_source from pretty.js pretty prints the code using the input parse tree
     return compile(tree);
 }
@@ -58,7 +57,7 @@ async function run_all(){
 
     let program = await parse_and_read(source_code);
     console.log(program)
-    var VM = new VirtualMachine(program, null, null);
+    var VM = new VirtualMachine(program);
     execute_all(VM);
 }
 
@@ -76,7 +75,7 @@ async function debug(){
     document.querySelector('#stepbutton').disabled = false;
     var source_code = await codeMirrorEditor.getValue();
     let program = await parse_and_read(source_code);
-    var VM = new VirtualMachine(program, null, null);
+    var VM = new VirtualMachine(program);
 
     while(true){
         await pauseUntilEvent(createClickListenerPromise(document.querySelector('#stepbutton')))
@@ -105,7 +104,7 @@ function execute_step(VM){
     VM.execute_bytecode()
     registerDiv.innerHTML = "Registers: " + JSON.stringify(VM.state.registers, undefined, 2).replaceAll("\"", "");
     labelsDiv.innerHTML = "Labels: " + JSON.stringify(VM.state.labels, undefined, 2).replaceAll("\"", "");
-    constantsDiv.innerHTML = "Constants: " + JSON.stringify(VM.state.cs, undefined, 2).replaceAll("\"", "");
+    constantsDiv.innerHTML = "Constants: " + JSON.stringify(VM.state.constants, undefined, 2).replaceAll("\"", "");
     dataDiv.innerHTML = "Data: " + JSON.stringify(VM.state.data, undefined, 2).replaceAll("\"", "");
     //memoryDiv.innerHTML = "memory: " + JSON.stringify(state.memory, undefined, 2);
 }
