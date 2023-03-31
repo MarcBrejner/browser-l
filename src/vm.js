@@ -7,17 +7,15 @@ class State {
 }
 
 class VirtualMachine {
-    constructor(program,
-                memory = new Array(10000),
-                registers = {
-                    "$!":0, //PC
-                    "$?":0, //Bool
-                    "$x":0,
-                    "$y":0
-                })
-    {
-        this.program = program;
-        this.state = init_state();
+  constructor(program, memory = new Array(100).fill(0),
+              registers = {
+                "$!" : 0, // PC
+                "$?": 0,  // Bool
+                "$x": 0,
+                "$y": 0
+              }) {
+    this.program = program;
+    this.state = init_state();
 
         function init_state(){
             let memory_for_constants = new Array();
@@ -43,37 +41,38 @@ class VirtualMachine {
         }
     }
 
-    execute_bytecode() {
-        var pc = this.state.registers['$!'];
-        this.program.instructions[pc].handle(this);
-        this.state.registers['$!']++;
-    }
+  execute_bytecode() {
+    var pc = this.state.registers['$!'];
+    this.program.instructions[pc].handle(this);
+    this.state.registers['$!']++;
+  }
 
-    assign_binary(cond, writer, reader1, opr, reader2){
-        if (cond && this.check_condition()) return;
-        let RHS = this.evaluate_binary(reader1,opr,reader2);
-        this.write(writer, RHS);
-    }
-    
-    assign_unary(cond, writer, opr, reader){
-        if (cond && this.check_condition()) return;
-        let RHS = this.evaluate_unary(opr,reader);
-        this.write(writer, RHS);
-    }
-    
-    assign(cond, writer, reader){
-        if (cond && this.check_condition()) return;
-        let RHS = this.read(reader);
-        this.write(writer, RHS);
-    }
-    
-    evaluate_binary(v1, opr, v2){//TODO: Maybe revisit
-        return eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
-    }
-    
-    evaluate_unary(opr, v){
-        return eval(`${opr} ${this.read(v)}`);
-    }
+  assign_binary(cond, writer, reader1, opr, reader2) {
+    if (cond && this.check_condition())
+      return;
+    let RHS = this.evaluate_binary(reader1, opr, reader2);
+    this.write(writer, RHS);
+  }
+
+  assign_unary(cond, writer, opr, reader) {
+    if (cond && this.check_condition())
+      return;
+    let RHS = this.evaluate_unary(opr, reader);
+    this.write(writer, RHS);
+  }
+
+  assign(cond, writer, reader) {
+    if (cond && this.check_condition())
+      return;
+    let RHS = this.read(reader);
+    this.write(writer, RHS);
+  }
+
+  evaluate_binary(v1, opr, v2) {
+    return eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
+  }
+
+  evaluate_unary(opr, v) { return eval(`${opr} ${this.read(v)}`); }
 
     check_condition() {
         return !this.state.registers['$?'];

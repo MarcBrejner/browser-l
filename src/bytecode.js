@@ -23,7 +23,7 @@ const RT = {
   NUMBER: 5,
 };
 
-class bytecode {
+class ByteCode {
   constructor(opcode, operands = []) {
     this.opcode = opcode;
     this.operands = operands;
@@ -57,14 +57,14 @@ class writer {
   }
 }
 
-class reader {
+class Reader {
   constructor(reader_type, reader_id) {
     this.type = reader_type;
     this.id = reader_id;
   }
 }
 
-class program {
+class Program {
   constructor(instructions, ecs, data, constants, labels) {
     this.instructions = instructions;
     this.ECS = ecs;
@@ -76,9 +76,9 @@ class program {
 
 class ECS {
     constructor() {
-        this.LineNumber = new Array();
-        this.StartIndex = new Array();
-        this.EndIndex = new Array();
+        this.line_number = new Array();
+        this.start_index = new Array();
+        this.end_index = new Array();
     }
 }
 

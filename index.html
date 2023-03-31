@@ -7,13 +7,16 @@
     <title>CodeMirror</title>
     <script src="build/assets/codemirror/codemirror.js"></script>
     <link href="build/assets/codemirror/codemirror.css" rel="stylesheet"/>
-    <link href="build/assets/highlightstyle.css" rel="stylesheet"/>
+    <link href="highlightstyle.css" rel="stylesheet"/>
     
   </head>
   <body>
     <div class="EditorWindows">
-      <textarea id="editorWindow" cols="30" rows="10"></textarea>
-      <textarea id="prettyWindow" cols="30" rows="10"></textarea>
+      <textarea id="editorWindow" cols="30" rows="10">
+        $x := 1;
+        $y := 2;
+      </textarea>
+      <div id="prettyPretty" style='text: family-tt'></div>
     </div>
 
     <button class="button" id="runbutton" onclick="run_all()" >
@@ -33,15 +36,6 @@
     <div class="results">
       <div id="registers">
         Registers: { $!: 0, $?: 0, $x: 0, $y: 0, $j: 0 }
-      </div>
-      <div id="labels">
-        Labels: {}
-      </div>
-      <div id="constants">
-        Constants: {}
-      </div>
-      <div id="data">
-        Data: {}
       </div>
       <div id="memory">
 
