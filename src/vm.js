@@ -1,182 +1,177 @@
 class State {
-    constructor(memory, registers, labels, constants, data){
-        this.memory = memory
-        this.registers = registers;
-        this.labels = labels;
-        this.constants = constants;
-        this.data = data;
-    }
+  constructor(memory, registers, labels, constants, data) {
+    this.memory = memory;
+    this.registers = registers;
+    this.labels = labels;
+    this.constants = constants;
+    this.data = data;
+  }
 }
 
 class VirtualMachine {
-    constructor(program,
-                memory = new Array(10000),
-                registers = {
-                    "$!":0, //PC
-                    "$?":0, //Bool
-                    "$x":0,
-                    "$y":0
-                })
-    {
-        this.program = program;
-        this.state = init_state();
+  constructor(program, memory = new Array(100).fill(0),
+              registers = {
+                "$!" : 0, // PC
+                "$?": 0,  // Bool
+                "$x": 0,
+                "$y": 0
+              }) {
+    this.program = program;
+    this.state = init_state();
 
-        function init_state(){
-            let memory_for_constants = new Array();
-            let state_labels={}, state_constants={}, state_data={};
-            map_integers_to_memory(program.labels, state_labels);
-            map_integers_to_memory(program.constants, state_constants);
-            // map_strings_to_memory(program.data, state_data);
-            let state_memory = memory.concat(memory_for_constants);
+    function init_state() {
+      let memory_for_constants = new Array();
+      let state_labels = {}, state_constants = {}, state_data = {};
+      map_integers_to_memory(program.labels, state_labels);
+      map_integers_to_memory(program.constants, state_constants);
+      // map_strings_to_memory(program.data, state_data);
+      // let state_memory = memory.concat(memory_for_constants);
 
-            return new State(state_memory,
-                registers, 
-                state_labels, 
-                state_constants, 
-                state_data);
+      let state_memory = memory;
 
-            function map_integers_to_memory(program_constants,target){
-                Object.entries(program_constants).forEach(([id,integer]) =>{
-                    let pointer = memory_for_constants.length;
-                    target[id] = pointer;
-                    memory_for_constants.push(integer);
-                });
-            }
-            function map_strings_to_memory(program_constants){
-                Object.entries(program_constants).forEach(([id,str]) =>{
-                    let pointer = memory_for_constants.length;
-                    target[id] = pointer;
-                    
-                });
-            }
-        }
-    }
+      return new State(state_memory, registers, state_labels, state_constants,
+                       state_data);
 
-    execute_bytecode() {
-        var pc = this.state.registers['$!'];
-        this.program.instructions[pc].handle(this);
-        this.state.registers['$!']++;
+      function map_integers_to_memory(program_constants, target) {
+        Object.entries(program_constants).forEach(([ id, integer ]) => {
+          let pointer = memory_for_constants.length;
+          target[id] = pointer;
+          memory_for_constants.push(integer);
+        });
+      }
+      function map_strings_to_memory(program_constants) {
+        Object.entries(program_constants).forEach(([ id, str ]) => {
+          let pointer = memory_for_constants.length;
+          target[id] = pointer;
+        });
+      }
     }
+  }
 
-    assign_binary(cond, writer, reader1, opr, reader2){
-        if (cond && this.check_condition()) return;
-        let RHS = this.evaluate_binary(reader1,opr,reader2);
-        this.write(writer, RHS);
-    }
-    
-    assign_unary(cond, writer, opr, reader){
-        if (cond && this.check_condition()) return;
-        let RHS = this.evaluate_unary(opr,reader);
-        this.write(writer, RHS);
-    }
-    
-    assign(cond, writer, reader){
-        if (cond && this.check_condition()) return;
-        let RHS = this.read(reader);
-        this.write(writer, RHS);
-    }
-    
-    evaluate_binary(v1, opr, v2){
-        return eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
-    }
-    
-    evaluate_unary(opr, v){
-        return eval(`${opr} ${this.read(v)}`);
-    }
+  execute_bytecode() {
+    var pc = this.state.registers['$!'];
+    this.program.instructions[pc].handle(this);
+    this.state.registers['$!']++;
+  }
 
-    check_condition() {
-        return !this.state.registers['$?'];
+  assign_binary(cond, writer, reader1, opr, reader2) {
+    if (cond && this.check_condition())
+      return;
+    let RHS = this.evaluate_binary(reader1, opr, reader2);
+    this.write(writer, RHS);
+  }
+
+  assign_unary(cond, writer, opr, reader) {
+    if (cond && this.check_condition())
+      return;
+    let RHS = this.evaluate_unary(opr, reader);
+    this.write(writer, RHS);
+  }
+
+  assign(cond, writer, reader) {
+    if (cond && this.check_condition())
+      return;
+    let RHS = this.read(reader);
+    this.write(writer, RHS);
+  }
+
+  evaluate_binary(v1, opr, v2) {
+    return eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
+  }
+
+  evaluate_unary(opr, v) { return eval(`${opr} ${this.read(v)}`); }
+
+  check_condition() { return !this.state.registers['$?']; }
+
+  write(writer, RHS) {
+    switch (writer.type) {
+    case WT.MEMORY:
+      throw new Error("Memorye error");
+      // var register = writer.child(1).text;
+      // var bytes = parseInt(writer.child(3).text);
+      // var expression_result = handle_expression(expression);
+      // var is_number = parseInt(expression_result);
+      // var startIndex = state.registers[register];
+      // if (startIndex + bytes > state.writable_memory) {
+      //     console.warn("Memory out of bounds");
+      //     break;
+      // }
+      // if (!isNaN(is_number)) {
+      //     state.memory[state.registers[register]] = expression_result;
+      //     return;
+      // }
+      // for (var i = 0; i < bytes; i++) {
+      //     state.memory[i+startIndex] = expression_result.charAt(i);
+      // }
+      // state.memory[bytes]=null; // string terminal
+      break;
+    case WT.REGISTER:
+      if (writer.id in this.state.registers) {
+        this.state.registers[writer.id] = RHS;
+      } else {
+        throw new Error("Tried to write to a register that does not exist");
+      }
+      break;
     }
-    
-    write(writer, RHS){
-        switch(writer.type){
-            case WT.MEMORY:
-                throw new Error("Memorye error");
-                // var register = writer.child(1).text;
-                // var bytes = parseInt(writer.child(3).text);
-                // var expression_result = handle_expression(expression);
-                // var is_number = parseInt(expression_result);
-                // var startIndex = state.registers[register];
-                // if (startIndex + bytes > state.writable_memory) { 
-                //     console.warn("Memory out of bounds");
-                //     break;
-                // }
-                // if (!isNaN(is_number)) {
-                //     state.memory[state.registers[register]] = expression_result;
-                //     return;
-                // }
-                // for (var i = 0; i < bytes; i++) {
-                //     state.memory[i+startIndex] = expression_result.charAt(i);
-                // }
-                // state.memory[bytes]=null; // string terminal    
-                break;
-            case WT.REGISTER:
-                if (writer.id in this.state.registers){
-                    this.state.registers[writer.id] = RHS;
-                }else {
-                    throw new Error("Tried to write to a register that does not exist");
-                } 
-                break;
-        }
+  }
+
+  read(reader) {
+    switch (reader.type) {
+    case RT.REGISTER:
+      if (reader.id in this.state.registers) {
+        return this.state.registers[reader.id];
+      }
+      throw new Error("Register ", reader.id, " not found");
+    case RT.MEMORY:
+      // var startIndex =
+      // state.registers[reader.child(0).child(0).child(1).text]; var stopIndex
+      // = startIndex + parseInt(reader.child(0).child(0).child(3).text); var
+      // result = ""; if (stopIndex < state.memory.length) {
+      //     for (var i = startIndex; i < stopIndex; i++) {
+      //         result += state.memory[i];
+      //     }
+      //     return result;
+      // }
+      throw new Error("Memory out of bounds");
+    case RT.CONSTANT:
+      if (reader.id in this.state.cs) {
+        return parseInt(this.state.cs[reader.id]);
+      }
+      throw new Error("Constant ", reader.id, " not found");
+    case RT.DATA:
+      if (reader.id in this.state.data) {
+        return this.state.data[reader.id];
+      }
+      throw new Error("Data ", reader.id, " not found")
+      case RT.LABEL: if (reader.id in this.state.labels) {
+        return this.state.labels[reader.id];
+      }
+      throw new Error("Label ", reader.id, " not found")
+      case RT
+          .NUMBER:
+          // the number that the reader holds, is the id in this case
+          return reader.id;
     }
-    
-    read(reader){
-        switch(reader.type){
-            case RT.REGISTER:
-                if (reader.id in this.state.registers){
-                    return this.state.registers[reader.id];
-                }
-                throw new Error("Register ",reader.id," not found");
-            case RT.MEMORY:
-                    // var startIndex = state.registers[reader.child(0).child(0).child(1).text];
-                    // var stopIndex = startIndex + parseInt(reader.child(0).child(0).child(3).text);
-                    // var result = "";
-                    // if (stopIndex < state.memory.length) {
-                    //     for (var i = startIndex; i < stopIndex; i++) {
-                    //         result += state.memory[i];
-                    //     }
-                    //     return result;        
-                    // }
-                throw new Error("Memory out of bounds");
-            case RT.CONSTANT:
-                if (reader.id in this.state.cs){
-                    return parseInt(this.state.cs[reader.id]);
-                }
-                throw new Error("Constant ",reader.id," not found");
-            case RT.DATA:
-                if (reader.id in this.state.data){
-                    return this.state.data[reader.id];
-                }
-                throw new Error("Data ",reader.id," not found")
-            case RT.LABEL:
-                if (reader.id in this.state.labels){
-                    return this.state.labels[reader.id];
-                }
-                throw new Error("Label ",reader.id," not found")
-            case RT.NUMBER:
-                //the number that the reader holds, is the id in this case
-                return reader.id;
-        }
+  }
+
+  handle_syscall() {
+    switch (this.state.registers["$x"]) {
+    case 0: // print int
+      console.log(this.state.memory[this.state.registers["$y"]]);
+      break;
+    case 1: // print str
+      var idx = this.state.registers["$y"];
+      var str = "";
+      while (this.state.memory[idx] != null) {
+        str += this.state.memory[idx];
+        idx++;
+      }
+      console.log(str);
+      break;
+    default:
+      console.log("Syscall Error");
     }
-    
-    handle_syscall(){
-        switch(this.state.registers["$x"]) {
-            case 0: // print int
-                console.log(this.state.memory[this.state.registers["$y"]]);
-                break;
-            case 1: // print str
-                var idx = this.state.registers["$y"];
-                var str = "";
-                while(this.state.memory[idx] != null) {
-                    str += this.state.memory[idx];
-                    idx++;
-                }
-                console.log(str);
-                break;
-            default:
-                console.log("Syscall Error");
-        }
-    }
+  }
 }
 /*
 // bytecode: (enum: OP, int: line_number, array?: operands)
@@ -217,9 +212,8 @@ function execute_bytecode(bytecode){
             assign(operands);
             return;
     }
-    
-}*/
 
+}*/
 
 // function handle_binary(v_left,opr,v_right){
 //     switch(opr){
@@ -261,15 +255,17 @@ function execute_bytecode(bytecode){
 //         case 1: // reader
 //             return handle_reader(expression.child(0));
 //         case 2: // oper, reader
-//             return handle_unary(expression.child(0),handle_reader(expression.child(1)));
+//             return
+//             handle_unary(expression.child(0),handle_reader(expression.child(1)));
 //         case 3: // reader, oper, reader
-//             return handle_binary(handle_reader(expression.child(0)), expression.child(1), handle_reader(expression.child(2)))
+//             return handle_binary(handle_reader(expression.child(0)),
+//             expression.child(1), handle_reader(expression.child(2)))
 //     }
 // }
 
 // function handle_writer(statement){
 //     var writer = statement.child(0).child(0).child(0);
-//     var expression = statement.child(2); 
+//     var expression = statement.child(2);
 //     switch(writer.type){
 //         case 'memory':
 //             var register = writer.child(1).text;
@@ -277,7 +273,7 @@ function execute_bytecode(bytecode){
 //             var expression_result = handle_expression(expression);
 //             var is_number = parseInt(expression_result);
 //             var startIndex = state.registers[register];
-//             if (startIndex + bytes > state.writable_memory) { 
+//             if (startIndex + bytes > state.writable_memory) {
 //                 console.warn("Memory out of bounds");
 //                 break;
 //             }
@@ -288,15 +284,13 @@ function execute_bytecode(bytecode){
 //             for (var i = 0; i < bytes; i++) {
 //                 state.memory[i+startIndex] = expression_result.charAt(i);
 //             }
-//             state.memory[bytes]=null; // string terminal    
+//             state.memory[bytes]=null; // string terminal
 //             break;
 //         case 'register':
-//             state.registers[writer.text.toString()] = handle_expression(expression);
-//             break;
+//             state.registers[writer.text.toString()] =
+//             handle_expression(expression); break;
 //     }
 // }
-
-
 
 // function handle_statement(statement){
 //     if(statement.childCount == 1 && statement.text == 'syscall'){
@@ -337,9 +331,3 @@ function execute_bytecode(bytecode){
 //         state.free_memory_pointer+=bytes;
 //     }
 // }
-
-
-
-
-
-
