@@ -1,9 +1,7 @@
 class State {
-    constructor(memory, registers, labels, constants, data){
+    constructor(memory, registers, data){
         this.memory = memory
         this.registers = registers;
-        this.labels = labels;
-        this.constants = constants;
         this.data = data;
     }
 }
@@ -24,29 +22,22 @@ class VirtualMachine {
         function init_state(){
             let memory_for_constants = new Array();
             let state_labels={}, state_constants={}, state_data={};
-            map_integers_to_memory(program.labels, state_labels);
-            map_integers_to_memory(program.constants, state_constants);
+            // map_integers_to_memory(program.labels, state_labels);
+            // map_integers_to_memory(program.constants, state_constants);
             // map_strings_to_memory(program.data, state_data);
             let state_memory = memory.concat(memory_for_constants);
 
             return new State(state_memory,
-                registers, 
-                state_labels, 
-                state_constants, 
+                registers,
                 state_data);
 
-            function map_integers_to_memory(program_constants,target){
-                Object.entries(program_constants).forEach(([id,integer]) =>{
-                    let pointer = memory_for_constants.length;
-                    target[id] = pointer;
-                    memory_for_constants.push(integer);
-                });
-            }
             function map_strings_to_memory(program_constants){
                 Object.entries(program_constants).forEach(([id,str]) =>{
                     let pointer = memory_for_constants.length;
                     target[id] = pointer;
-                    
+                    for(let i in str){
+                        memory_for_constants[pointer++] = str[i]
+                    }
                 });
             }
         }
@@ -76,7 +67,7 @@ class VirtualMachine {
         this.write(writer, RHS);
     }
     
-    evaluate_binary(v1, opr, v2){
+    evaluate_binary(v1, opr, v2){//TODO: Maybe revisit
         return eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
     }
     
@@ -91,24 +82,10 @@ class VirtualMachine {
     write(writer, RHS){
         switch(writer.type){
             case WT.MEMORY:
-                throw new Error("Memorye error");
-                // var register = writer.child(1).text;
-                // var bytes = parseInt(writer.child(3).text);
-                // var expression_result = handle_expression(expression);
-                // var is_number = parseInt(expression_result);
-                // var startIndex = state.registers[register];
-                // if (startIndex + bytes > state.writable_memory) { 
-                //     console.warn("Memory out of bounds");
-                //     break;
-                // }
-                // if (!isNaN(is_number)) {
-                //     state.memory[state.registers[register]] = expression_result;
-                //     return;
-                // }
-                // for (var i = 0; i < bytes; i++) {
-                //     state.memory[i+startIndex] = expression_result.charAt(i);
-                // }
-                // state.memory[bytes]=null; // string terminal    
+                let mem_index =  this.read(writer.id)
+                for (let i = 0; i < writer.offset; i++){
+                    this.state.memory[mem_index] = RHS
+                }
                 break;
             case WT.REGISTER:
                 if (writer.id in this.state.registers){
@@ -139,8 +116,8 @@ class VirtualMachine {
                     // }
                 throw new Error("Memory out of bounds");
             case RT.CONSTANT:
-                if (reader.id in this.state.cs){
-                    return parseInt(this.state.cs[reader.id]);
+                if (reader.id in this.state.constants){
+                    return parseInt(this.program.constants[reader.id]);
                 }
                 throw new Error("Constant ",reader.id," not found");
             case RT.DATA:
@@ -150,7 +127,7 @@ class VirtualMachine {
                 throw new Error("Data ",reader.id," not found")
             case RT.LABEL:
                 if (reader.id in this.state.labels){
-                    return this.state.labels[reader.id];
+                    return this.program.labels[reader.id];
                 }
                 throw new Error("Label ",reader.id," not found")
             case RT.NUMBER:
@@ -178,168 +155,3 @@ class VirtualMachine {
         }
     }
 }
-/*
-// bytecode: (enum: OP, int: line_number, array?: operands)
-function execute_bytecode(bytecode){
-    bytecode.handle(this);
-    /*let skip_conditional = !state.registers["$?"];
-    switch(op_code){
-        case OP.DEC_CONST:
-            return;
-        case OP.DEC_DATA:
-            return;
-        case OP.LABEL:
-            set_label(operands)
-            return;
-        case OP.SYSCALL:
-            handle_syscall();
-            return;
-        case OP.ASSIGN_BIN:
-            assign_binary(operands);
-            return;
-        case OP.ASSIGN_UN:
-            let [writer, opr, reader] = operands;
-            assign_unary(writer, opr, reader);
-            return;
-        case OP.ASSIGN:
-            assign(operands);
-            return;
-        case OP.COND_BIN:
-            if(skip_conditional) return;
-            assign_binary(operands);
-            return;
-        case OP.COND_UN:
-            if(skip_conditional) return;
-            assign_unary(operands);
-            return;
-        case OP.COND:
-            if(skip_conditional) return;
-            assign(operands);
-            return;
-    }
-    
-}*/
-
-
-// function handle_binary(v_left,opr,v_right){
-//     switch(opr){
-//         case '+':
-//             return v_left + v_right;
-//         case '-':
-//             return v_left - v_right;
-//         case '*':
-//             return v_left * v_right;
-//         case '/':
-//             return v_left / v_right;
-//         case '|':
-//             return v_left || v_right ;
-//         case '&':
-//             return v_left && v_right;
-//         case '>':
-//             return v_left > v_right;
-//         case '<':
-//             return v_left < v_right;
-//         case '=':
-//             return v_left == v_right;
-//     }
-//     console.log(console.error("reeee"));
-//     throw new Error("Operator:",oper," unknown")
-// }
-
-// function handle_unary(oper,v){
-//     switch(oper.text){
-//         case '-':
-//             return -v;
-//         case '&':
-//             return 0; //Not implemented
-//     }
-// }
-
-// function handle_expression(expression){
-//     var numOfChildren = expression.childCount;
-//     switch(numOfChildren){
-//         case 1: // reader
-//             return handle_reader(expression.child(0));
-//         case 2: // oper, reader
-//             return handle_unary(expression.child(0),handle_reader(expression.child(1)));
-//         case 3: // reader, oper, reader
-//             return handle_binary(handle_reader(expression.child(0)), expression.child(1), handle_reader(expression.child(2)))
-//     }
-// }
-
-// function handle_writer(statement){
-//     var writer = statement.child(0).child(0).child(0);
-//     var expression = statement.child(2); 
-//     switch(writer.type){
-//         case 'memory':
-//             var register = writer.child(1).text;
-//             var bytes = parseInt(writer.child(3).text);
-//             var expression_result = handle_expression(expression);
-//             var is_number = parseInt(expression_result);
-//             var startIndex = state.registers[register];
-//             if (startIndex + bytes > state.writable_memory) { 
-//                 console.warn("Memory out of bounds");
-//                 break;
-//             }
-//             if (!isNaN(is_number)) {
-//                 state.memory[state.registers[register]] = expression_result;
-//                 return;
-//             }
-//             for (var i = 0; i < bytes; i++) {
-//                 state.memory[i+startIndex] = expression_result.charAt(i);
-//             }
-//             state.memory[bytes]=null; // string terminal    
-//             break;
-//         case 'register':
-//             state.registers[writer.text.toString()] = handle_expression(expression);
-//             break;
-//     }
-// }
-
-
-
-// function handle_statement(statement){
-//     if(statement.childCount == 1 && statement.text == 'syscall'){
-//         handle_syscall(statement.child(0));
-//     }else{
-//         if(statement.child(1).type.toString() == ':='){
-//             handle_writer(statement);
-//         }else if(statement.child(1).type.toString() == '?='){
-//             if(!state.registers['$?']) return;
-//             handle_writer(statement);
-//         }
-//     }
-// }
-
-// function handle_declaration(declaration){
-//     let type = declaration.child(0).text;
-//     let [declarator, value] = declaration.child(1).text.split(' ');
-//     let bytes = value.split("").length;
-
-//     if (bytes + state.free_memory_pointer > state.memory.length) {
-//         console.warn("Declation: Memory out of bounds")
-//         return;
-//     }
-
-//     if(type == 'const'){
-//         if (isNaN(parseInt(value))) {
-//             console.error("Const can only be assigned numbers.");
-//             return;
-//         }
-//         state.memory[state.free_memory_pointer] = value;
-//         state.cs[declarator] = state.free_memory_pointer;
-//         state.free_memory_pointer++;
-//     }else if(type == 'data'){
-//         state.data[declarator] = state.free_memory_pointer;
-//         for (var i = 0; i < bytes; i++) {
-//             state.memory[state.free_memory_pointer+i] = value.charAt(i);
-//         }
-//         state.free_memory_pointer+=bytes;
-//     }
-// }
-
-
-
-
-
-
