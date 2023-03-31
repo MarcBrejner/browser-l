@@ -11,18 +11,18 @@ function compile_reader(reader_node) {
   let reader_type = get_reader_type(reader_node);
   switch (reader_type) {
     case "register":
-      return new reader(RT.REGISTER, reader_id);
+      return new Reader(RT.REGISTER, reader_id);
     case "memory":
-      return new reader(RT.MEMORY, reader_id);
+      return new Reader(RT.MEMORY, reader_id);
     case "constant":
-      return new reader(RT.CONSTANT, reader_id);
+      return new Reader(RT.CONSTANT, reader_id);
     case "data":
-      return new reader(RT.DATA, reader_id);
+      return new Reader(RT.DATA, reader_id);
     case "label":
-      return new reader(RT.LABEL, reader_id);
+      return new Reader(RT.LABEL, reader_id);
     case "number":
       //the number that the reader holds, is the id in this case
-      return new reader(RT.NUMBER, parseInt(reader_id));
+      return new Reader(RT.NUMBER, parseInt(reader_id));
   }
 }
 
@@ -31,9 +31,9 @@ function compile_writer(statement) {
   let writer_id = writer_node.text;
   switch (writer_node.type) {
     case "memory":
-      return new writer(WT.MEMORY, writer_id);
+      return new Writer(WT.MEMORY, writer_id);
     case "register":
-      return new writer(WT.REGISTER, writer_id);
+      return new Writer(WT.REGISTER, writer_id);
   }
 }
 
@@ -48,22 +48,22 @@ function compile_assign(statement) {
     case 1: // reader
       var reader = compile_reader(expression.child(0));
       return [
-        new bytecode(OP.ASSIGN, [is_conditional, writer, reader])].concat(get_ecs_for_statement(statement));
+        new ByteCode(OP.ASSIGN, [is_conditional, writer, reader])].concat(get_ecs_for_statement(statement));
     case 2: // oper, reader
       var reader = compile_reader(expression.child(1));
       var opr = expression.child(0).text;
-      return [new bytecode(OP.ASSIGN_UN, [is_conditional, writer, opr, reader])].concat(get_ecs_for_statement(statement));
+      return [new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr, reader])].concat(get_ecs_for_statement(statement));
     case 3: // reader, oper, reader
       var reader1 = compile_reader(expression.child(0));
       var opr = expression.child(1).text;
       var reader2 = compile_reader(expression.child(2));
-      return [new bytecode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr, reader2,])].concat(get_ecs_for_statement(statement));
+      return [new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr, reader2,])].concat(get_ecs_for_statement(statement));
   }
 }
 
 function compile_statement(statement) {
   if (statement.childCount == 1 && statement.text == "syscall") {
-    return [new bytecode(OP.SYSCALL)].concat(get_ecs_for_statement(statement));;
+    return [new ByteCode(OP.SYSCALL)].concat(get_ecs_for_statement(statement));;
   } else {
     return compile_assign(statement);
   }
@@ -73,7 +73,7 @@ function compile_program(statements, declarations) {
   let [constants, data] = compile_declarations(declarations);
   let [instructions, ecs, labels] = compile_statements(statements);
 
-  return new program(instructions, ecs, data, constants, labels);
+  return new Program(instructions, ecs, data, constants, labels);
 }
 
 function compile_declarations(declarations) {
@@ -112,9 +112,9 @@ function compile_statements(statements) {
       case "statement":
         var [bytecode, lineNumber, startIndex, endIndex] = compile_statement(statement);
         instructions.push(bytecode);
-        ecs.LineNumber.push(lineNumber);
-        ecs.StartIndex.push(startIndex);
-        ecs.EndIndex.push(endIndex);
+        ecs.line_number.push(lineNumber);
+        ecs.start_index.push(startIndex);
+        ecs.end_index.push(endIndex);
         l_pc++;
         break;
       case ";":

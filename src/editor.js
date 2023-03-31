@@ -102,21 +102,12 @@ function execute_step(VM) {
   registerDiv.innerHTML =
       "Registers: " +
       JSON.stringify(VM.state.registers, undefined, 2).replaceAll("\"", "");
-  labelsDiv.innerHTML =
-      "Labels: " +
-      JSON.stringify(VM.state.labels, undefined, 2).replaceAll("\"", "");
-  constantsDiv.innerHTML =
-      "Constants: " +
-      JSON.stringify(VM.state.constants, undefined, 2).replaceAll("\"", "");
-  dataDiv.innerHTML =
-      "Data: " +
-      JSON.stringify(VM.state.data, undefined, 2).replaceAll("\"", "");
 
   var pretty_printer = new PrettyPrinter(VM.program);
   document.getElementById("prettyPretty").innerHTML =
       pretty_printer.print_program(VM.state);
 
-  rows = ""
+  let rows = ""
   for (let i = 0; i < VM.state.memory.length; i += 10) {
     let row = ""
     for (let j = i; j < VM.state.memory.length && j < i + 10; j += 1) {
