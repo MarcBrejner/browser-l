@@ -12,8 +12,11 @@
   </head>
   <body>
     <div class="EditorWindows">
-      <textarea id="editorWindow" cols="30" rows="10"></textarea>
-      <textarea id="prettyWindow" cols="30" rows="10"></textarea>
+      <textarea id="editorWindow" cols="30" rows="10">
+        $x := 1;
+        $y := 2;
+      </textarea>
+      <div id="prettyPretty" style='text: family-tt'></div>
     </div>
 
     <button class="button" id="runbutton" onclick="run_all()" >
