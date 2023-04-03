@@ -81,9 +81,10 @@ class VirtualMachine {
     write(writer, RHS){
         switch(writer.type){
             case WT.MEMORY:
-                let mem_index =  this.read(writer.id)
+                let mem_index =  this.read(new Reader(RT.REGISTER, writer.id));
                 for (let i = 0; i < writer.offset; i++){
-                    this.state.memory[mem_index] = RHS
+                    this.state.memory[mem_index] = RHS;
+                    mem_index += 1;
                 }
                 break;
             case WT.REGISTER:
@@ -115,7 +116,7 @@ class VirtualMachine {
                     // }
                 throw new Error("Memory out of bounds");
             case RT.CONSTANT:
-                if (reader.id in this.state.constants){
+                if (reader.id in this.program.constants){
                     return parseInt(this.program.constants[reader.id]);
                 }
                 throw new Error("Constant ",reader.id," not found");
@@ -125,7 +126,7 @@ class VirtualMachine {
                 }
                 throw new Error("Data ",reader.id," not found")
             case RT.LABEL:
-                if (reader.id in this.state.labels){
+                if (reader.id in this.program.labels){
                     return this.program.labels[reader.id];
                 }
                 throw new Error("Label ",reader.id," not found")

@@ -49,7 +49,7 @@ class ByteCode {
 }
 
 
-class writer {
+class Writer {
   constructor(writer_type, writer_id, offset = 0) {
     this.type = writer_type;
     this.id = writer_id;

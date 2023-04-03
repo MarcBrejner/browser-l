@@ -31,7 +31,7 @@ function compile_writer(statement) {
   let writer_id = writer_node.text;
   switch (writer_node.type) {
     case "memory":
-      return new writer(WT.MEMORY, writer_node.child(1).text, writer_node.child(2).text);
+      return new Writer(WT.MEMORY, writer_node.child(1).text, writer_node.child(3).text);
     case "register":
       return new Writer(WT.REGISTER, writer_id);
   }
