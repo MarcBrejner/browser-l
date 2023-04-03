@@ -5,10 +5,11 @@ class PrettyPrinter {
     let pretty_source_code = "";
     let instructions = this.program.instructions;
     for (let i = 0; i < instructions.length; i++) {
-      let res = `<span>${i}</span>` + instructions[i].handle(this) + "<hr/>";
-      if (i === state.registers['$!']) {
+      var one_indexed = i + 1;
+      let res = `<span id=line-number>${one_indexed} </span>` + instructions[i].handle(this) + `<br>`;
+      if (one_indexed === state.registers['$!']) {
         pretty_source_code +=
-            `<span style='background-color: yellow'>${res}</span>`
+            `<div id=highlight-line>${res}</div>`
       } else {
         pretty_source_code += res
       }
@@ -20,17 +21,29 @@ class PrettyPrinter {
 
   assign_binary(conditional, writer, reader1, opr, reader2) {
     var cond = conditional ? '?=' : ':=';
-    return `${writer.id} ${cond} ${reader1.id} ${opr} ${reader2.id};\n`
+    return `${this.wrap_assign(writer)} ${this.wrap_opr(cond)} ${this.wrap_assign(reader1)} ${this.wrap_opr(opr)} ${this.wrap_assign(reader2)}${this.wrap_semicolon()}\n`
   }
 
   assign_unary(conditional, writer, opr, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${writer.id} ${cond} ${opr} ${reader.id};\n`
+    return `${this.wrap_assign(writer)} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(reader)}${this.wrap_semicolon()}\n`
   }
 
   assign(conditional, writer, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${writer.id} ${cond} ${reader.id};\n`
+    return `${this.wrap_assign(writer)} ${this.wrap_opr(cond)} ${this.wrap_assign(reader)}${this.wrap_semicolon()}\n`
+  }
+
+  wrap_assign(assign) {
+    return `<span id=assign>${assign.id}</span>`;
+  }
+
+  wrap_opr(opr) {
+    return `<span id=opr>${opr}</span>`;
+  }
+
+  wrap_semicolon() {
+    return `<span id=semicolon>;</span>`;
   }
 }
 

@@ -13,10 +13,10 @@
   <body>
     <div class="EditorWindows">
       <textarea id="editorWindow" cols="30" rows="10">
-        $x := 1;
-        $y := 2;
+$x := 1;
+$y := 2;
       </textarea>
-      <div id="prettyPretty" style='text: family-tt'></div>
+      <div id="prettyPretty"></div>
     </div>
 
     <button class="button" id="runbutton" onclick="run_all()" >
@@ -34,12 +34,12 @@
       document.querySelector('#stepbutton').disabled = true;
     </script>
     <div class="results">
-      <div id="registers">
+      <span id="registers">
         Registers: { $!: 0, $?: 0, $x: 0, $y: 0, $j: 0 }
-      </div>
-      <div id="memory">
+      </span>
+      <span id="memory">
 
-      </div>
+      </span>
     </div>
 
     <script src="src/bytecode.js"></script>
