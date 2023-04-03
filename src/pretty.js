@@ -6,7 +6,7 @@ class PrettyPrinter {
     let instructions = this.program.instructions;
     for (let i = 0; i < instructions.length; i++) {
       var one_indexed = i + 1;
-      let res = `<span id=line-number>${one_indexed} </span>` + instructions[i].handle(this) + `<br>`;
+      let res = `<span id=line-number>${one_indexed} </span>` + instructions[i].handle(this) + this.print_label(i) +`<br>`;
       if (one_indexed === state.registers['$!']) {
         pretty_source_code +=
             `<div id=highlight-line>${res}</div>`
@@ -21,21 +21,21 @@ class PrettyPrinter {
 
   assign_binary(conditional, writer, reader1, opr, reader2) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(writer)} ${this.wrap_opr(cond)} ${this.wrap_assign(reader1)} ${this.wrap_opr(opr)} ${this.wrap_assign(reader2)}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader2))}${this.wrap_semicolon()}\n`
   }
 
   assign_unary(conditional, writer, opr, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(writer)} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(reader)}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
   }
 
   assign(conditional, writer, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(writer)} ${this.wrap_opr(cond)} ${this.wrap_assign(reader)}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
   }
 
   wrap_assign(assign) {
-    return `<span id=assign>${assign.id}</span>`;
+    return `<span id=assign>${assign}</span>`;
   }
 
   wrap_opr(opr) {
@@ -44,6 +44,37 @@ class PrettyPrinter {
 
   wrap_semicolon() {
     return `<span id=semicolon>;</span>`;
+  }
+
+  wrap_const(constant) {
+    return `<span id=constant>${constant}</span>`;
+  }
+
+  wrap_label(label) {
+    return `<span id=label>${label}</span>`;
+  }
+
+  print_reader(reader){
+    if (reader.type === RT.CONSTANT){
+      return `${this.wrap_const(`${reader.id} (${this.program.constants[reader.id]})`)}`
+    }else{
+      return `${reader.id}`
+    }
+  }
+
+  print_label(i){
+    let [exists, label_key] = getKeyByValueIfValueExists(this.program.labels, i);
+    let result = exists ? `${this.wrap_label(label_key)}` : "";
+    return result;
+  }
+
+}
+
+function getKeyByValueIfValueExists(object, value) {
+  if(Object.values(object).includes(value)){
+    return [true, Object.keys(object).find(key => object[key] === value)];
+  }else{
+    return [false, null];
   }
 }
 

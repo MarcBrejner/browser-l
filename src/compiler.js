@@ -31,7 +31,7 @@ function compile_writer(statement) {
   let writer_id = writer_node.text;
   switch (writer_node.type) {
     case "memory":
-      return new Writer(WT.MEMORY, writer_id);
+      return new Writer(WT.MEMORY, writer_node.child(1).text, writer_node.child(3).text);
     case "register":
       return new Writer(WT.REGISTER, writer_id);
   }
@@ -69,6 +69,15 @@ function compile_statement(statement) {
   }
 }
 
+function compile_declaration(declaration, constants, data){
+  let type = declaration.child(0).text;
+  let [id, value] = declaration.child(1).text.split(" ");
+  type === "const" 
+    ? constants[id] = value
+    : data[id] = value;
+  return [constants, data]
+}
+
 function compile_program(statements, declarations) {
   let [constants, data] = compile_declarations(declarations);
   let [instructions, ecs, labels] = compile_statements(statements);
@@ -79,17 +88,15 @@ function compile_program(statements, declarations) {
 function compile_declarations(declarations) {
   let constants = {};
   let data = {};
-
   for (let d_i = 0; d_i < declarations.childCount; d_i++) {
-    let declaration = declarations.child(s_i);
-    let type = declaration.child(0).text;
-    let [id, value] = declaration.child(1).text.split(" ");
-    switch (type) {
-      case "const":
-        constants[id] = value;
+    let declaration = declarations.child(d_i);
+    switch (declaration.type) {
+      case "declaration":
+        [constants, data] = compile_declaration(declaration, constants, data);
         break;
-      case "data":
-        data[id] = value;
+      case ";":
+        break;
+      case " ":
         break;
     }
   }
@@ -140,7 +147,9 @@ function compile(tree) {
     tree.rootNode.childCount > 1
       ? tree.rootNode.child(1)
       : tree.rootNode.child(0);
+      
   let program = compile_program(statements, declarations);
+
   return program;
 }
 

@@ -41,6 +41,14 @@ span {
     color:steelblue;
 }
 
+#label {
+    color:forestgreen;
+}
+
+#constant {
+    color:brown;
+}
+
 #highlight-line {
     background-color:yellow;
 }
