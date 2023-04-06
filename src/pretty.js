@@ -8,10 +8,11 @@ class PrettyPrinter {
     let pretty_source_code = "";
     let instructions = this.program.instructions;
     for (let i = 0; i < instructions.length; i++) {
-      let res = `<span>${i}</span>` + instructions[i].handle(this) + this.print_label(i) + "<hr/>";
-      if (i === state.registers['$!']) {
+      var one_indexed = i + 1;
+      let res = `<span id=line-number>${one_indexed} </span>` + instructions[i].handle(this) + this.print_label(i) +`<br>`;
+      if (one_indexed === state.registers['$!']) {
         pretty_source_code +=
-            `<span style='background-color: yellow'>${res}</span>`
+            `<div id=highlight-line>${res}</div>`
       } else {
         pretty_source_code += res
       }
@@ -23,22 +24,42 @@ class PrettyPrinter {
 
   assign_binary(conditional, writer, reader1, opr, reader2) {
     var cond = conditional ? '?=' : ':=';
-    return `${writer.id} ${cond} ${this.print_reader(reader1)} ${opr} ${this.print_reader(reader2)};\n`
+    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader2))}${this.wrap_semicolon()}\n`
   }
 
   assign_unary(conditional, writer, opr, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${writer.id} ${cond} ${opr} ${this.print_reader(reader)};\n`
+    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
   }
 
   assign(conditional, writer, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${writer.id} ${cond} ${this.print_reader(reader)};\n`
+    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
+  }
+
+  wrap_assign(assign) {
+    return `<span id=assign>${assign}</span>`;
+  }
+
+  wrap_opr(opr) {
+    return `<span id=opr>${opr}</span>`;
+  }
+
+  wrap_semicolon() {
+    return `<span id=semicolon>;</span>`;
+  }
+
+  wrap_const(constant) {
+    return `<span id=constant>${constant}</span>`;
+  }
+
+  wrap_label(label) {
+    return `<span id=label>${label}</span>`;
   }
 
   print_reader(reader){
     if (reader.type === RT.CONSTANT){
-      return `${reader.id} (${this.program.constants[reader.id]})`
+      return `${this.wrap_const(`${reader.id} (${this.program.constants[reader.id]})`)}`
     }else{
       return `${reader.id}`
     }
@@ -46,7 +67,7 @@ class PrettyPrinter {
 
   print_label(i){
     let [exists, label_key] = getKeyByValueIfValueExists(this.program.labels, i);
-    let result = exists ? `${label_key}` : "";
+    let result = exists ? `${this.wrap_label(label_key)}` : "";
     return result;
   }
 
