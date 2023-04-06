@@ -136,7 +136,6 @@ function compile_statements(statements) {
 
 
 function compile(tree) {
-  console.log(tree.rootNode.toString())
   var errors = find_error(tree.rootNode, new Array());
 
   if(errors.length > 0){
@@ -159,14 +158,14 @@ function get_ecs_for_statement(statement) {
   return [statement.startPosition.row, statement.startIndex, statement.endIndex];
 }
 
-
+const error_pattern = /(UNEXPECTED\s+'[^']+'|MISSING\s+"[^']+")/g;
 function find_error(node, errors){
-  console.log(node.toString())
-  if (node.childCount == 0){
+  if (node.childCount == 0 && !node.isMissing()){
       return [""];
   }
-  if(node.type == "ERROR" || node.type == "MISSING"){
-    let error_msg = node.childCount > 1 ? "Syntax error: "+node.child(1).toString()+" on line: "+(node.startPosition.row+1) : "Syntax error: "+node.toString()+" on line: "+(node.startPosition.row+1)
+  if(node.type == "ERROR" || node.isMissing()){
+    let matches = node.toString().match(error_pattern);  
+    let error_msg = matches === null ? "Syntax error on line: "+(node.startPosition.row+1) : "Syntax error: "+matches[0]+" on line: "+(node.startPosition.row+1);
     errors.push(error_msg);
     return errors;
   }
