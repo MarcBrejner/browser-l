@@ -29,18 +29,22 @@ $y := 2;
       DEBUG
     </button>
 
-    <button class="button" id="stepbutton" >
+    <button class="button" id="exitdebug" onclick="exit_debug()">
+      STOP DEBUG
+    </button>
+
+    <button class="button" id="stepbutton" onclick="execute_step()">
       STEP
     </button>
+
     <script>
       document.querySelector('#stepbutton').disabled = true;
+      document.querySelector('#exitdebug').disabled = true;
     </script>
     <div class="results">
       <span id="registers">
-        Registers: { $!: 0, $?: 0, $x: 0, $y: 0, $j: 0 }
       </span>
       <span id="memory">
-
       </span>
     </div>
 
