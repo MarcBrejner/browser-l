@@ -4,6 +4,9 @@ var constantsDiv = document.getElementById("constants");
 var dataDiv = document.getElementById("data");
 var memoryDiv = document.getElementById("memory");
 
+var _VirtualMachine = null;
+var _PrettyPrinter = null;
+
 // Editable window
 var codeMirrorEditor =
     CodeMirror.fromTextArea(document.getElementById('editorWindow'), {
@@ -32,86 +35,79 @@ async function initialize_parser() {
 
 // Pretty print input sourcecode
 async function parse_and_pretty_print(source_code) {
-  let parser = await initialize_parser();
-  let tree = await parser.parse(source_code);
+  var parser = await initialize_parser();
+  var tree = await parser.parse(source_code);
   if (tree.rootNode.toString().includes("ERROR")) {
     return "- ERROR -";
   }
-  let program = compile(tree);
+  var program = compile(tree);
   // parse_byte_code from pretty.js pretty prints the byte_code
-  var pretty_printer = new PrettyPrinter(program);
-  return pretty_printer.print_program({registers : {'$!' : -1}});
+  var pretty_printer = get_pretty_printer(program);
+  return pretty_printer.print_program();
 }
 
 async function parse_and_read(source_code) {
-  let parser = await initialize_parser();
-  let tree = await parser.parse(source_code);
+  var parser = await initialize_parser();
+  var tree = await parser.parse(source_code);
   // p_source from pretty.js pretty prints the code using the input parse tree
   return compile(tree);
 }
+
 async function run_all() {
   var source_code = await codeMirrorEditor.getValue();
 
-  let program = await parse_and_read(source_code);
+  var program = await parse_and_read(source_code);
   console.log(program)
-  var VM = new VirtualMachine(program);
-  execute_all(VM);
-}
-
-async function pauseUntilEvent(clickListenerPromise) {
-  await clickListenerPromise
-}
-
-async function createClickListenerPromise(target) {
-  return new Promise((resolve) => target.addEventListener('click', resolve))
+  // updates the program of the virtual machine
+  get_virtual_machine(program);
+  execute_all();
 }
 
 async function debug() {
   document.querySelector('#debugbutton').disabled = true;
+  document.querySelector('#exitdebug').disabled = false;
   document.querySelector('#stepbutton').disabled = false;
-  var source_code = await codeMirrorEditor.getValue();
-  let program = await parse_and_read(source_code);
-  var VM = new VirtualMachine(program);
-
-  while (true) {
-    await pauseUntilEvent(
-        createClickListenerPromise(document.querySelector('#stepbutton')))
-    if (execute_step(VM) == -1) {
-      document.querySelector('#debugbutton').disabled = false;
-      document.querySelector('#stepbutton').disabled = true;
-      return;
-    }
-  }
+  await show_results_in_html_fresh_state();
 }
 
-function execute_all(VM) {
+async function exit_debug() {
+  reset_buttons_after_debug();
+  var pretty_printer = get_pretty_printer();
+  document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program();
+  await show_results_in_html_fresh_state();
+}
+
+function execute_all() {
   while (true) { // step
-    if (execute_step(VM) == -1) {
+    if (execute_step() == -1) {
       break;
     }
   }
 }
 
-function execute_step(VM) {
+function execute_step() {
+  var VM = get_virtual_machine();
   if (VM.state.registers['$!'] >= VM.program.instructions.length) {
     console.log("EOF");
+    reset_buttons_after_debug();
     return -1;
   }
 
-  VM.execute_bytecode()
-  registerDiv.innerHTML =
-      "Registers: " +
-      JSON.stringify(VM.state.registers, undefined, 2).replaceAll("\"", "");
+  VM.execute_bytecode();
 
-  var pretty_printer = new PrettyPrinter(VM.program);
-  document.getElementById("prettyPretty").innerHTML =
-      pretty_printer.print_program(VM.state);
+  var pretty_printer = get_pretty_printer(VM.program);
+  document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program(VM.state);
+  show_results_in_html(VM.state);
+}
 
-  let rows = ""
-  for (let i = 0; i < VM.state.memory.length; i += 10) {
-    let row = ""
-    for (let j = i; j < VM.state.memory.length && j < i + 10; j += 1) {
-      row += `<td>${toHex(VM.state.memory[j])}</td>`
+function show_results_in_html(state) {
+  registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
+
+  var rows = ""
+  for (var i = 0; i < state.memory.length; i += 10) {
+    var row = ""
+    for (var j = i; j < state.memory.length && j < i + 10; j += 1) {
+      row += `<td>${toHex(state.memory[j])}</td>`
     }
     rows += `<tr>${row}</tr>`
   }
@@ -120,4 +116,50 @@ function execute_step(VM) {
   function toHex(d) {
     return ("0" + (Number(d).toString(16))).slice(-2).toUpperCase()
   }
+}
+
+async function show_results_in_html_fresh_state() {
+  var source_code = await codeMirrorEditor.getValue();
+  var program = await parse_and_read(source_code);
+  var VM = get_virtual_machine(program);
+  show_results_in_html(VM.state);
+}
+
+function get_virtual_machine(program) {
+  if (_VirtualMachine == null) {
+    _VirtualMachine = new VirtualMachine();
+    _VirtualMachine.update_vm(program);
+    return _VirtualMachine;
+  }
+
+  if (program === undefined) {
+    return _VirtualMachine;
+  }
+
+  _VirtualMachine.update_vm(program)
+  return _VirtualMachine;
+}
+
+function get_pretty_printer(program) {
+  if (_PrettyPrinter == null) {
+    _PrettyPrinter = new PrettyPrinter();
+    _PrettyPrinter.update_program(program);
+    return _PrettyPrinter;
+  }
+
+  if (program === undefined) {
+    return _PrettyPrinter;
+  }
+
+  _PrettyPrinter.update_program(program)
+  return _PrettyPrinter;
+}
+
+function reset_buttons_after_debug() {
+    document.querySelector('#debugbutton').disabled = false;
+    document.querySelector('#exitdebug').disabled = true;
+    document.querySelector('#stepbutton').disabled = true;
+    if (document.querySelector('.highlight-line') != null) {
+      document.querySelector('.highlight-line').classList.remove('highlight-line');
+    }
 }

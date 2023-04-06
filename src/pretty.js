@@ -1,17 +1,25 @@
 class PrettyPrinter {
-  constructor(program) { this.program = program }
+
+  update_program(program) {
+    this.program = program; 
+  }
 
   print_program(state) {
-    let pretty_source_code = "";
-    let instructions = this.program.instructions;
-    for (let i = 0; i < instructions.length; i++) {
+    var pretty_source_code = "";
+    var instructions = this.program.instructions;
+    var debugging = document.querySelector('#debugbutton').disabled;
+    for (var i = 0; i < instructions.length; i++) {
       var one_indexed = i + 1;
-      let res = `<span id=line-number>${one_indexed} </span>` + instructions[i].handle(this) + this.print_label(i) +`<br>`;
-      if (one_indexed === state.registers['$!']) {
-        pretty_source_code +=
-            `<div id=highlight-line>${res}</div>`
+      var res = `<span id=line-number>${one_indexed} </span>` + instructions[i].handle(this) + this.print_label(i) +`<br>`;
+      if (!debugging || state === undefined) {
+        pretty_source_code += res;
       } else {
-        pretty_source_code += res
+        if (one_indexed === state.registers['$!']) {
+          pretty_source_code +=
+              `<span class=highlight-line>${res}</span>`
+        } else {
+          pretty_source_code += res
+        }
       }
     }
     return pretty_source_code;
@@ -63,8 +71,8 @@ class PrettyPrinter {
   }
 
   print_label(i){
-    let [exists, label_key] = getKeyByValueIfValueExists(this.program.labels, i);
-    let result = exists ? `${this.wrap_label(label_key)}` : "";
+    var [exists, label_key] = getKeyByValueIfValueExists(this.program.labels, i);
+    var result = exists ? `${this.wrap_label(label_key)}` : "";
     return result;
   }
 

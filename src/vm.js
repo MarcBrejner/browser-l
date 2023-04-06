@@ -7,72 +7,67 @@ class State {
 }
 
 class VirtualMachine {
-  constructor(program, memory = new Array(100).fill(0),
-              registers = {
-                "$!" : 0, // PC
-                "$?": 0,  // Bool
-                "$x": 0,
-                "$y": 0
-              }) {
-    this.program = program;
-    this.state = init_state();
 
-        function init_state(){
-            let memory_for_constants = new Array();
-            let state_labels={}, state_constants={}, state_data={};
-            // map_integers_to_memory(program.labels, state_labels);
-            // map_integers_to_memory(program.constants, state_constants);
-            // map_strings_to_memory(program.data, state_data);
-            let state_memory = memory.concat(memory_for_constants);
+    update_vm(program, memory = new Array(100).fill(0), registers = {'$!':0, '$?':0, '$x':0, '$y':0}) {
+        this.program = program;
+        this.state = this.init_state(memory, registers);
+    }
 
-            return new State(state_memory,
-                registers,
-                state_data);
+    init_state(memory, registers) {
+        let memory_for_constants = new Array();
+        let state_labels={}, state_constants={}, state_data={};
+        // map_integers_to_memory(program.labels, state_labels);
+        // map_integers_to_memory(program.constants, state_constants);
+        // map_strings_to_memory(program.data, state_data);
+        let state_memory = memory.concat(memory_for_constants);
 
-            function map_strings_to_memory(program_constants){
-                Object.entries(program_constants).forEach(([id,str]) =>{
-                    let pointer = memory_for_constants.length;
-                    target[id] = pointer;
-                    for(let i in str){
-                        memory_for_constants[pointer++] = str[i]
-                    }
-                });
-            }
+        return new State(state_memory,
+            registers,
+            state_data);
+
+        function map_strings_to_memory(program_constants){
+            Object.entries(program_constants).forEach(([id,str]) =>{
+                let pointer = memory_for_constants.length;
+                target[id] = pointer;
+                for(let i in str){
+                    memory_for_constants[pointer++] = str[i]
+                }
+            });
         }
     }
 
-  execute_bytecode() {
-    var pc = this.state.registers['$!'];
-    this.program.instructions[pc].handle(this);
-    this.state.registers['$!']++;
-  }
+    execute_bytecode() {
+        var pc = this.state.registers['$!'];
+        this.program.instructions[pc].handle(this);
+        this.state.registers['$!']++;
+    }
 
-  assign_binary(cond, writer, reader1, opr, reader2) {
-    if (cond && this.check_condition())
-      return;
-    let RHS = this.evaluate_binary(reader1, opr, reader2);
-    this.write(writer, RHS);
-  }
+    assign_binary(cond, writer, reader1, opr, reader2) {
+        if (cond && this.check_condition())
+        return;
+        let RHS = this.evaluate_binary(reader1, opr, reader2);
+        this.write(writer, RHS);
+    }
 
-  assign_unary(cond, writer, opr, reader) {
-    if (cond && this.check_condition())
-      return;
-    let RHS = this.evaluate_unary(opr, reader);
-    this.write(writer, RHS);
-  }
+    assign_unary(cond, writer, opr, reader) {
+        if (cond && this.check_condition())
+        return;
+        let RHS = this.evaluate_unary(opr, reader);
+        this.write(writer, RHS);
+    }
 
-  assign(cond, writer, reader) {
-    if (cond && this.check_condition())
-      return;
-    let RHS = this.read(reader);
-    this.write(writer, RHS);
-  }
+    assign(cond, writer, reader) {
+        if (cond && this.check_condition())
+        return;
+        let RHS = this.read(reader);
+        this.write(writer, RHS);
+    }
 
-  evaluate_binary(v1, opr, v2) {
-    return eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
-  }
+    evaluate_binary(v1, opr, v2) {
+        return eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
+    }
 
-  evaluate_unary(opr, v) { return eval(`${opr} ${this.read(v)}`); }
+    evaluate_unary(opr, v) { return eval(`${opr} ${this.read(v)}`); }
 
     check_condition() {
         return !this.state.registers['$?'];
@@ -136,7 +131,7 @@ class VirtualMachine {
         }
     }
     
-    handle_syscall(){
+    syscall(){
         switch(this.state.registers["$x"]) {
             case 0: // print int
                 console.log(this.state.memory[this.state.registers["$y"]]);
