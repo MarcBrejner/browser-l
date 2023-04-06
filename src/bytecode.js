@@ -65,12 +65,13 @@ class Reader {
 }
 
 class Program {
-  constructor(instructions, ecs, data, constants, labels) {
+  constructor(instructions, ecs, data, constants, labels, error_msg=null) {
     this.instructions = instructions;
     this.ECS = ecs;
     this.data = data;
     this.constants = constants;
     this.labels = labels;
+    this.error_msg = error_msg
   }
 }
 

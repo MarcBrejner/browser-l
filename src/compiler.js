@@ -134,20 +134,22 @@ function compile_statements(statements) {
   return [instructions, ecs, labels];
 }
 
+
 function compile(tree) {
-  // wipe_data();
-  if (tree.rootNode.toString().includes("ERROR")) {
-    console.log("Syntax Error, see parse below:");
-    console.log(tree.rootNode.toString());
-    return;
+  console.log(tree.rootNode.toString())
+  var errors = find_error(tree.rootNode, new Array());
+
+  if(errors.length > 0){
+     return new Program([],{},{},{},{},errors[0]);
   }
+
   const declarations =
     tree.rootNode.childCount > 1 ? tree.rootNode.child(0) : [];
   const statements =
     tree.rootNode.childCount > 1
       ? tree.rootNode.child(1)
       : tree.rootNode.child(0);
-      
+  
   let program = compile_program(statements, declarations);
 
   return program;
@@ -155,4 +157,24 @@ function compile(tree) {
 
 function get_ecs_for_statement(statement) {
   return [statement.startPosition.row, statement.startIndex, statement.endIndex];
+}
+
+
+function find_error(node, errors){
+  console.log(node.toString())
+  if (node.childCount == 0){
+      return [""];
+  }
+  if(node.type == "ERROR" || node.type == "MISSING"){
+    let error_msg = node.childCount > 1 ? "Syntax error: "+node.child(1).toString()+" on line: "+(node.startPosition.row+1) : "Syntax error: "+node.toString()+" on line: "+(node.startPosition.row+1)
+    errors.push(error_msg);
+    return errors;
+  }
+
+  for (let n_i = 0; n_i < node.childCount; n_i++) {
+    let next_node = node.child(n_i);
+    find_error(next_node,errors);
+  }
+
+  return errors;
 }

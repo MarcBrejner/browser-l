@@ -2,6 +2,9 @@ class PrettyPrinter {
   constructor(program) { this.program = program }
 
   print_program(state) {
+    if(this.program.error_msg !== null){
+      return this.program.error_msg;
+    }
     let pretty_source_code = "";
     let instructions = this.program.instructions;
     for (let i = 0; i < instructions.length; i++) {

@@ -34,9 +34,6 @@ async function initialize_parser() {
 async function parse_and_pretty_print(source_code) {
   let parser = await initialize_parser();
   let tree = await parser.parse(source_code);
-  if (tree.rootNode.toString().includes("ERROR")) {
-    return "- ERROR -";
-  }
   let program = compile(tree);
   // parse_byte_code from pretty.js pretty prints the byte_code
   var pretty_printer = new PrettyPrinter(program);
@@ -53,7 +50,10 @@ async function run_all() {
   var source_code = await codeMirrorEditor.getValue();
 
   let program = await parse_and_read(source_code);
-  console.log(program)
+  if(program.error_msg !== null){
+    console.log(program.error_msg);
+    return;
+  }
   var VM = new VirtualMachine(program);
   execute_all(VM);
 }
@@ -67,10 +67,15 @@ async function createClickListenerPromise(target) {
 }
 
 async function debug() {
-  document.querySelector('#debugbutton').disabled = true;
-  document.querySelector('#stepbutton').disabled = false;
   var source_code = await codeMirrorEditor.getValue();
   let program = await parse_and_read(source_code);
+  if(program.error_msg !== null){
+    console.log(program.error_msg);
+    return;
+  }
+  document.querySelector('#debugbutton').disabled = true;
+  document.querySelector('#stepbutton').disabled = false;
+
   var VM = new VirtualMachine(program);
 
   while (true) {
