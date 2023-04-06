@@ -10,7 +10,7 @@
     margin-right:5px;
 }
 
-span {
+body {
     color:dimgray;
     font-family: monospace;
 }
@@ -49,7 +49,7 @@ span {
     color:brown;
 }
 
-#highlight-line {
+.highlight-line {
     background-color:yellow;
 }
 
