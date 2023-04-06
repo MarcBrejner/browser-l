@@ -35,12 +35,9 @@ async function initialize_parser() {
 
 // Pretty print input sourcecode
 async function parse_and_pretty_print(source_code) {
-  var parser = await initialize_parser();
-  var tree = await parser.parse(source_code);
-  if (tree.rootNode.toString().includes("ERROR")) {
-    return "- ERROR -";
-  }
-  var program = compile(tree);
+  let parser = await initialize_parser();
+  let tree = await parser.parse(source_code);
+  let program = compile(tree);
   // parse_byte_code from pretty.js pretty prints the byte_code
   var pretty_printer = get_pretty_printer(program);
   return pretty_printer.print_program();
@@ -55,8 +52,11 @@ async function parse_and_read(source_code) {
 
 async function run_all() {
   var source_code = await codeMirrorEditor.getValue();
-
   var program = await parse_and_read(source_code);
+  if(program.error_msg !== null){
+    console.log(program.error_msg);
+    return;
+  }
   console.log(program)
   // updates the program of the virtual machine
   get_virtual_machine(program);
@@ -64,17 +64,27 @@ async function run_all() {
 }
 
 async function debug() {
+  var source_code = await codeMirrorEditor.getValue();
+  var program = await parse_and_read(source_code);
+  if(program.error_msg !== null){
+    console.log(program.error_msg);
+    return;
+  }
+  var VM = get_virtual_machine(program);
+  show_results_in_html(VM.state);
   document.querySelector('#debugbutton').disabled = true;
   document.querySelector('#exitdebug').disabled = false;
   document.querySelector('#stepbutton').disabled = false;
-  await show_results_in_html_fresh_state();
 }
 
 async function exit_debug() {
   reset_buttons_after_debug();
   var pretty_printer = get_pretty_printer();
   document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program();
-  await show_results_in_html_fresh_state();
+  var source_code = await codeMirrorEditor.getValue();
+  var program = await parse_and_read(source_code);
+  var VM = get_virtual_machine(program);
+  show_results_in_html(VM.state);
 }
 
 function execute_all() {
@@ -116,13 +126,6 @@ function show_results_in_html(state) {
   function toHex(d) {
     return ("0" + (Number(d).toString(16))).slice(-2).toUpperCase()
   }
-}
-
-async function show_results_in_html_fresh_state() {
-  var source_code = await codeMirrorEditor.getValue();
-  var program = await parse_and_read(source_code);
-  var VM = get_virtual_machine(program);
-  show_results_in_html(VM.state);
 }
 
 function get_virtual_machine(program) {

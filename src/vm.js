@@ -13,13 +13,11 @@ class VirtualMachine {
         this.state = this.init_state(memory, registers);
     }
 
-    init_state(memory, registers) {
-        let memory_for_constants = new Array();
-        let state_labels={}, state_constants={}, state_data={};
-        // map_integers_to_memory(program.labels, state_labels);
-        // map_integers_to_memory(program.constants, state_constants);
-        // map_strings_to_memory(program.data, state_data);
-        let state_memory = memory.concat(memory_for_constants);
+    init_state(memory, registers){
+            let memory_for_constants = new Array();
+            let state_data={};
+            map_strings_to_memory(this.program.data, state_data);
+            let state_memory = memory.concat(memory_for_constants);
 
         return new State(state_memory,
             registers,

@@ -5,6 +5,9 @@ class PrettyPrinter {
   }
 
   print_program(state) {
+    if(this.program.error_msg !== null){
+      return this.program.error_msg;
+    }
     var pretty_source_code = "";
     var instructions = this.program.instructions;
     var debugging = document.querySelector('#debugbutton').disabled;
