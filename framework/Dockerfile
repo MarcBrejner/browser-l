@@ -4,18 +4,6 @@ RUN apt-get update && apt-get install -y curl sudo git xz-utils lbzip2
 # Install nodejs
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash
 RUN apt-get install -y nodejs
-# Install tree-sitter
-RUN npm install tree-sitter-cli@0.20.0
-ENV PATH=$PATH:/node_modules/.bin
-# Get input language
-COPY assets/tree-sitter/L0 tree-sitter-l0
-COPY assets/tree-sitter/L1 tree-sitter-l1
-WORKDIR "/tree-sitter-l0"
-RUN tree-sitter generate
-WORKDIR "/"
-WORKDIR "/tree-sitter-l1"
-RUN tree-sitter generate
-WORKDIR "/"
 # Install Emscripten
 RUN git clone https://github.com/emscripten-core/emsdk.git \
     && cd /emsdk \
@@ -26,8 +14,24 @@ ENV PATH=$PATH:/emsdk:/emsdk/upstream/emscripten:/emsdk/upstream/bin:/emsdk/node
 ENV EMSDK=/emsdk
 ENV EM_CONFIG=/emsdk/.emscripten
 ENV EMSDK_NODE=/emsdk/node/14.15.5_64bit/bin/node
-# Compile input language to wasm
+# Install tree-sitter
+RUN git clone https://github.com/MarcBrejner/tree-sitter-twenty
+WORKDIR "/tree-sitter-twenty"
+RUN git pull
+#RUN rm -rf /script/build-wasm
+#COPY build-wasm /script/build-wasm
+#COPY tree-sitter tree-sitter
+#WORKDIR "/tree-sitter"
+RUN chmod +x ./script/build-wasm
+RUN ./script/build-wasm
 WORKDIR "/"
-RUN npx tree-sitter build-wasm tree-sitter-l0
-RUN npx tree-sitter build-wasm tree-sitter-l1
+RUN npm install tree-sitter-cli@0.20.0
+ENV PATH=$PATH:/node_modules/.bin
+# Get input language
+COPY levels/L0 L0
+WORKDIR "/L0"
+RUN tree-sitter generate
+WORKDIR "/"
+# Compile input language to wasm
+RUN npx tree-sitter build-wasm L0
 
