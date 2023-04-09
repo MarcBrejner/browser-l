@@ -1,0 +1,141 @@
+=============================
+constants
+=============================
+const @MSG_LENGTH 14;
+const @SYS_WRITE 4;
+const @STD_OUT 1;
+
+$x:=1;
+---
+(source_file 
+  (declarations 
+    (declaration 
+      (constant)) 
+    (declaration 
+      (constant)) 
+    (declaration 
+      (constant)))
+  (statements 
+    (statement 
+      (writer
+        (assign
+          (register))) 
+        (expression 
+          (reader))))
+)
+=============================
+statements
+=============================
+#HERE
+$x:=@STD_OUT;
+$y:=@MSG_LENGTH;
+[$i,4]:=@SYS_WRITE;
+$j:=[$i,4] + 1;
+$j:=[$i,4] - 2;
+$x:=-5;
+$? := 1;
+$! ?= #HERE - 1;
+$! := #HERE - 1;
+---
+(source_file 
+  (statements 
+    (label) 
+    (statement 
+      (writer 
+        (assign 
+          (register))) 
+      (expression 
+        (reader 
+          (constant)))) 
+    (statement 
+      (writer 
+        (assign 
+          (register))) 
+      (expression 
+        (reader 
+          (constant)))) 
+    (statement 
+      (writer 
+        (assign 
+          (memory 
+            (register)))) 
+      (expression 
+        (reader 
+          (constant)))) 
+    (statement 
+      (writer 
+        (assign
+          (register)))
+      (expression 
+        (reader 
+          (assign 
+            (memory
+              (register)))) 
+        (operator) 
+        (reader))) 
+    (statement 
+      (writer 
+        (assign 
+          (register))) 
+      (expression 
+        (reader 
+          (assign 
+            (memory 
+              (register)))) 
+        (operator) 
+        (reader))) 
+    (statement 
+      (writer 
+        (assign 
+          (register))) 
+      (expression 
+        (operator) 
+        (reader))) 
+    (statement 
+      (writer 
+        (assign 
+          (register))) 
+      (expression 
+        (reader))) 
+    (statement 
+      (writer 
+        (assign 
+          (register))) 
+      (expression 
+        (reader 
+          (label)) 
+        (operator) 
+        (reader))) 
+    (statement 
+      (writer 
+        (assign 
+          (register))) 
+      (expression 
+        (reader 
+          (label)) 
+        (operator) 
+        (reader))))
+)
+
+=============================
+data
+=============================
+data &MSG "Hello world!\n";
+data &ACC 123;
+
+$x:=1;
+---
+(source_file
+  (declarations
+    (declaration
+      (data))
+    (declaration
+      (data)))
+  (statements
+    (statement
+      (writer
+        (assign
+          (register)))
+        (expression
+          (reader))))
+)
