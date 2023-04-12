@@ -13,7 +13,9 @@ function compile_reader(reader_node) {
     case "register":
       return new Reader(RT.REGISTER, reader_id);
     case "memory":
-      return new Reader(RT.MEMORY, reader_id);
+      let startindex = reader_node.child(0).child(0).child(1).text;
+      let offset = reader_node.child(0).child(0).child(3).text;
+      return new Reader(RT.MEMORY,startindex,offset);
     case "constant":
       return new Reader(RT.CONSTANT, reader_id);
     case "data":
@@ -74,7 +76,7 @@ function compile_declaration(declaration, constants, data){
   let [id, value] = declaration.child(1).text.split(" ");
   type === "const" 
     ? constants[id] = value
-    : data[id] = value;
+    : data[id] = value.slice(1,-1)
   return [constants, data]
 }
 
