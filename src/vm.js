@@ -14,18 +14,18 @@ class VirtualMachine {
     }
 
     init_state(memory, registers){
-            let state_data={};
-            map_strings_to_memory(this.program.data, state_data);
+        var state_data={};
+        map_strings_to_memory(this.program.data);
 
         return new State(memory,
             registers,
             state_data);
 
-        function map_strings_to_memory(program_constants,target){
+        function map_strings_to_memory(program_constants){
             var pointer = 0;
             Object.entries(program_constants).forEach(([id,str]) =>{
                 //let pointer = memory_for_constants.length;
-                target[id] = pointer;
+                state_data[id] = pointer;
                 for(let char in str){
                     memory[pointer] = str.charCodeAt(char);
                     pointer += 1;
@@ -121,8 +121,7 @@ class VirtualMachine {
                 throw new Error("Constant ",reader.id," not found");
             case RT.DATA:
                 if (reader.id in this.state.data){
-                    let startindex = this.state.data[reader.id];
-                    return this.state.memory[startindex];
+                    return this.state.data[reader.id];
                 }
                 throw new Error("Data ",reader.id," not found")
             case RT.LABEL:
