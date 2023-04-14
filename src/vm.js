@@ -14,22 +14,23 @@ class VirtualMachine {
     }
 
     init_state(memory, registers){
-            let memory_for_constants = new Array();
             let state_data={};
             map_strings_to_memory(this.program.data, state_data);
-            let state_memory = memory.concat(memory_for_constants);
 
-        return new State(state_memory,
+        return new State(memory,
             registers,
             state_data);
 
-        function map_strings_to_memory(program_constants){
+        function map_strings_to_memory(program_constants,target){
+            var pointer = 0;
             Object.entries(program_constants).forEach(([id,str]) =>{
-                let pointer = memory_for_constants.length;
+                //let pointer = memory_for_constants.length;
                 target[id] = pointer;
-                for(let i in str){
-                    memory_for_constants[pointer++] = str[i]
+                for(let char in str){
+                    memory[pointer] = str.charCodeAt(char);
+                    pointer += 1;
                 }
+                pointer += 1;
             });
         }
     }
@@ -98,16 +99,21 @@ class VirtualMachine {
                 }
                 throw new Error("Register ",reader.id," not found");
             case RT.MEMORY:
-                    // var startIndex = state.registers[reader.child(0).child(0).child(1).text];
-                    // var stopIndex = startIndex + parseInt(reader.child(0).child(0).child(3).text);
-                    // var result = "";
-                    // if (stopIndex < state.memory.length) {
-                    //     for (var i = startIndex; i < stopIndex; i++) {
-                    //         result += state.memory[i];
-                    //     }
-                    //     return result;        
-                    // }
-                throw new Error("Memory out of bounds");
+                let mem_index =  this.read(new Reader(RT.REGISTER, reader.id));
+                let return_value = 0;
+                try{
+                    for (let i = 0; i < reader.offset; i++){
+                        return_value += this.state.memory[mem_index];
+                        mem_index += 1;
+                    }
+                }catch (error){
+                    if(mem_index > this.state.memory.length){
+                        console.log("Memory index out of bounds");
+                    }
+                }
+
+                return return_value
+                break;
             case RT.CONSTANT:
                 if (reader.id in this.program.constants){
                     return parseInt(this.program.constants[reader.id]);
@@ -115,7 +121,8 @@ class VirtualMachine {
                 throw new Error("Constant ",reader.id," not found");
             case RT.DATA:
                 if (reader.id in this.state.data){
-                    return this.state.data[reader.id];
+                    let startindex = this.state.data[reader.id];
+                    return this.state.memory[startindex];
                 }
                 throw new Error("Data ",reader.id," not found")
             case RT.LABEL:

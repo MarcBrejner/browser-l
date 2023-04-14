@@ -58,9 +58,10 @@ class Writer {
 }
 
 class Reader {
-  constructor(reader_type, reader_id) {
+  constructor(reader_type, reader_id, offset = 0) {
     this.type = reader_type;
     this.id = reader_id;
+    this.offset = offset;
   }
 }
 

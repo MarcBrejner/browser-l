@@ -166,3 +166,13 @@ function reset_buttons_after_debug() {
       document.querySelector('.highlight-line').classList.remove('highlight-line');
     }
 }
+
+async function test_l(source_code){
+  var program = await parse_and_read(source_code);
+  if(program.error_msg !== null){
+    console.log(program.error_msg);
+    return;
+  }
+  get_virtual_machine(program);
+  execute_all();
+}
