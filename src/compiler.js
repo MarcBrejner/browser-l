@@ -71,10 +71,20 @@ function compile_statement(statement) {
 
 function compile_declaration(declaration, constants, data){
   let type = declaration.child(0).text;
-  let [id, value] = declaration.child(1).text.split(" ");
-  type === "const" 
-    ? constants[id] = value
-    : data[id] = value;
+  let data_regex = /(&[A-Z]+)\s(".+")/;
+  let const_regex = /(@[A-Z]+)\s([0-9]+)/;
+  let declaration_string = declaration.child(1).text;
+  if (type === "const") {
+    let match = declaration_string.match(const_regex);
+    let id = match[1];
+    let value = match[2];
+    constants[id] = value;
+  } else if (type === "data") {
+    let match = declaration_string.match(data_regex);
+    let id = match[1];
+    let value = match[2];
+    data[id] = value.slice(1, -1);
+  }
   return [constants, data]
 }
 
