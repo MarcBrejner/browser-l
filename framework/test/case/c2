@@ -1,0 +1,8 @@
+data &MSG "Hello World!";
+$x := 1;
+$? := 10;
+#LOOP
+$y := &MSG;
+syscall;
+$? := $? - 1;
+$! ?= #LOOP - 1;

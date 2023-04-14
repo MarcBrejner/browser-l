@@ -139,13 +139,13 @@ class VirtualMachine {
     syscall(){
         switch(this.state.registers["$x"]) {
             case 0: // print int
-                console.log(this.state.memory[this.state.registers["$y"]]);
+                console.log(this.state.registers["$y"]);
                 break;
             case 1: // print str
                 var idx = this.state.registers["$y"];
                 var str = "";
-                while(this.state.memory[idx] != null) {
-                    str += this.state.memory[idx];
+                while(this.state.memory[idx] != 0) {
+                    str += String.fromCharCode(this.state.memory[idx]);
                     idx++;
                 }
                 console.log(str);

@@ -114,9 +114,9 @@ function show_results_in_html(state) {
   registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
 
   var rows = ""
-  for (var i = 0; i < state.memory.length; i += 10) {
-    var row = ""
-    for (var j = i; j < state.memory.length && j < i + 10; j += 1) {
+  for (var i = 0; i < state.memory.length; i += 16) {
+    var row = `<td>${i}--</td>`
+    for (var j = i; j < state.memory.length && j < i + 16; j += 1) {
       row += `<td>${toHex(state.memory[j])}</td>`
     }
     rows += `<tr>${row}</tr>`
