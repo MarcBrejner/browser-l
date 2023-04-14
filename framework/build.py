@@ -37,8 +37,8 @@ def encode_wasm():
     }
     """
     code += "encoded = '{}'; \nvar L_wasm = decode(encoded);".format(encoded_l)
-    output_file = open("temp/loadparser.js", "w")
-    output_file.write(code)
+    with open("temp/loadparser.js", "w") as output_file:
+        output_file.write(code)
 
 def bundle_html():
     os.chdir('../')
@@ -63,6 +63,9 @@ def bundle_html():
                 line_to_append = "<style>"+code+"</style>"
         output_bundled.write(line_to_append)
 
+    output_bundled.close()
+    html_template.close()
+    
 def download_codemirror():
     codemirror_path = "./temp/codemirror"
     os.makedirs(codemirror_path, exist_ok=True)
