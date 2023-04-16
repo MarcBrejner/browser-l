@@ -11,12 +11,17 @@ def compile_wasm():
     image_tag="from-py"
     client = docker.from_env()
     client.images.build(path="./", tag=image_tag, rm=True)
+    print("Created image")
     container = client.containers.create(image_tag)
+    print("Created container")
     container_id = container.id
     os.makedirs("./temp/tree-sitter", exist_ok=True)
     os.system("docker cp {}:/tree-sitter-L0.wasm ./temp/tree-sitter-l0.wasm".format(container_id))
+    print("Copied tree-sitter-l0.wasm")
     os.system("docker cp {}:/tree-sitter-twenty/lib/binding_web/tree-sitter.js ./temp/tree-sitter/tree-sitter.js".format(container_id))
+    print("Copied tree-sitter.js")
     container.remove()
+    print("Removed container")
 
 def encode_wasm():
     with open("./temp/tree-sitter-l0.wasm","rb") as wasm_file:
@@ -38,6 +43,10 @@ def encode_wasm():
     """
     code += "encoded = '{}'; \nvar L_wasm = decode(encoded);".format(encoded_l)
     with open("temp/loadparser.js", "w") as output_file:
+        output_file.write(code)
+
+    print("Encoded wasm")
+    with open("../dev/assets/loadparser.js", "w") as output_file:
         output_file.write(code)
 
 def bundle_html():
@@ -65,6 +74,7 @@ def bundle_html():
 
     output_bundled.close()
     html_template.close()
+    print("Bundled html")
     
 def download_codemirror():
     codemirror_path = "./temp/codemirror"
@@ -87,7 +97,6 @@ def delete_codemirror():
     os.remove("./temp/tree-sitter-l0.wasm")
     os.remove("./temp/loadparser.js")
     os.rmdir('./temp')
-
 
 
 compile_wasm()
