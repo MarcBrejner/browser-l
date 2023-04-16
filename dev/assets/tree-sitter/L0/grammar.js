@@ -80,17 +80,17 @@ module.exports = grammar({
 		label: $ => /#[A-Z]+/,
 		//label: $ => seq('#', $.address),
 
-		memory: $ => seq('[', $.register, ',', $.number, ']'),
+		memory: $ => seq('[', $.register, ',', $.type, ']'),
 
 		//string: $ => seq('"', repeat(/[^"]+/), '"'),
+
+		type: () => /i8, i16, i32, i64, ui8, ui16, ui32, ui64, f8, f16, f32, f64/,
 
 		register: () => /\$[x,y,i,j,k,l,m,n,?,!]/,
 
 		syscall: () => 'syscall',
 
 		operator: () => /[+-/\*|&><=]+/,
-
-		number: () => /[0-9]+/,
 
 		//address: () => /[a-zA-Z_]+/,
 	}

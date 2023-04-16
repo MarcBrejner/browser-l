@@ -113,7 +113,6 @@ class VirtualMachine {
                 }
 
                 return return_value
-                break;
             case RT.CONSTANT:
                 if (reader.id in this.program.constants){
                     return parseInt(this.program.constants[reader.id]);
@@ -139,6 +138,7 @@ class VirtualMachine {
         switch(this.state.registers["$x"]) {
             case 0: // print int
                 console.log(this.state.registers["$y"]);
+                outputSpan.innerHTML += this.state.registers["$y"] + "\n";
                 break;
             case 1: // print str
                 var idx = this.state.registers["$y"];
@@ -148,9 +148,12 @@ class VirtualMachine {
                     idx++;
                 }
                 console.log(str);
+                outputSpan.innerHTML += str + "\n";
                 break;
             default:
                 console.log("Syscall Error");
+                outputSpan.innerHTML += "Syscall Error\n";
+                break;
         }
     }
 }

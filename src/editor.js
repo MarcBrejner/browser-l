@@ -3,6 +3,7 @@ var labelsDiv = document.getElementById("labels");
 var constantsDiv = document.getElementById("constants");
 var dataDiv = document.getElementById("data");
 var memoryDiv = document.getElementById("memory");
+var outputSpan = document.getElementById("output");
 
 var _VirtualMachine = null;
 var _PrettyPrinter = null;
@@ -115,7 +116,7 @@ function show_results_in_html(state) {
 
   var rows = ""
   for (var i = 0; i < state.memory.length; i += 16) {
-    var row = `<td>${i}--</td>`
+    var row = `<td>${i.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})}--</td>`
     for (var j = i; j < state.memory.length && j < i + 16; j += 1) {
       row += `<td>${toHex(state.memory[j])}</td>`
     }

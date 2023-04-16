@@ -41,6 +41,10 @@ body {
     font-size: 16px;
 }
 
+.syscall_output {
+    display: inline;
+}
+
 #prettyPretty {
     border: 1px solid #eee;
     border-radius: 5px;
