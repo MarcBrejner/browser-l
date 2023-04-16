@@ -23,6 +23,21 @@ const RT = {
   NUMBER: 5,
 };
 
+DATATYPE = {
+  UI8: 0,
+  UI16: 1,
+  UI32: 2,
+  UI64: 3,
+  I8: 4,
+  I16: 5,
+  I32: 6,
+  I64: 7,
+  F8: 8,
+  F16: 9,
+  F32: 10,
+  F64: 11
+}
+
 class ByteCode {
   constructor(opcode, operands = []) {
     this.opcode = opcode;
@@ -83,6 +98,7 @@ class ECS {
         this.end_index = new Array();
     }
 }
+
 
 
 /*
