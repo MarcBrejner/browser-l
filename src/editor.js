@@ -116,11 +116,21 @@ function show_results_in_html(state) {
   registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
 
   var rows = ""
+  var rowText = "";
   for (var i = 0; i < state.memory.length; i += 16) {
+    rowText = "";
     var row = `<td>${i.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})}--</td>`
     for (var j = i; j < state.memory.length && j < i + 16; j += 1) {
       row += `<td>${toHex(state.memory[j])}</td>`
     }
+    for (var k = i; k < state.memory.length && k < i + 16; k += 1) {
+      if (state.memory[k] === 0) {
+        rowText += " ";
+      } else {
+        rowText += `${String.fromCharCode(state.memory[k])}`
+      }
+    }
+    row += `<td>${rowText}</td>`
     rows += `<tr>${row}</tr>`
   }
   memoryDiv.innerHTML = `<table>${rows}</table>`
