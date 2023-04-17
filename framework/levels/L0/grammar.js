@@ -84,7 +84,7 @@ module.exports = grammar({
 
 		//string: $ => seq('"', repeat(/[^"]+/), '"'),
 
-		type: () => /i8, i16, i32, i64, ui8, ui16, ui32, ui64, f8, f16, f32, f64/,
+		type: () => /i8|i16|i32|i64|u8|u16|u32|u64|f8|f16|f32|f64/,
 
 		register: () => /\$[x,y,i,j,k,l,m,n,?,!]/,
 
