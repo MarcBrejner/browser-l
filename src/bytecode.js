@@ -23,20 +23,19 @@ const RT = {
   NUMBER: 5,
 };
 
-DATATYPE = {
-  u8: "u8",
-  u16: "u16",
-  u32: "u32",
-  u64: "u64",
-  i8: "i8",
-  i16: "i16",
-  i32: "i32",
-  i64: "i64",
-  f8: "f8",
-  f16: "f16",
-  f32: "f32",
-  f64: "f64"
+const DT = {
+  UNSIGNED: 'u',
+  SIGNED: 'i',
+  FLOAT: 'f'
 }
+
+class datatype{
+  constructor(size, type){
+    this.size = size;
+    this.type = type;
+  }
+}
+
 
 class ByteCode {
   constructor(opcode, operands = []) {

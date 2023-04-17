@@ -9,29 +9,29 @@ function get_reader_type(reader) {
 function get_datatype(datatype_string){
   switch(datatype_string){
     case "u8":
-      return DATATYPE.u8;
+      return new datatype(8,DT.UNSIGNED);
     case "u16":
-      return DATATYPE.u16;
+      return new datatype(16,DT.UNSIGNED);
     case "u32":
-      return DATATYPE.u32;
+      return new datatype(32,DT.UNSIGNED);
     case "u64":
-      return DATATYPE.u64;
+      return new datatype(64,DT.UNSIGNED);
     case "i8":
-      return DATATYPE.i8;
+      return new datatype(8,DT.SIGNED);
     case "i16":
-      return DATATYPE.i16;
+      return new datatype(16,DT.SIGNED);
     case "i32":
-      return DATATYPE.i32;
+      return new datatype(32,DT.SIGNED);
     case "i64":
-      return DATATYPE.i64;
+      return new datatype(64,DT.SIGNED);
     case "f8":
-      return DATATYPE.f8;
+      return new datatype(8,DT.FLOAT);
     case "f16":
-      return DATATYPE.f16;
+      return new datatype(16,DT.FLOAT);
     case "f32":
-      return DATATYPE.f32;
+      return new datatype(32,DT.FLOAT);
     case "f64":
-      return DATATYPE.f64;
+      return new datatype(64,DT.FLOAT);
   }
 }
 

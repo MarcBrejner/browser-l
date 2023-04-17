@@ -121,23 +121,23 @@ function show_results_in_html(state) {
     rowText = "";
     var row = `<td>${i.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})}--</td>`
     for (var j = i; j < state.memory.length && j < i + 16; j += 1) {
-      row += `<td>${toHex(state.memory[j])}</td>`
+      row += `<td>${state.memory[j]}</td>`
     }
     for (var k = i; k < state.memory.length && k < i + 16; k += 1) {
-      if (state.memory[k] === 0) {
+      if (state.memory[k] === '00') {
         rowText += " ";
       } else {
-        rowText += `${String.fromCharCode(state.memory[k])}`
+        rowText += `${String.fromCharCode(parseInt(state.memory[k],16))}`
       }
     }
-    row += `<td>${rowText}</td>`
+    row += `<td>|   ${rowText}</td>`
     rows += `<tr>${row}</tr>`
   }
   memoryDiv.innerHTML = `<table>${rows}</table>`
 
-  function toHex(d) {
-    return ("0" + (Number(d).toString(16))).slice(-2).toUpperCase()
-  }
+  // function toHex(d) {
+  //   return ("0" + (Number(d).toString(16))).slice(-2).toUpperCase()
+  // }
 }
 
 function get_virtual_machine(program) {

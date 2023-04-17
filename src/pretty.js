@@ -67,7 +67,7 @@ class PrettyPrinter {
 
   print_writer(writer){
     if(writer.type == WT.MEMORY){
-      return `[${writer.id},${writer.datatype}]`
+      return `[${writer.id},${writer.datatype.type}${writer.datatype.size}]`
     }else{
       return `${writer.id}`
     }
@@ -77,7 +77,7 @@ class PrettyPrinter {
     if (reader.type === RT.CONSTANT){
       return `${this.wrap_const(`${reader.id} (${this.program.constants[reader.id]})`)}`
     }else if(reader.type == RT.MEMORY){
-      return `[${reader.id},${reader.datatype}]`
+      return `[${reader.id},${reader.datatype.type}${reader.datatype.size}]`
     }else{
       return `${reader.id}`
     }

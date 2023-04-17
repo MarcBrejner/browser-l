@@ -6,9 +6,22 @@ class State {
     }
 }
 
+function number_to_byte_array(number, size) {
+    const byteCount = Math.ceil(size / 8);
+    const byteArray = new Array(byteCount);
+
+    for (let i = byteCount - 1; i >= 0; i--) {
+      byteArray[i] = (number & 0xff).toString(16).padStart(2,'0').toUpperCase()
+      number = number >> 8;
+    }
+
+    return byteArray;
+}
+
+
 class VirtualMachine {
 
-    update_vm(program, memory = new Array(100).fill(0), registers = {'$!':0, '$?':0, '$x':0, '$y':0}) {
+    update_vm(program, memory = new Array(112).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0}) {
         this.program = program;
         this.state = this.init_state(memory, registers);
     }
@@ -27,7 +40,7 @@ class VirtualMachine {
                 //let pointer = memory_for_constants.length;
                 state_data[id] = pointer;
                 for(let char in str){
-                    memory[pointer] = str.charCodeAt(char);
+                    memory[pointer] = number_to_byte_array(str.charCodeAt(char),8)[0];
                     pointer += 1;
                 }
                 pointer += 1;
@@ -76,10 +89,10 @@ class VirtualMachine {
         switch(writer.type){
             case WT.MEMORY:
                 let mem_index =  this.read(new Reader(RT.REGISTER, writer.id));
-                
-
-                for (let i = 0; i < writer.offset; i++){
-                    this.state.memory[mem_index] = RHS;
+                //TODO: make work with signed & float
+                let hex8_array = number_to_byte_array(RHS,writer.datatype.size)
+                for (let i = 0; i < hex8_array.length; i++){
+                    this.state.memory[mem_index] = hex8_array[i];
                     mem_index += 1;
                 }
                 break;
