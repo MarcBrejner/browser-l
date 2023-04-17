@@ -32,17 +32,17 @@ class PrettyPrinter {
 
   assign_binary(conditional, writer, reader1, opr, reader2) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader2))}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(this.print_writer(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader2))}${this.wrap_semicolon()}\n`
   }
 
   assign_unary(conditional, writer, opr, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(this.print_writer(writer))} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
   }
 
   assign(conditional, writer, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(writer.id)} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(this.print_writer(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
   }
 
   wrap_assign(assign) {
@@ -63,6 +63,14 @@ class PrettyPrinter {
 
   wrap_label(label) {
     return `<span id=label>${label}</span>`;
+  }
+
+  print_writer(writer){
+    if(writer.type == WT.MEMORY){
+      return `[${writer.id},${writer.datatype}]`
+    }else{
+      return `${writer.id}`
+    }
   }
 
   print_reader(reader){

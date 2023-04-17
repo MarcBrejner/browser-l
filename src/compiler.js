@@ -7,15 +7,15 @@ function get_reader_type(reader) {
 }
 
 function get_datatype(datatype_string){
-  switch(datatype){
-    case "ui8":
-      return DATATYPE.ui8;
-    case "ui16":
-      return DATATYPE.ui16;
-    case "ui32":
-      return DATATYPE.ui32;
-    case "ui64":
-      return DATATYPE.ui64;
+  switch(datatype_string){
+    case "u8":
+      return DATATYPE.u8;
+    case "u16":
+      return DATATYPE.u16;
+    case "u32":
+      return DATATYPE.u32;
+    case "u64":
+      return DATATYPE.u64;
     case "i8":
       return DATATYPE.i8;
     case "i16":
