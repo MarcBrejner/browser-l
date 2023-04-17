@@ -6,6 +6,36 @@ function get_reader_type(reader) {
   }
 }
 
+function get_datatype(datatype_string){
+  switch(datatype){
+    case "ui8":
+      return DATATYPE.ui8;
+    case "ui16":
+      return DATATYPE.ui16;
+    case "ui32":
+      return DATATYPE.ui32;
+    case "ui64":
+      return DATATYPE.ui64;
+    case "i8":
+      return DATATYPE.i8;
+    case "i16":
+      return DATATYPE.i16;
+    case "i32":
+      return DATATYPE.i32;
+    case "i64":
+      return DATATYPE.i64;
+    case "f8":
+      return DATATYPE.f8;
+    case "f16":
+      return DATATYPE.f16;
+    case "f32":
+      return DATATYPE.f32;
+    case "f64":
+      return DATATYPE.f64;
+  }
+}
+
+
 function compile_reader(reader_node) {
   let reader_id = reader_node.text;
   let reader_type = get_reader_type(reader_node);
@@ -13,9 +43,9 @@ function compile_reader(reader_node) {
     case "register":
       return new Reader(RT.REGISTER, reader_id);
     case "memory":
-      let startindex = reader_node.child(0).child(0).child(1).text;
-      let offset = reader_node.child(0).child(0).child(3).text;
-      return new Reader(RT.MEMORY,startindex,offset);
+      let startindex_register = reader_node.child(0).child(0).child(1).text;
+      let datatype_text = reader_node.child(0).child(0).child(3).text;
+      return new Reader(RT.MEMORY, startindex_register, get_datatype(datatype_text))
     case "constant":
       return new Reader(RT.CONSTANT, reader_id);
     case "data":
@@ -33,7 +63,7 @@ function compile_writer(statement) {
   let writer_id = writer_node.text;
   switch (writer_node.type) {
     case "memory":
-      return new Writer(WT.MEMORY, writer_node.child(1).text, writer_node.child(3).text);
+      return new Writer(WT.MEMORY, writer_node.child(1).text, get_datatype(writer_node.child(3).text));
     case "register":
       return new Writer(WT.REGISTER, writer_id);
   }

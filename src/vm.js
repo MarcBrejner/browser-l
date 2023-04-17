@@ -76,6 +76,8 @@ class VirtualMachine {
         switch(writer.type){
             case WT.MEMORY:
                 let mem_index =  this.read(new Reader(RT.REGISTER, writer.id));
+                
+
                 for (let i = 0; i < writer.offset; i++){
                     this.state.memory[mem_index] = RHS;
                     mem_index += 1;

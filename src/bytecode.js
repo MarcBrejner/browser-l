@@ -24,18 +24,18 @@ const RT = {
 };
 
 DATATYPE = {
-  UI8: 0,
-  UI16: 1,
-  UI32: 2,
-  UI64: 3,
-  I8: 4,
-  I16: 5,
-  I32: 6,
-  I64: 7,
-  F8: 8,
-  F16: 9,
-  F32: 10,
-  F64: 11
+  ui8: 0,
+  ui16: 1,
+  ui32: 2,
+  ui64: 3,
+  i8: 4,
+  i16: 5,
+  i32: 6,
+  i64: 7,
+  f8: 8,
+  f16: 9,
+  f32: 10,
+  f64: 11
 }
 
 class ByteCode {
@@ -65,18 +65,18 @@ class ByteCode {
 
 
 class Writer {
-  constructor(writer_type, writer_id, offset = 0) {
+  constructor(writer_type, writer_id, datatype = null) {
     this.type = writer_type;
     this.id = writer_id;
-    this.offset = offset;
+    this.datatype = datatype;
   }
 }
 
 class Reader {
-  constructor(reader_type, reader_id, offset = 0) {
+  constructor(reader_type, reader_id, datatype = null) {
     this.type = reader_type;
     this.id = reader_id;
-    this.offset = offset;
+    this.datatype = datatype;
   }
 }
 

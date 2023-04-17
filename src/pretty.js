@@ -68,6 +68,8 @@ class PrettyPrinter {
   print_reader(reader){
     if (reader.type === RT.CONSTANT){
       return `${this.wrap_const(`${reader.id} (${this.program.constants[reader.id]})`)}`
+    }else if(reader.type == RT.MEMORY){
+      return `[${reader.id},${reader.datatype}]`
     }else{
       return `${reader.id}`
     }
