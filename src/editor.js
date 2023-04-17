@@ -52,6 +52,7 @@ async function parse_and_read(source_code) {
 }
 
 async function run_all() {
+  outputSpan.innerHTML = '';
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
   if(program.error_msg !== null){
@@ -166,6 +167,7 @@ function reset_buttons_after_debug() {
     if (document.querySelector('.highlight-line') != null) {
       document.querySelector('.highlight-line').classList.remove('highlight-line');
     }
+    outputSpan.innerHTML = '';
 }
 
 async function test_l(source_code){
