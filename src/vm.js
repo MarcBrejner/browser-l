@@ -179,7 +179,7 @@ class VirtualMachine {
                 var idx = this.state.registers["$y"];
                 var str = "";
                 while(this.state.memory[idx] != 0) {
-                    str += String.fromCharCode(this.state.memory[idx]);
+                    str += String.fromCharCode(parseInt(this.state.memory[idx], 16));
                     idx++;
                 }
                 console.log(str);
