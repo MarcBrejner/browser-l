@@ -19,6 +19,23 @@ function number_to_byte_array(number, size) {
 }
 
 
+function byte_array_to_number(byteArray, type) {
+    let number = 0;
+    let signed = type === DT.SIGNED;
+    const signBit = 0x80 << (byteArray.length - 1) * 8;
+
+    for (let i = 0; i < byteArray.length; i++) {
+      number = (number << 8) + parseInt(byteArray[i], 16);
+    }
+
+    if (signed && (number & signBit)) {
+        number -= 1 << (byteArray.length * 8);
+    }
+  
+    return number;
+}
+
+
 class VirtualMachine {
 
     update_vm(program, memory = new Array(112).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0}) {
@@ -115,12 +132,15 @@ class VirtualMachine {
                 throw new Error("Register ",reader.id," not found");
             case RT.MEMORY:
                 let mem_index =  this.read(new Reader(RT.REGISTER, reader.id));
-                let return_value = 0;
+                let mem_chunk = new Array();
+                let return_value = -1;
                 try{
-                    for (let i = 0; i < reader.offset; i++){
-                        return_value += this.state.memory[mem_index];
+                    for (let i = 0; i < (reader.datatype.size/8); i++){
+                        mem_chunk[i] = this.state.memory[mem_index];
                         mem_index += 1;
                     }
+                    return_value = byte_array_to_number(mem_chunk,reader.datatype.type);
+
                 }catch (error){
                     if(mem_index > this.state.memory.length){
                         console.log("Memory index out of bounds");
