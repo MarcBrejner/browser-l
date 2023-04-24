@@ -7,27 +7,27 @@ import docker
 import requests
 
 
-def compile_wasm():
+def create_docker():
+    global container
     image_tag="from-py"
     client = docker.from_env()
     client.images.build(path="./", tag=image_tag, rm=True)
     print("Created image")
     container = client.containers.create(image_tag)
     print("Created container")
-    container_id = container.id
+
+def compile_tree_sitter():
     os.makedirs("./temp/tree-sitter", exist_ok=True)
-    os.system("docker cp {}:/tree-sitter-L0.wasm ./temp/tree-sitter-l0.wasm".format(container_id))
-    print("Copied tree-sitter-l0.wasm")
-    os.system("docker cp {}:/tree-sitter-twenty/lib/binding_web/tree-sitter.js ./temp/tree-sitter/tree-sitter.js".format(container_id))
+    os.system("docker cp {}:/tree-sitter-twenty/lib/binding_web/tree-sitter.js ./temp/tree-sitter/tree-sitter.js".format(container.id))
     print("Copied tree-sitter.js")
-    container.remove()
-    print("Removed container")
+
+def compile_L_level(level):
+    os.makedirs("./temp/tree-sitter", exist_ok=True)
+    os.system("docker cp {}:/tree-sitter-L{}.wasm ./temp/tree-sitter-l{}.wasm".format(container.id, level, level))
+    print("Copied tree-sitter-l{}.wasm".format(level))
+
 
 def encode_wasm():
-    with open("./temp/tree-sitter-l0.wasm","rb") as wasm_file:
-        encoded = base64.b64encode(wasm_file.read())
-        encoded_l = encoded.decode('utf-8')
-
     code = """function asciiToBinary(str) {
         return atob(str)
     }
@@ -41,7 +41,15 @@ def encode_wasm():
     return bytes;
     }
     """
-    code += "encoded = '{}'; \nvar L_wasm = decode(encoded);".format(encoded_l)
+    #define directory paths
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        compile_L_level(level)
+        with open("./temp/tree-sitter-l{}.wasm".format(level),"rb") as wasm_file:
+            encoded = base64.b64encode(wasm_file.read())
+            encoded_l = encoded.decode('utf-8')
+        code += "encoded_L{} = '{}'; \nvar L{}_wasm = decode(encoded_L{});\n".format(level, encoded_l, level, level)
+
     with open("temp/loadparser.js", "w") as output_file:
         output_file.write(code)
 
@@ -95,12 +103,14 @@ def delete_codemirror():
     shutil.rmtree('./temp/codemirror')
     shutil.rmtree('./temp/tree-sitter')
     os.remove("./temp/tree-sitter-l0.wasm")
+    os.remove("./temp/tree-sitter-l1.wasm")
     os.remove("./temp/loadparser.js")
     os.rmdir('./temp')
 
-
-compile_wasm()
+create_docker()
+compile_tree_sitter()
 encode_wasm()
 download_codemirror()
 bundle_html()
 delete_codemirror()
+container.remove()

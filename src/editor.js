@@ -29,7 +29,7 @@ const Parser = window.TreeSitter;
 async function initialize_parser() {
   await Parser.init();
   const parser = new Parser();
-  const L = await Parser.Language.load(L_wasm);
+  const L = await Parser.Language.load(L1_wasm);
   parser.setLanguage(L);
   return parser;
 }
@@ -47,8 +47,10 @@ async function parse_and_pretty_print(source_code) {
 async function parse_and_read(source_code) {
   var parser = await initialize_parser();
   var tree = await parser.parse(source_code);
+  var emitted_code = emit_statements(tree, emit_l1);
+  var emitted_tree = await parser.parse(emitted_code);
   // p_source from pretty.js pretty prints the code using the input parse tree
-  return compile(tree);
+  return compile(emitted_tree);
 }
 
 async function run_all() {
