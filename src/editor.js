@@ -28,15 +28,20 @@ codeMirrorEditor.on('change', async function(cMirror) {
 const Parser = window.TreeSitter;
 async function initialize_parser() {
   await Parser.init();
-  const parser = new Parser();
-  const L = await Parser.Language.load(L1_wasm);
-  parser.setLanguage(L);
-  return parser;
+  var parsers = new Array();
+  for (var i = 0; i < encoded_levels.length; i++) {
+    let parser = new Parser();
+    let L = await Parser.Language.load(encoded_levels[i]);
+    parser.setLanguage(L);
+    parsers.push(parser);
+  }
+  return parsers;
 }
 
 // Pretty print input sourcecode
 async function parse_and_pretty_print(source_code) {
-  let parser = await initialize_parser();
+  let parsers = await initialize_parser();
+  let parser = parsers[0];
   let tree = await parser.parse(source_code);
   let program = compile(tree);
   // parse_byte_code from pretty.js pretty prints the byte_code
@@ -45,7 +50,8 @@ async function parse_and_pretty_print(source_code) {
 }
 
 async function parse_and_read(source_code) {
-  var parser = await initialize_parser();
+  var parsers = await initialize_parser();
+  let parser = parsers[0];
   var tree = await parser.parse(source_code);
   var emitted_code = emit_statements(tree, emit_l1);
   var emitted_tree = await parser.parse(emitted_code);

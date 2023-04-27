@@ -40,6 +40,7 @@ def encode_wasm():
     }
     return bytes;
     }
+    var encoded_levels = new Array();
     """
     #define directory paths
     for filename in os.listdir('levels'):
@@ -48,7 +49,7 @@ def encode_wasm():
         with open("./temp/tree-sitter-l{}.wasm".format(level),"rb") as wasm_file:
             encoded = base64.b64encode(wasm_file.read())
             encoded_l = encoded.decode('utf-8')
-        code += "encoded_L{} = '{}'; \nvar L{}_wasm = decode(encoded_L{});\n".format(level, encoded_l, level, level)
+        code += "encoded_levels.push(decode('{}'));\n".format(encoded_l)
 
     with open("temp/loadparser.js", "w") as output_file:
         output_file.write(code)
@@ -95,15 +96,16 @@ def download_codemirror():
     with ZipFile(codemirror_path + '/codemirror.zip', 'r') as zip_ref:
         zip_ref.extractall(path=codemirror_path)
 
-    shutil.move(codemirror_path + "/codemirror-5.65.12/lib/codemirror.css", codemirror_path + "/codemirror.css")
-    shutil.move(codemirror_path + "/codemirror-5.65.12/lib/codemirror.js", codemirror_path + "/codemirror.js")
+    shutil.move(codemirror_path + "/codemirror-5.65.13/lib/codemirror.css", codemirror_path + "/codemirror.css")
+    shutil.move(codemirror_path + "/codemirror-5.65.13/lib/codemirror.js", codemirror_path + "/codemirror.js")
 
 def delete_codemirror():
     os.chdir('./framework')
     shutil.rmtree('./temp/codemirror')
     shutil.rmtree('./temp/tree-sitter')
-    os.remove("./temp/tree-sitter-l0.wasm")
-    os.remove("./temp/tree-sitter-l1.wasm")
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        os.remove("./temp/tree-sitter-l{}.wasm".format(level))
     os.remove("./temp/loadparser.js")
     os.rmdir('./temp')
 
