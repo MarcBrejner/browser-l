@@ -1,3 +1,3 @@
-function emit_l0(statement){
+(function (statement){
     return statement.text;
-}
+})

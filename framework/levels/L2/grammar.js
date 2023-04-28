@@ -33,7 +33,8 @@ module.exports = grammar({
 				$.syscall,
 				field("assignment", seq($.writer, ':=', $.expression)),
 				field("conditional", seq($.writer, '?=', $.expression)),
-				field("VLAD", seq("VLAD", choice($.register, $.label)))
+				field("goto", seq("goto", choice($.register, $.label))),
+				field("L2TEST", seq("L2TEST", choice($.register, $.label)))
 			),
 
 		expression: $ =>

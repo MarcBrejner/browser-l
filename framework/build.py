@@ -29,22 +29,25 @@ def compile_L_level(level):
 
 def encode_wasm():
     code = """function asciiToBinary(str) {
-        return atob(str)
-    }
+    return atob(str)
+}
 
-    function decode(encoded) {
+function decode(encoded) {
     var binaryString =  asciiToBinary(encoded);
     var bytes = new Uint8Array(binaryString.length);
     for (var i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes;
-    }
-    var encoded_levels = new Array();
-    """
+}
+var encoded_levels = new Array();
+var emit_functions = new Array();
+"""
     #define directory paths
     for filename in os.listdir('levels'):
         level = filename.replace('L', '')
+        with open("levels/{}/emit.js".format(filename),"r") as emit_function:
+            code+= "emit_functions.push({})\n".format(emit_function.read())
         compile_L_level(level)
         with open("./temp/tree-sitter-l{}.wasm".format(level),"rb") as wasm_file:
             encoded = base64.b64encode(wasm_file.read())
