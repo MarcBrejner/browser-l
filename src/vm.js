@@ -18,7 +18,6 @@ function number_to_byte_array(number, size) {
     return byteArray;
 }
 
-
 function byte_array_to_number(byteArray, type) {
     let number = 0;
     let signed = type === DT.SIGNED;

@@ -18,7 +18,6 @@ var codeMirrorEditor =
 // Fires whenever the editable window changes
 codeMirrorEditor.on('change', async function(cMirror) {
   var source_code = cMirror.getValue();
-  // codeMirrorPretty.setValue());
   //  Set content of prettyWindow to the pretty printed code
   var code = await parse_and_pretty_print(source_code);
   document.getElementById("prettyPretty").innerHTML = code;
@@ -41,11 +40,9 @@ async function initialize_parser() {
 // Pretty print input sourcecode
 async function parse_and_pretty_print(source_code) {
   let parsers = await initialize_parser();
-  let parser = parsers[1];
-  let tree = await parser.parse(source_code);
-  var emitted_code = emit_statements(tree, emit_l1);
-  var emitted_tree = await parser.parse(emitted_code);
-  let program = compile(emitted_tree);
+  
+  let tree_L0 = emit_down(source_code, emit_functions, parsers, 2);
+  let program = compile(tree_L0);
   // parse_byte_code from pretty.js pretty prints the byte_code
   var pretty_printer = get_pretty_printer(program);
   return pretty_printer.print_program();
@@ -53,12 +50,9 @@ async function parse_and_pretty_print(source_code) {
 
 async function parse_and_read(source_code) {
   var parsers = await initialize_parser();
-  let parser = parsers[1];
-  var tree = await parser.parse(source_code);
-  var emitted_code = emit_statements(tree, emit_l1);
-  var emitted_tree = await parser.parse(emitted_code);
-  // p_source from pretty.js pretty prints the code using the input parse tree
-  return compile(emitted_tree);
+  let tree_L0 = emit_down(source_code, emit_functions, parsers, 2);
+  let program = compile(tree_L0);
+  return program;
 }
 
 async function run_all() {
@@ -124,7 +118,6 @@ function execute_step() {
 
 function show_results_in_html(state) {
   registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
-
   var rows = ""
   var rowText = "";
   for (var i = 0; i < state.memory.length; i += 16) {
@@ -144,10 +137,6 @@ function show_results_in_html(state) {
     rows += `<tr>${row}</tr>`
   }
   memoryDiv.innerHTML = `<table>${rows}</table>`
-
-  // function toHex(d) {
-  //   return ("0" + (Number(d).toString(16))).slice(-2).toUpperCase()
-  // }
 }
 
 function get_virtual_machine(program) {
