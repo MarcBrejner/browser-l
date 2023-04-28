@@ -14,9 +14,12 @@
     <div class="EditorWindows">
       <textarea id="editorWindow" cols="30" rows="10">
 const @H 3;
+$?:=@H;
 #HERE 
-$x := 1 + @H;
+$x := 0;
 $y := 2;
+$?:=$?-1;
+syscall;
 goto #HERE
       </textarea>
       <div id="prettyPretty"></div>
@@ -69,6 +72,7 @@ goto #HERE
     <script src="src/editor.js"></script>
     <script src="framework/levels/L0/emit.js"></script>
     <script src="framework/levels/L1/emit.js"></script>
+    <script src="framework/levels/L2/emit.js"></script>
     <script>run_all()</script>
   </body>
 </html>
