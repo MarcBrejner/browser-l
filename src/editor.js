@@ -70,6 +70,7 @@ async function run_all() {
   console.log(program)
   // updates the program of the virtual machine
   get_virtual_machine(program);
+  reset_buttons_after_debug();
   execute_all();
 }
 
@@ -109,7 +110,6 @@ function execute_step() {
   var VM = get_virtual_machine();
   if (VM.state.registers['$!'] >= VM.program.instructions.length) {
     console.log("EOF");
-    reset_buttons_after_debug();
     return -1;
   }
 
