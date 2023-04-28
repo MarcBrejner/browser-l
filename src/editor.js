@@ -4,6 +4,7 @@ var constantsDiv = document.getElementById("constants");
 var dataDiv = document.getElementById("data");
 var memoryDiv = document.getElementById("memory");
 var outputSpan = document.getElementById("output");
+var chosenLevel = document.getElementById("levels");
 
 var _VirtualMachine = null;
 var _PrettyPrinter = null;
@@ -14,6 +15,10 @@ var codeMirrorEditor =
       lineNumbers : true,
       value : "",
     })
+
+chosenLevel.onchange = function(){
+  CodeMirror.signal(codeMirrorEditor,'change', codeMirrorEditor)
+}
 
 // Fires whenever the editable window changes
 codeMirrorEditor.on('change', async function(cMirror) {
@@ -41,7 +46,7 @@ async function initialize_parser() {
 async function parse_and_pretty_print(source_code) {
   let parsers = await initialize_parser();
   
-  let tree_L0 = emit_down(source_code, emit_functions, parsers, 2);
+  let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
   let program = compile(tree_L0);
   // parse_byte_code from pretty.js pretty prints the byte_code
   var pretty_printer = get_pretty_printer(program);
@@ -50,7 +55,7 @@ async function parse_and_pretty_print(source_code) {
 
 async function parse_and_read(source_code) {
   var parsers = await initialize_parser();
-  let tree_L0 = emit_down(source_code, emit_functions, parsers, 2);
+  let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
   let program = compile(tree_L0);
   return program;
 }

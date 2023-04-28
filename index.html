@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <div>
+      <label for="levels">Choose a level:</label>
+      <select name="levels" id="levels">
+      </select>
+    </div>
     <script type="text/javascript" src="dev/assets/tree-sitter/tree-sitter.js"></script>
     <script type="text/javascript" src="dev/assets/loadparser.js"></script>
 
@@ -20,7 +25,6 @@ $x := 0;
 $y := 2;
 $?:=$?-1;
 syscall;
-goto #HERE
       </textarea>
       <div id="prettyPretty"></div>
     </div>
@@ -63,7 +67,6 @@ goto #HERE
         <span id="output"></span>
       </span>
     </span>
-
     <script src="src/bytecode.js"></script>
     <script src="src/emitter.js"></script>
     <script src="src/compiler.js"></script>
