@@ -184,7 +184,6 @@ function compile(tree) {
      return new Program([],{},{},{},{},errors[0]);
   }
 
-  console.log(tree.rootNode.text)
   const declarations =
     tree.rootNode.childCount > 1 ? tree.rootNode.child(0) : [];
   const statements =

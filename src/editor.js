@@ -21,7 +21,7 @@ codeMirrorEditor.on('change', async function(cMirror) {
   //  Set content of prettyWindow to the pretty printed code
   var code = await parse_and_pretty_print(source_code);
   document.getElementById("prettyPretty").innerHTML = code;
-});
+})
 
 // Load parser
 const Parser = window.TreeSitter;
