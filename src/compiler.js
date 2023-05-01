@@ -178,6 +178,7 @@ function compile_statements(statements) {
 
 
 function compile(tree) {
+  // TODO: Add erros on higher levels than 0
   var errors = find_error(tree.rootNode, new Array());
 
   if(errors.length > 0){

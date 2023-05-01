@@ -40,6 +40,7 @@ function decode(encoded) {
     }
     return bytes;
 }
+
 var encoded_levels = new Array();
 var emit_functions = new Array();
 """
@@ -53,6 +54,17 @@ var emit_functions = new Array();
             encoded = base64.b64encode(wasm_file.read())
             encoded_l = encoded.decode('utf-8')
         code += "encoded_levels.push(decode('{}'));\n".format(encoded_l)
+    
+    code += """
+    for (var i = 0; i<=emit_functions.length-1; i++){
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.innerHTML = "L"+i;
+        document.getElementById('levels').appendChild(opt);
+    }
+    document.getElementById('levels').value = 0;
+    """
+
 
     with open("temp/loadparser.js", "w") as output_file:
         output_file.write(code)
