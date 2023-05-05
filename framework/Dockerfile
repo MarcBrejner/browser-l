@@ -28,10 +28,9 @@ WORKDIR "/"
 RUN npm install tree-sitter-cli@0.20.0
 ENV PATH=$PATH:/node_modules/.bin
 # Get input language
-COPY levels/L0 L0
-WORKDIR "/L0"
-RUN tree-sitter generate
-WORKDIR "/"
-# Compile input language to wasm
-RUN npx tree-sitter build-wasm L0
+COPY levels levels 
 
+# Iterate through each L folder, generate tree-sitter grammar and compile to wasm
+RUN for dir in $(ls -d /levels/L*/); do \
+      cd $dir && tree-sitter generate && cd / && npx tree-sitter build-wasm $dir; \
+    done

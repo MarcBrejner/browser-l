@@ -4,6 +4,7 @@ var constantsDiv = document.getElementById("constants");
 var dataDiv = document.getElementById("data");
 var memoryDiv = document.getElementById("memory");
 var outputSpan = document.getElementById("output");
+var chosenLevel = document.getElementById("levels");
 
 var _VirtualMachine = null;
 var _PrettyPrinter = null;
@@ -15,40 +16,48 @@ var codeMirrorEditor =
       value : "",
     })
 
+chosenLevel.onchange = function(){
+  CodeMirror.signal(codeMirrorEditor,'change', codeMirrorEditor)
+}
+
 // Fires whenever the editable window changes
 codeMirrorEditor.on('change', async function(cMirror) {
   var source_code = cMirror.getValue();
-  // codeMirrorPretty.setValue());
   //  Set content of prettyWindow to the pretty printed code
   var code = await parse_and_pretty_print(source_code);
   document.getElementById("prettyPretty").innerHTML = code;
-});
+})
 
 // Load parser
 const Parser = window.TreeSitter;
 async function initialize_parser() {
   await Parser.init();
-  const parser = new Parser();
-  const L = await Parser.Language.load(L_wasm);
-  parser.setLanguage(L);
-  return parser;
+  var parsers = new Array();
+  for (var i = 0; i < encoded_levels.length; i++) {
+    let parser = new Parser();
+    let L = await Parser.Language.load(encoded_levels[i]);
+    parser.setLanguage(L);
+    parsers.push(parser);
+  }
+  return parsers;
 }
 
 // Pretty print input sourcecode
 async function parse_and_pretty_print(source_code) {
-  let parser = await initialize_parser();
-  let tree = await parser.parse(source_code);
-  let program = compile(tree);
+  let parsers = await initialize_parser();
+  
+  let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
+  let program = compile(tree_L0);
   // parse_byte_code from pretty.js pretty prints the byte_code
   var pretty_printer = get_pretty_printer(program);
   return pretty_printer.print_program();
 }
 
 async function parse_and_read(source_code) {
-  var parser = await initialize_parser();
-  var tree = await parser.parse(source_code);
-  // p_source from pretty.js pretty prints the code using the input parse tree
-  return compile(tree);
+  var parsers = await initialize_parser();
+  let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
+  let program = compile(tree_L0);
+  return program;
 }
 
 async function run_all() {
@@ -114,7 +123,6 @@ function execute_step() {
 
 function show_results_in_html(state) {
   registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
-
   var rows = ""
   var rowText = "";
   for (var i = 0; i < state.memory.length; i += 16) {
@@ -134,10 +142,6 @@ function show_results_in_html(state) {
     rows += `<tr>${row}</tr>`
   }
   memoryDiv.innerHTML = `<table>${rows}</table>`
-
-  // function toHex(d) {
-  //   return ("0" + (Number(d).toString(16))).slice(-2).toUpperCase()
-  // }
 }
 
 function get_virtual_machine(program) {

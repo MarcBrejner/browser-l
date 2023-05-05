@@ -7,41 +7,65 @@ import docker
 import requests
 
 
-def compile_wasm():
+def create_docker():
+    global container
     image_tag="from-py"
     client = docker.from_env()
     client.images.build(path="./", tag=image_tag, rm=True)
     print("Created image")
     container = client.containers.create(image_tag)
     print("Created container")
-    container_id = container.id
+
+def compile_tree_sitter():
     os.makedirs("./temp/tree-sitter", exist_ok=True)
-    os.system("docker cp {}:/tree-sitter-L0.wasm ./temp/tree-sitter-l0.wasm".format(container_id))
-    print("Copied tree-sitter-l0.wasm")
-    os.system("docker cp {}:/tree-sitter-twenty/lib/binding_web/tree-sitter.js ./temp/tree-sitter/tree-sitter.js".format(container_id))
+    os.system("docker cp {}:/tree-sitter-twenty/lib/binding_web/tree-sitter.js ./temp/tree-sitter/tree-sitter.js".format(container.id))
     print("Copied tree-sitter.js")
-    container.remove()
-    print("Removed container")
+
+def compile_L_level(level):
+    os.makedirs("./temp/tree-sitter", exist_ok=True)
+    os.system("docker cp {}:/tree-sitter-L{}.wasm ./temp/tree-sitter-l{}.wasm".format(container.id, level, level))
+    print("Copied tree-sitter-l{}.wasm".format(level))
+
 
 def encode_wasm():
-    with open("./temp/tree-sitter-l0.wasm","rb") as wasm_file:
-        encoded = base64.b64encode(wasm_file.read())
-        encoded_l = encoded.decode('utf-8')
-
     code = """function asciiToBinary(str) {
-        return atob(str)
-    }
+    return atob(str)
+}
 
-    function decode(encoded) {
+function decode(encoded) {
     var binaryString =  asciiToBinary(encoded);
     var bytes = new Uint8Array(binaryString.length);
     for (var i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes;
+}
+
+var encoded_levels = new Array();
+var emit_functions = new Array();
+"""
+    #define directory paths
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        with open("levels/{}/emit.js".format(filename),"r") as emit_function:
+            code+= "emit_functions.push({})\n".format(emit_function.read())
+        compile_L_level(level)
+        with open("./temp/tree-sitter-l{}.wasm".format(level),"rb") as wasm_file:
+            encoded = base64.b64encode(wasm_file.read())
+            encoded_l = encoded.decode('utf-8')
+        code += "encoded_levels.push(decode('{}'));\n".format(encoded_l)
+    
+    code += """
+    for (var i = 0; i<=emit_functions.length-1; i++){
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.innerHTML = "L"+i;
+        document.getElementById('levels').appendChild(opt);
     }
+    document.getElementById('levels').value = 0;
     """
-    code += "encoded = '{}'; \nvar L_wasm = decode(encoded);".format(encoded_l)
+
+
     with open("temp/loadparser.js", "w") as output_file:
         output_file.write(code)
 
@@ -87,20 +111,23 @@ def download_codemirror():
     with ZipFile(codemirror_path + '/codemirror.zip', 'r') as zip_ref:
         zip_ref.extractall(path=codemirror_path)
 
-    shutil.move(codemirror_path + "/codemirror-5.65.12/lib/codemirror.css", codemirror_path + "/codemirror.css")
-    shutil.move(codemirror_path + "/codemirror-5.65.12/lib/codemirror.js", codemirror_path + "/codemirror.js")
+    shutil.move(codemirror_path + "/codemirror-5.65.13/lib/codemirror.css", codemirror_path + "/codemirror.css")
+    shutil.move(codemirror_path + "/codemirror-5.65.13/lib/codemirror.js", codemirror_path + "/codemirror.js")
 
 def delete_codemirror():
     os.chdir('./framework')
     shutil.rmtree('./temp/codemirror')
     shutil.rmtree('./temp/tree-sitter')
-    os.remove("./temp/tree-sitter-l0.wasm")
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        os.remove("./temp/tree-sitter-l{}.wasm".format(level))
     os.remove("./temp/loadparser.js")
     os.rmdir('./temp')
 
-
-compile_wasm()
+create_docker()
+compile_tree_sitter()
 encode_wasm()
 download_codemirror()
 bundle_html()
 delete_codemirror()
+container.remove()

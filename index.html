@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <div>
+      <label for="levels">Choose a level:</label>
+      <select name="levels" id="levels">
+      </select>
+    </div>
     <script type="text/javascript" src="dev/assets/tree-sitter/tree-sitter.js"></script>
     <script type="text/javascript" src="dev/assets/loadparser.js"></script>
 
@@ -14,9 +19,12 @@
     <div class="EditorWindows">
       <textarea id="editorWindow" cols="30" rows="10">
 const @H 3;
+$?:=@H;
 #HERE 
-$x := 1 + @H;
+$x := 0;
 $y := 2;
+$?:=$?-1;
+syscall;
       </textarea>
       <div id="prettyPretty"></div>
     </div>
@@ -59,8 +67,8 @@ $y := 2;
         <span id="output"></span>
       </span>
     </span>
-
     <script src="src/bytecode.js"></script>
+    <script src="src/emitter.js"></script>
     <script src="src/compiler.js"></script>
     <script src="src/pretty.js"></script>
     <script src="src/vm.js"></script>
