@@ -31,10 +31,10 @@ module.exports = grammar({
 		statement: $ =>
 			choice(
 				$.syscall,
+				field("variable", seq($.variable_name, ":", $.type, "=", $.expression)),
 				field("assignment", seq($.writer, ':=', $.expression)),
 				field("conditional", seq($.writer, '?=', $.expression)),
 				field("goto", seq("goto", choice($.register, $.label))),
-				field("L2TEST", seq("L2TEST", choice($.register, $.label)))
 			),
 
 		expression: $ =>
@@ -48,7 +48,8 @@ module.exports = grammar({
 			choice(
 				$.assign,
 				$.datavar,
-				$.number
+				$.number,
+				$.variable_name
 			),
 
 		writer: $ =>
@@ -69,14 +70,14 @@ module.exports = grammar({
 				$.label
 			),
 
-		constant_declaration: $ => /@[A-Z]+\s[0-9]+/,
+		constant_declaration: $ => /@[_a-zA-Z]+\s[0-9]+/,
 
-		data_declaration: $ => /&[A-Z]+\s".+"/,
+		data_declaration: $ => /&[_a-zA-Z]+\s".+"/,
 		//constant: $ => seq('@', $.address, optional($.number)),
 
-		constant: $ => /@[A-Z]+/,
+		constant: $ => /@[_a-zA-Z]+/,
 
-		data: $ => /&[A-Z]+/,
+		data: $ => /&[_a-zA-Z]+/,
 		//data: $ => seq('&', $.address, choice($.number, $.string)),
 	
 		label: $ => /#[A-Z]+/,
@@ -95,6 +96,8 @@ module.exports = grammar({
 		operator: () => /[+-/\*|&><=]+/,
 
 		number: () => /[0-9]+/,
+
+		variable_name: () => /[_a-zA-Z]+/
 
 		//address: () => /[a-zA-Z_]+/,
 	}

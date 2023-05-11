@@ -1,3 +1,3 @@
 (function (statement){
-    return statement.text;
+    SourceCodeBuilder.addStatement(statement.text)
 })
