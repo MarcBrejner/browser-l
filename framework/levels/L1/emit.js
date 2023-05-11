@@ -1,7 +1,11 @@
 (function (statement){
-    if (statement.childCount === 0) return statement.text;
-    if (statement.child(0).type == 'goto'){
-        return `$! ?= ${statement.child(1).text} - 1;`; //L0 kode for goto
+    if (statement.childCount === 0)  {
+        SourceCodeBuilder.addStatement(statement.text);
+        return;
     }
-    return statement.text;
+    if (statement.child(0).type == 'goto'){
+        SourceCodeBuilder.addStatement(`$! ?= ${statement.child(1).text} - 1;`)
+        return;
+    }
+    SourceCodeBuilder.addStatement(statement.text);
 })

@@ -62,7 +62,7 @@ var emit_functions = new Array();
         opt.innerHTML = "L"+i;
         document.getElementById('levels').appendChild(opt);
     }
-    document.getElementById('levels').value = 0;
+    document.getElementById('levels').value = 2;
     """
 
 
