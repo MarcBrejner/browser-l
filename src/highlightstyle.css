@@ -13,6 +13,7 @@
 body {
     color:dimgray;
     font-family: monospace;
+    cursor: default;
 }
 
 .button {
@@ -43,6 +44,28 @@ body {
 
 .syscall_output {
     display: inline;
+}
+
+.show-memory-id-on-hover {
+    position: relative;
+}
+
+.show-memory-id-on-hover:hover::after {
+    content: attr(memory-id);
+    position: absolute;
+    visibility: visible;
+    background-color: #f1f1f1;
+    color: #000;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    width: 100px;
+    top: -30px;
+    transform: translateX(-50%);
+  }
+
+.show-memory-id-on-hover[memory-id=""]::after {
+    display: none;
 }
 
 #prettyPretty {

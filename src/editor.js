@@ -127,10 +127,12 @@ function show_results_in_html(state) {
   var rowText = "";
   for (var i = 0; i < state.memory.length; i += 16) {
     rowText = "";
+    // Print the actual memory
     var row = `<td>${i.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})}--</td>`
     for (var j = i; j < state.memory.length && j < i + 16; j += 1) {
-      row += `<td>${state.memory[j]}</td>`
+      row += `<td class='show-memory-id-on-hover' memory-id='${state.memory_id[j]}'>${state.memory[j]}</td>`
     }
+    // Print the memory string representation to the right of each row
     for (var k = i; k < state.memory.length && k < i + 16; k += 1) {
       if (state.memory[k] === '00') {
         rowText += " ";

@@ -1,8 +1,9 @@
 class State {
-    constructor(memory, registers, data){
+    constructor(memory, registers, data, memory_id){
         this.memory = memory
         this.registers = registers;
         this.data = data;
+        this.memory_id = memory_id
     }
 }
 
@@ -37,25 +38,30 @@ function byte_array_to_number(byteArray, type) {
 
 class VirtualMachine {
 
-    update_vm(program, memory = new Array(112).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0}) {
+    memorySize = 112;
+
+    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0}) {
         this.program = program;
         this.state = this.init_state(memory, registers);
     }
 
     init_state(memory, registers){
         var state_data={};
+        var memory_id = new Array(this.memorySize).fill('');
         map_strings_to_memory(this.program.data);
 
         return new State(memory,
             registers,
-            state_data);
+            state_data,
+            memory_id);
 
-        function map_strings_to_memory(program_constants){
+        function map_strings_to_memory(program_data){
             var pointer = 0;
-            Object.entries(program_constants).forEach(([id,str]) =>{
+            Object.entries(program_data).forEach(([id,str]) =>{
                 //let pointer = memory_for_constants.length;
                 state_data[id] = pointer;
                 for(let char in str){
+                    memory_id[pointer] = id;
                     memory[pointer] = number_to_byte_array(str.charCodeAt(char),8)[0];
                     pointer += 1;
                 }
