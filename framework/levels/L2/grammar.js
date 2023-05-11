@@ -70,14 +70,14 @@ module.exports = grammar({
 				$.label
 			),
 
-		constant_declaration: $ => /@[a-zA-Z]+\s[0-9]+/,
+		constant_declaration: $ => /@[_a-zA-Z]+\s[0-9]+/,
 
-		data_declaration: $ => /&[a-zA-Z]+\s".+"/,
+		data_declaration: $ => /&[_a-zA-Z]+\s".+"/,
 		//constant: $ => seq('@', $.address, optional($.number)),
 
-		constant: $ => /@[a-zA-Z]+/,
+		constant: $ => /@[_a-zA-Z]+/,
 
-		data: $ => /&[a-zA-Z]+/,
+		data: $ => /&[_a-zA-Z]+/,
 		//data: $ => seq('&', $.address, choice($.number, $.string)),
 	
 		label: $ => /#[A-Z]+/,
@@ -97,7 +97,7 @@ module.exports = grammar({
 
 		number: () => /[0-9]+/,
 
-		variable_name: () => /[a-zA-Z]+/
+		variable_name: () => /[_a-zA-Z]+/
 
 		//address: () => /[a-zA-Z_]+/,
 	}

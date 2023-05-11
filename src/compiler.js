@@ -104,8 +104,8 @@ function compile_statement(statement) {
 function compile_declaration(declaration, constants, data){
   let type = declaration.child(0).text;
   // TODO: hent fra grammar i stedet for
-  let data_regex = /(&[a-zA-Z]+)\s(".+")/;
-  let const_regex = /(@[a-zA-Z]+)\s([0-9]+)/;
+  let data_regex = /(&[_a-zA-Z]+)\s(".+")/;
+  let const_regex = /(@[_a-zA-Z]+)\s([0-9]+)/;
   let declaration_string = declaration.child(1).text;
   if (type === "const") {
     let match = declaration_string.match(const_regex);

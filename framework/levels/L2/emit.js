@@ -4,8 +4,9 @@
         return;
     }
 
+    var variablePrefix = "_";
     if (statement.child(0).type == 'variable_name'){
-        var variableName = statement.child(0).text;
+        var variableName = variablePrefix + statement.child(0).text;
         var variableType = statement.child(2).text;
         variables.variableTypes[variableName] = variableType;
         var variableSize = parseInt(variableType.replace(/\D/g, ''));
@@ -41,6 +42,8 @@
         var binaryExpression = statement.child(2 + childOffset).childCount === 3;
         var reader1 = statement.child(2 + childOffset).child(0).child(0);
         var reader2 = binaryExpression ? statement.child(2 + childOffset).child(2).child(0) : null;
+        var reader1Name = variablePrefix + reader1.text;
+        var reader2Name = reader2 == null ? "" : variablePrefix + reader2.text;
         var expression = statement.child(2 + childOffset);
         // L2: $x := f + g
         // L0: 
@@ -48,17 +51,17 @@
         // $m := &g;
         // $x := [$n, u8] + [$m,u32]
         if (binaryExpression && reader1.type === 'variable_name' && reader2.type === 'variable_name') {
-            SourceCodeBuilder.addStatement(`$n:=&${reader1.text};\n`);
-            SourceCodeBuilder.addStatement(`$m:=&${reader2.text};\n`);
-            SourceCodeBuilder.addStatement(`${statement.child(0).text}:=[$n,${variables.variableTypes[reader1.text]}] ${expression.child(1).text} [$m,${variables.variableTypes[reader2.text]}];\n`);
+            SourceCodeBuilder.addStatement(`$n:=&${reader1Name};\n`);
+            SourceCodeBuilder.addStatement(`$m:=&${reader2Name};\n`);
+            SourceCodeBuilder.addStatement(`${statement.child(0).text}:=[$n,${variables.variableTypes[reader1Name]}] ${expression.child(1).text} [$m,${variables.variableTypes[reader2Name]}];\n`);
         } 
         // L2: $x := f + 5
         // L0: 
         // $n := &f;
         // $x := [$n, u8] + 5
         else if (binaryExpression && reader1.type === 'variable_name') {
-            SourceCodeBuilder.addStatement(`$n:=&${reader1.text};\n`);
-            SourceCodeBuilder.addStatement(`${statement.child(0).text}:=[$n,${variables.variableTypes[reader1.text]}] ${expression.child(1).text} ${expression.child(2).text};\n`);
+            SourceCodeBuilder.addStatement(`$n:=&${reader1Name};\n`);
+            SourceCodeBuilder.addStatement(`${statement.child(0).text}:=[$n,${variables.variableTypes[reader1Name]}] ${expression.child(1).text} ${expression.child(2).text};\n`);
         }
 
         // L2: $x := 5 + g
@@ -66,8 +69,8 @@
         // $n := &g;
         // $x := 5 + [$n, u8] 
         else if (binaryExpression && reader2.type === 'variable_name') {
-            SourceCodeBuilder.addStatement(`$n:=&${reader2.text};\n`);
-            SourceCodeBuilder.addStatement(`${statement.child(0).text}:=${expression.child(0).text} ${expression.child(1).text} [$n,${variables.variableTypes[reader2.text]}];\n`);
+            SourceCodeBuilder.addStatement(`$n:=&${reader2Name};\n`);
+            SourceCodeBuilder.addStatement(`${statement.child(0).text}:=${expression.child(0).text} ${expression.child(1).text} [$n,${variables.variableTypes[reader2Name]}];\n`);
         }
 
         // L2: $x := g
@@ -75,8 +78,8 @@
         // $n := &g;
         // $x := [$n, u8] 
         else if (!binaryExpression) {
-            SourceCodeBuilder.addStatement(`$n:=&${reader1.text};\n`);
-            SourceCodeBuilder.addStatement(`${statement.child(0).text}:=[$n,${variables.variableTypes[reader1.text]}];\n`);
+            SourceCodeBuilder.addStatement(`$n:=&${reader1Name};\n`);
+            SourceCodeBuilder.addStatement(`${statement.child(0).text}:=[$n,${variables.variableTypes[reader1Name]}];\n`);
         }
     }
 })

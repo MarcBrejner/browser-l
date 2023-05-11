@@ -5,6 +5,7 @@
     }
     if (statement.child(0).type == 'goto'){
         SourceCodeBuilder.addStatement(`$! ?= ${statement.child(1).text} - 1;`)
+        return;
     }
     SourceCodeBuilder.addStatement(statement.text);
 })
