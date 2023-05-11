@@ -59,7 +59,7 @@ body {
     text-align: center;
     border-radius: 6px;
     padding: 5px;
-    width: 100px;
+    width: max-content;
     top: -30px;
     transform: translateX(-50%);
   }
@@ -95,6 +95,14 @@ body {
     background-color:yellow;
 }
 
+.highlight-memory-id {
+    background-color:lightgreen;
+}
+
 #semicolon {
     padding-right: 5px;
+}
+
+table {
+    border-spacing: 0px;
 }

@@ -40,7 +40,7 @@ class VirtualMachine {
 
     memorySize = 112;
 
-    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0}) {
+    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0, '$n':0, '$m':0}) {
         this.program = program;
         this.state = this.init_state(memory, registers);
     }

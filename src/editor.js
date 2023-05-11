@@ -125,12 +125,13 @@ function show_results_in_html(state) {
   registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
   var rows = ""
   var rowText = "";
+  var tbody = "";
   for (var i = 0; i < state.memory.length; i += 16) {
     rowText = "";
     // Print the actual memory
     var row = `<td>${i.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})}--</td>`
     for (var j = i; j < state.memory.length && j < i + 16; j += 1) {
-      row += `<td class='show-memory-id-on-hover' memory-id='${state.memory_id[j]}'>${state.memory[j]}</td>`
+        row += `<td class='show-memory-id-on-hover' memory-id='${state.memory_id[j]}'>${state.memory[j]}</td>`
     }
     // Print the memory string representation to the right of each row
     for (var k = i; k < state.memory.length && k < i + 16; k += 1) {
@@ -143,7 +144,26 @@ function show_results_in_html(state) {
     row += `<td>|   ${rowText}</td>`
     rows += `<tr>${row}</tr>`
   }
-  memoryDiv.innerHTML = `<table>${rows}</table>`
+  memoryDiv.innerHTML = `<table id=memory-table>${rows}</table>`
+
+  const tooltips = document.querySelectorAll(".show-memory-id-on-hover:not([memory-id=''])");
+
+  tooltips.forEach(tooltip => {
+    tooltip.addEventListener('mouseover', () => {
+      const tooltipText = tooltip.getAttribute('memory-id');
+      tooltips.forEach(el => {
+        if (el.getAttribute('memory-id') === tooltipText) {
+          el.classList.add('highlight-memory-id');
+        }
+      });
+    });
+
+    tooltip.addEventListener('mouseout', () => {
+      tooltips.forEach(el => {
+        el.classList.remove('highlight-memory-id');
+      });
+    });
+  });
 }
 
 function get_virtual_machine(program) {
