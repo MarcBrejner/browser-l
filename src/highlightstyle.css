@@ -60,6 +60,7 @@ body {
     border-radius: 6px;
     padding: 5px;
     width: max-content;
+    left:10px;
     top: -30px;
     transform: translateX(-50%);
   }

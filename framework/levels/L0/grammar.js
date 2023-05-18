@@ -31,9 +31,15 @@ module.exports = grammar({
 		statement: $ =>
 			choice(
 				$.syscall,
-				field("assignment", seq($.writer, ':=', $.expression)),
-				field("conditional", seq($.writer, '?=', $.expression))
+				$.assignment,
+				$.conditional,
 			),
+		
+		assignment: $ =>
+			seq($.writer, ':=', $.expression),
+
+		conditional: $ =>
+			seq($.writer, '?=', $.expression),	
 
 		expression: $ =>
 			choice(

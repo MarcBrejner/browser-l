@@ -6,6 +6,7 @@ function get_reader_type(reader) {
   }
 }
 
+
 function get_datatype(datatype_string){
   switch(datatype_string){
     case "u8":
