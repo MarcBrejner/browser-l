@@ -4,17 +4,16 @@ class L0Builder {
     statements = [];
 
     handle(node, rec) {
-        rec.bind(this)
         if (node.type === "assignment") {
             switch (node.child(2).childCount) {
                 case 1:
-                    this.assign(node.child(0), rec(node.child(2).child(0), this.handle));
+                    this.assign(node.child(0), rec.handle(node.child(2).child(0), this));
                     break;
                 case 2:
-                    this.assign_unary(node.child(0), node.child(2).child(1), rec(node.child(2), this.handle));
+                    this.assign_unary(node.child(0), node.child(2).child(1), rec(node.child(2), this));
                     break;
                 case 3:
-                    this.assign_binary(node.child(0), rec(node.child(2).child(0), this.handle),node.child(2).child(1), rec(node.child(2).child(2), this.handle));
+                    this.assign_binary(node.child(0), rec.handle(node.child(2).child(0), this),node.child(2).child(1), rec.handle(node.child(2).child(2), this));
                     break;
             }
         }
@@ -50,7 +49,7 @@ class L1Builder extends L0Builder {
         } else if (node.type === "reader") {    
             return node;
         } else {
-            super.handle(node, this.handle)
+            super.handle(node, this)
         }
     }
 
@@ -73,21 +72,21 @@ class L2Builder extends L1Builder {
             var variable_name = node.child(0)
             var type = node.child(2)
             var expression = node.child(4)
-            this.variable_declaration(variable_name, type, expression)
+            this.variable_declaration(variable_name.text, type.text, expression)
         } else if (node.child(0).type === "variable_name") {
-            return L2Builder.read_variable(node)
+            return this.read_variable(node)
         } else if (node.type === "reader") {
             return node;
         }
         else {
-            super.handle(node, this.handle)
+            super.handle(node, this)
         }
     }
 
     variable_declaration(variable_name, type, expression) {
-        var updated_variable_name = `&_${variable_name.text}`
-        var variable_size = parseInt(type.text.replace(/\D/g, ''));
-        variables.variableTypes[variable_name] = type;
+        var updated_variable_name = `&_${variable_name}`
+        var variable_size = parseInt(type.replace(/\D/g, ''));
+        variables.variableTypes[updated_variable_name] = type;
         var memory_allocation = "";
         for (var i = 0; i < variable_size/8; i++) {
             memory_allocation += "0";
@@ -95,17 +94,19 @@ class L2Builder extends L1Builder {
         this.data[updated_variable_name] = memory_allocation;
         var _expression = compile_expression(expression);
         this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.REGISTER, '$n'), new Reader(RT.DATA, updated_variable_name)]));
-        this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.MEMORY, '$n', get_datatype(type.text))].concat(_expression)));
+        this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.MEMORY, '$n', get_datatype(type))].concat(_expression)));
     }
 
         // L2: $x := g
         // L0: 
         // $n := &g;
         // return [$n, u8] 
-    read_variable(variable_name) {
+    read_variable(variable_node) {
         // TODO: fix that if it's a binary assign, they can't both use the $n register
-        this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.REGISTER, '$n'), new Reader(RT.DATA, variable_name)]))
-        return new Reader(RT.MEMORY, '$n', variables.variableTypes[variable_name])
+        var variable_name = variable_node.text
+        var updated_variable_name = `&_${variable_name}`
+        this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.REGISTER, '$n'), new Reader(RT.DATA, updated_variable_name)]))
+        return new Reader(RT.MEMORY, '$n', get_datatype(variables.variableTypes[updated_variable_name]))
     }
 }
 
