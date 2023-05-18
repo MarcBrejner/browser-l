@@ -139,18 +139,3 @@ function compile_expression(expression) {
           return [reader1, opr, reader2]
     }
 }
-
-function create_cooler_node(node) {
-    var coolerNode = {
-        children: [],
-
-        child(index) {
-            return this.children[index]
-        }
-    }
-    coolerNode.type = node.type
-    coolerNode.childCount = node.childCount
-    coolerNode.children = node.children
-    coolerNode.text = node.text
-    return coolerNode
-}
