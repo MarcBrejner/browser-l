@@ -34,15 +34,21 @@ module.exports = grammar({
 				$.assignment,
 				$.conditional,
 				$.goto,
-				$.variable,
-				field("variable", seq($.variable_name, ":", $.type, "=", $.expression)),
-				field("assignment", seq($.writer, ':=', $.expression)),
-				field("conditional", seq($.writer, '?=', $.expression)),
-				field("goto", seq("goto", choice($.register, $.label))),
+				$.variable
 			),
 
 		assignment: $ =>
 			seq($.writer, ':=', $.expression),
+
+		conditional: $ =>
+			seq($.writer, '?=', $.expression),	
+
+		goto: $ =>
+			seq("goto", choice($.register, $.label)),assignment: $ =>
+			seq($.writer, ':=', $.expression),
+
+		variable: $ =>
+			seq($.variable_name, ":", $.type, "=", $.expression),
 
 		expression: $ =>
 			choice(
