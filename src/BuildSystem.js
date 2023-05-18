@@ -10,7 +10,7 @@ class L0Builder {
                     this.assign(node.child(0), rec.handle(node.child(2).child(0), this));
                     break;
                 case 2:
-                    this.assign_unary(node.child(0), node.child(2).child(1), rec(node.child(2), this));
+                    this.assign_unary(node.child(0), node.child(2).child(1), rec.handle(node.child(2), this));
                     break;
                 case 3:
                     this.assign_binary(node.child(0), rec.handle(node.child(2).child(0), this),node.child(2).child(1), rec.handle(node.child(2).child(2), this));
