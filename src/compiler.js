@@ -1,8 +1,10 @@
 function get_reader_type(reader) {
   if (reader.child(0).type == "assign" || reader.child(0).type == "datavar") {
     return reader.child(0).child(0).type;
-  } else {
+  } else if (reader.child(0).type == "number"){
     return reader.child(0).type;
+  } else {
+    return reader.type;
   }
 }
 
@@ -59,8 +61,41 @@ function compile_reader(reader_node) {
   }
 }
 
-function compile_writer(statement) {
-  let writer_node = statement.child(0).child(0).child(0);
+function compile_reader_node(reader) {
+  let reader_id = reader.text;
+  let reader_type = get_reader_type(reader.child(0));
+  switch (reader_type) {
+    case "register":
+      return new Reader(RT.REGISTER, reader_id);
+    case "memory":
+      let startindex_register = reader.child(0).child(0).child(1).text;
+      let datatype_text = reader.child(0).child(0).child(3).text;
+      return new Reader(RT.MEMORY, startindex_register, get_datatype(datatype_text))
+    case "constant":
+      return new Reader(RT.CONSTANT, reader_id);
+    case "data":
+      return new Reader(RT.DATA, reader_id);
+    case "label":
+      return new Reader(RT.LABEL, reader_id);
+    case "number":
+      //the number that the reader holds, is the id in this case
+      return new Reader(RT.NUMBER, parseInt(reader_id));
+  }
+}
+
+function compile_writer(writer) {
+  let writer_node = writer.child(0).child(0).child(0);
+  let writer_id = writer_node.text;
+  switch (writer_node.type) {
+    case "memory":
+      return new Writer(WT.MEMORY, writer_node.child(1).text, get_datatype(writer_node.child(3).text));
+    case "register":
+      return new Writer(WT.REGISTER, writer_id);
+  }
+}
+
+function compile_writer_node(writer) {
+  let writer_node = writer.child(0).child(0);
   let writer_id = writer_node.text;
   switch (writer_node.type) {
     case "memory":

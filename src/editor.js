@@ -45,9 +45,9 @@ async function initialize_parser() {
 // Pretty print input sourcecode
 async function parse_and_pretty_print(source_code) {
   let parsers = await initialize_parser();
-  
-  let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
-  let program = compile(tree_L0);
+  let tree_L0 = parsers[2].parse(source_code);
+  // let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
+  let program = BuildSystem(tree_L0);
   // parse_byte_code from pretty.js pretty prints the byte_code
   var pretty_printer = get_pretty_printer(program);
   return pretty_printer.print_program();
@@ -55,8 +55,9 @@ async function parse_and_pretty_print(source_code) {
 
 async function parse_and_read(source_code) {
   var parsers = await initialize_parser();
-  let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
-  let program = compile(tree_L0);
+  let tree_L0 = parsers[2].parse(source_code);
+  // let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
+  let program = BuildSystem(tree_L0);
   return program;
 }
 
