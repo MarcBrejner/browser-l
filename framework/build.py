@@ -11,7 +11,7 @@ def create_docker():
     global container
     image_tag="from-py"
     client = docker.from_env()
-    client.images.build(path="./", tag=image_tag, rm=True)
+    client.images.build(path="./", tag=image_tag, rm=True, nocache=True)
     print("Created image")
     container = client.containers.create(image_tag)
     print("Created container")
