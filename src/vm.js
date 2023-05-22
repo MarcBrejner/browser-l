@@ -110,7 +110,7 @@ class VirtualMachine {
     write(writer, RHS){
         switch(writer.type){
             case WT.MEMORY:
-                let mem_index =  this.read(new Reader(RT.REGISTER, writer.id));
+                let mem_index =  this.read(writer.id);
                 //TODO: make work with signed & float
                 let hex8_array = number_to_byte_array(RHS,writer.datatype.size)
                 for (let i = 0; i < hex8_array.length; i++){
@@ -136,7 +136,7 @@ class VirtualMachine {
                 }
                 throw new Error("Register ",reader.id," not found");
             case RT.MEMORY:
-                let mem_index =  this.read(new Reader(RT.REGISTER, reader.id));
+                let mem_index = this.read(reader.id);
                 let mem_chunk = new Array();
                 let return_value = -1;
                 try{
