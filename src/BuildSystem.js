@@ -6,7 +6,10 @@ class L0Builder {
     L0types = ["number","assign","datavar"];
 
     handle(node, rec) {
-        let child_node = node.childCount > 0 ? node.child(0) : node
+        if (node.type === "statement") {
+            
+            this.handle(node.child_node, rec);
+        }
         if (child_node.type === "assignment") {
             var is_conditional = child_node.child(1).text === "?=" ? true : false;
             var writer = child_node.child(0);
@@ -47,7 +50,10 @@ class L0Builder {
     }
 
     get_reader(reader_node, rec){
-        return this.L0types.includes(reader_node.child(0).type) ? reader_node : rec.handle(reader_node, this);
+        if (reader_node.type === "number") {
+        return Reader(...)
+        }
+        // return this.L0types.includes(reader_node.child(0).type) ? reader_node : rec.handle(reader_node, this);
     }
 
     assign(is_conditional, writer, reader) {
@@ -105,8 +111,10 @@ class L1Builder extends L0Builder {
 
 class L2Builder extends L1Builder {
     handle(node, rec) {
+        if (node.type === "statement") {
+            L0Builder.handle(this, node,rec)
+        }
         
-        let child_node = node.childCount > 0 ? node.child(0) : node
 
         if (child_node.type === "variable") {
             var variable_name = child_node.child(0);
@@ -145,11 +153,17 @@ class L2Builder extends L1Builder {
         this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.REGISTER, '$n'), new Reader(RT.DATA, updated_variable_name)]));
         return new Reader(RT.MEMORY, '$n', get_datatype(variables.variableTypes[updated_variable_name]));
     }
+
+    get_reader(readernode, rec) {
+        if (readernode.type  === "variable") ...BuildSystem
+        else {super().get_reader(readernode);}
+}
 }
 
 function BuildSystem(tree) {
     variables.clear();
     var builder = new L2Builder();
+    builder.handle(tree.rootNode, builder)
     for (var j = 0; j < tree.rootNode.childCount; j++){
         var subtree = tree.rootNode.child(j);
         for (var i = 0; i < subtree.childCount; i++) {

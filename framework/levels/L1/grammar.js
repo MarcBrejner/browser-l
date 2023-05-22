@@ -57,8 +57,10 @@ module.exports = grammar({
 		reader: $ =>
 			choice(
 				$.assign,
-				$.datavar,
-				$.number
+				$.number,
+				$.label,
+				$.constant,
+				$.data
 			),
 
 		writer: $ =>
@@ -72,15 +74,16 @@ module.exports = grammar({
 				$.memory
 			),
 
-		datavar: $ =>
+		memory_access: $ =>
 			choice(
+				$.register,
 				$.constant,
 				$.data,
-				$.label
+				$.number
 			),
 
-		memory: $ => seq('[', $.register, ',', $.type, ']'),
-
+		memory: $ => seq('[', $.memory_access, ',', $.type, ']'),
+		
 		type: () => /i8|i16|i32|i64|u8|u16|u32|u64|f8|f16|f32|f64/,
 
 		constant: () => /@[_a-zA-Z]+/,
