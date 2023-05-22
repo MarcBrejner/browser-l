@@ -68,7 +68,7 @@ module.exports = grammar({
 				$.label,
 				$.constant,
 				$.data
-			),
+			),		
 
 		writer: $ =>
 			choice(

@@ -50,7 +50,7 @@ module.exports = grammar({
 				$.reader
 			),
 				
-			reader: $ =>
+		reader: $ =>
 			choice(
 				$.register,
 				$.memory,
@@ -65,7 +65,6 @@ module.exports = grammar({
 				$.register,
 				$.memory
 			),
-
 
 		memory_access: $ =>
 			choice(
