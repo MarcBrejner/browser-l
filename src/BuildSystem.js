@@ -3,39 +3,108 @@ class L0Builder {
     const = {};
     labels = {};
     statements = [];
-    L0types = ["number","assign","datavar", "constant"];
 
     handle(node) {
+        if (node.type === "source_file") { 
+            for (var i = 0; i < node.childCount; i++){
+                this.handle(node.child(i));
+            }
+        }
+
+        if (node.type === "declarations") {
+            for (var i = 0; i < node.childCount; i++) {
+                this.handle(node.child(i));
+            }
+        }
+
+        if (node.type === "statements") {
+            for (var i = 0; i < node.childCount; i++) {
+                this.handle(node.child(i));
+            }
+        }
+
         if (node.type === "statement") { 
             this.handle(node.child(0));
         }
 
-        if (node.type === "declaration") {
+        else if (node.type === "declaration") {
             this.handle(node.child(0));
         }
 
-        if (node.type === "assignment") {
+        else if (node.type === "expression") {
+            switch (node.childCount) {
+                case 1:
+                    return [this.handle(node.child(0))];
+                case 2:
+                    return [node.child(0), this.handle(node.child(1))];
+                case 3:
+                    return [this.handle(node.child(0)), node.child(1), this.handle(node.child(2))];
+            }
+        }
+
+        else if (node.type === "reader") {
+            return this.handle(node.child(0));
+        }
+
+        else if (node.type === "writer") {
+            return this.handle(node.child(0));
+        }
+        
+        else if (node.type === "number") {
+            return new Reader(RT.NUMBER, parseInt(node.text));
+        }
+
+        else if (node.type === "constant") {
+            return new Reader(RT.CONSTANT, node.text);
+        }
+
+        else if (node.type === "data") {
+            return new Reader(RT.DATA, node.text);
+        }
+
+        else if (node.type === "memory_access") {
+            return this.handle(node.child(0));
+        }
+
+        else if (node.type === "register") {
+            if (node.parent.type === "writer") {
+                return new Writer(WT.REGISTER, node.text);
+            } else if (node.parent.type === "reader" || node.parent.type === "memory_access") {
+                return new Reader(RT.REGISTER, node.text);
+            } 
+        }
+
+        else if (node.type === "memory") {
+            if (node.parent.type === "writer") {
+                return new Writer(WT.MEMORY, this.handle(node.child(1)), get_datatype(node.child(3).text));
+            } else if (node.parent.type === "reader") {
+                return new Reader(RT.MEMORY, this.handle(node.child(1)), get_datatype(node.child(3).text));
+            }
+        }
+
+        else if (node.type === "assignment") {
             var is_conditional = node.child(1).text === "?=" ? true : false;
             var writer = node.child(0);
-            switch (node.child(2).childCount) {
+            var expression = this.handle(node.child(2));
+            // TODO: Change such that assign take an expression as input?
+            switch (expression.length) {
                 case 1:
-                    var reader_node = node.child(2).child(0);
-                    var reader = this.get_reader(reader_node);
+                    writer = this.handle(writer)
+                    var reader = expression[0];
                     this.assign(is_conditional, writer, reader);
                     break;
                 case 2:
-                    var opr = node.child(2).child(1);
-                    var reader_node = node.child(2);
-                    var reader = this.get_reader(reader_node);
+                    writer = this.handle(writer);
+                    var opr = expression[0];
+                    var reader = expression[1];
                     this.assign_unary(is_conditional, writer, opr, reader);
                     break;
                 case 3:
-                    var opr = node.child(2).child(1);
-                    var reader_node1 = node.child(2).child(0);
-                    var reader_node2 = node.child(2).child(2);
-                    var reader1 = this.get_reader(reader_node1);
-                    var reader2 = this.get_reader(reader_node2);
-                    this.assign_binary(is_conditional, writer,reader1 ,opr, reader2);
+                    writer = this.handle(writer);
+                    var reader1 = expression[0];
+                    var opr = expression[1];
+                    var reader2 = expression[2];
+                    this.assign_binary(is_conditional, writer, reader1, opr, reader2);
                     break;
             }
         } else if(node.type === "constant_declaration"){
@@ -53,39 +122,15 @@ class L0Builder {
         }
     }
 
-    get_reader(reader_node){
-        /*
-        if (reader_node.type === "number") {
-        return Reader(...)
-        }
-        */
-        return this.L0types.includes(reader_node.child(0).type) ? reader_node : this.handle(reader_node);
-    }
-
     assign(is_conditional, writer, reader) {
-        if (reader.constructor.name !== "Reader") {
-            reader = compile_reader(reader);
-        }
-        writer = compile_writer_node(writer);
         this.statements.push(new ByteCode(OP.ASSIGN, [is_conditional, writer, reader]));
     }
 
     assign_unary(is_conditional, writer, opr, reader) {
-        if (reader.constructor.name !== "Reader") {
-            reader = compile_reader(reader);
-        }
-        writer = compile_writer_node(writer);
         this.statements.push(new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr.text, reader]));
     }
 
     assign_binary(is_conditional, writer, reader1, opr, reader2) {
-        if (reader1.constructor.name !== "Reader") {
-            reader1 = compile_reader(reader1);
-        }
-        if (reader2.constructor.name !== "Reader") {
-            reader2 = compile_reader(reader2);
-        }
-        writer = compile_writer_node(writer);
         this.statements.push(new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr.text, reader2]));
     }
 }
@@ -96,7 +141,7 @@ class L1Builder extends L0Builder {
         if (node.type === "goto") {
             this.goto(node.child(1));
         } else {
-            super.handle(node);
+            return super.handle(node);
         }
     }
 
@@ -115,117 +160,36 @@ class L1Builder extends L0Builder {
 
 class L2Builder extends L1Builder {
     handle(node) {
-        if (node.type === "variable") {
-            var variable_name = node.child(0);
-            var type = node.child(2);
-            var expression = node.child(4);
-            this.variable_declaration(variable_name.text, type.text, expression);
+        if (node.type === "variable") { 
+            this.variable_declaration(node);
         } else if (node.type === "variable_name") {
-            return this.read_variable(node);
+            return new Reader(RT.MEMORY, new Reader(RT.DATA, '&_' + node.text), get_datatype(variables.variableTypes["&_" + node.text]));
         } else {
-            super.handle(node);
+            return super.handle(node);
         }
     }
 
-    variable_declaration(variable_name, type, expression) {
-        var updated_variable_name = `&_${variable_name}`;
-        var variable_size = parseInt(type.replace(/\D/g, ''));
-        variables.variableTypes[updated_variable_name] = type;
+    variable_declaration(node) {
+        var variable_name = node.child(0);
+        var type = node.child(2);
+        var expression = node.child(4);
+        var variable_size = parseInt(type.text.replace(/\D/g, ''));
+        variables.variableTypes['&_' + variable_name.text] = type.text;
         var memory_allocation = "";
         for (var i = 0; i < variable_size/8; i++) {
             memory_allocation += "0";
         }
-        this.data[updated_variable_name] = memory_allocation;
-        var _expression = compile_expression(expression);
-        this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.REGISTER, '$n'), new Reader(RT.DATA, updated_variable_name)]));
-        this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.MEMORY, '$n', get_datatype(type))].concat(_expression)));
+        this.data['&_' + variable_name.text] = memory_allocation;
+        var _expression = this.handle(expression);
+        this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.MEMORY, new Reader(RT.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(_expression)));
     }
-
-        // L2: $x := g
-        // L0: 
-        // $n := &g;
-        // return [$n, u8] 
-    read_variable(variable_node) {
-        // TODO: fix that if it's a binary assign, they can't both use the $n register
-        var variable_name = variable_node.text;
-        var updated_variable_name = `&_${variable_name}`;
-        this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.REGISTER, '$n'), new Reader(RT.DATA, updated_variable_name)]));
-        return new Reader(RT.MEMORY, '$n', get_datatype(variables.variableTypes[updated_variable_name]));
-    }
-    /*
-    get_reader(readernode, rec) {
-        if (readernode.type  === "variable") ...BuildSystem
-        else {super().get_reader(readernode);}
-    }
-    */
 }
 
 function BuildSystem(tree) {
     variables.clear();
     var builder = new L2Builder();
-    // builder.handle(tree.rootNode, builder);
-    
-    for (var j = 0; j < tree.rootNode.childCount; j++){
-        var subtree = tree.rootNode.child(j);
-        for (var i = 0; i < subtree.childCount; i++) {
-            if (subtree.child(i).text !== ";" && subtree.child(i).text !== "\n" && subtree.child(i).text !== "") {
-                builder.handle(subtree.child(i));
-            }
-        }
-    }
-    
+    builder.handle(tree.rootNode);
     return new Program(builder.statements, {}, builder.data, builder.const, {});
-}
-
-function compile_expression(expression) {
-    var numOfChildren = expression.childCount
-    switch (numOfChildren) {
-        case 1: // reader
-          var reader = compile_reader(expression.child(0));
-          return [reader];
-        case 2: // opr, reader
-          var opr = expression.child(0).text;
-          var reader = compile_reader(expression.child(1));
-          return [opr, reader];
-        case 3: // reader, opr, reader
-          var reader1 = compile_reader(expression.child(0));
-          var opr = expression.child(1).text;
-          var reader2 = compile_reader(expression.child(2));
-          return [reader1, opr, reader2];
-    }
-}
-
-function get_reader_type(reader) {
-    if (reader.child(0).type == "assign" || reader.child(0).type == "datavar") {
-      return reader.child(0).child(0).type;
-    } else if (reader.child(0).type == "number"){
-      return reader.child(0).type;
-    } else {
-      return reader.type;
-    }
-}
-  
-
-function compile_reader(reader_node) {
-    let reader_id = reader_node.text;
-    let reader_type = get_reader_type(reader_node);
-    switch (reader_type) {
-      case "register":
-        return new Reader(RT.REGISTER, reader_id);
-      case "memory":
-        let startindex_register = reader_node.child(0).child(0).child(1).text;
-        let datatype_text = reader_node.child(0).child(0).child(3).text;
-        return new Reader(RT.MEMORY, startindex_register, get_datatype(datatype_text));
-      case "constant":
-        return new Reader(RT.CONSTANT, reader_id);
-      case "data":
-        return new Reader(RT.DATA, reader_id);
-      case "label":
-        return new Reader(RT.LABEL, reader_id);
-      case "number":
-        //the number that the reader holds, is the id in this case
-        return new Reader(RT.NUMBER, parseInt(reader_id));
-    }
 }
 
 function get_datatype(datatype_string){
@@ -257,17 +221,6 @@ function get_datatype(datatype_string){
     }
 }
 
-function compile_writer_node(writer) {
-    let writer_node = writer.child(0).child(0);
-    let writer_id = writer_node.text;
-    switch (writer_node.type) {
-        case "memory":
-        return new Writer(WT.MEMORY, writer_node.child(1).text, get_datatype(writer_node.child(3).text));
-        case "register":
-        return new Writer(WT.REGISTER, writer_id);
-    }
-}
-
 function get_ecs_for_statement(statement) {
     return [statement.startPosition.row, statement.startIndex, statement.endIndex];
 }
@@ -290,25 +243,4 @@ function find_error(node, errors){
     }
 
     return errors;
-}
-
-
-function compile_declaration(declaration, constants, data){
-    let type = declaration.child(0).text;
-    // TODO: hent fra grammar i stedet for
-    let data_regex = /(&[_a-zA-Z]+)\s(".+")/;
-    let const_regex = /(@[_a-zA-Z]+)\s([0-9]+)/;
-    let declaration_string = declaration.child(1).text;
-    if (type === "const") {
-        let match = declaration_string.match(const_regex);
-        let id = match[1];
-        let value = match[2];
-        constants[id] = value;
-    } else if (type === "data") {
-        let match = declaration_string.match(data_regex);
-        let id = match[1];
-        let value = match[2];
-        data[id] = value.slice(1, -1);
-    } 
-    return [constants, data]
 }
