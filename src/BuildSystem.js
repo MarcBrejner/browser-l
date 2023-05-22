@@ -3,57 +3,63 @@ class L0Builder {
     const = {};
     labels = {};
     statements = [];
-    L0types = ["number","assign","datavar"];
+    L0types = ["number","assign","datavar", "constant"];
 
-    handle(node, rec) {
-        if (node.type === "statement") {
-            
-            this.handle(node.child_node, rec);
+    handle(node) {
+        if (node.type === "statement") { 
+            this.handle(node.child(0));
         }
-        if (child_node.type === "assignment") {
-            var is_conditional = child_node.child(1).text === "?=" ? true : false;
-            var writer = child_node.child(0);
-            switch (child_node.child(2).childCount) {
+
+        if (node.type === "declaration") {
+            this.handle(node.child(0));
+        }
+
+        if (node.type === "assignment") {
+            var is_conditional = node.child(1).text === "?=" ? true : false;
+            var writer = node.child(0);
+            switch (node.child(2).childCount) {
                 case 1:
-                    var reader_node = child_node.child(2).child(0);
-                    var reader = this.get_reader(reader_node, rec);
+                    var reader_node = node.child(2).child(0);
+                    var reader = this.get_reader(reader_node);
                     this.assign(is_conditional, writer, reader);
                     break;
                 case 2:
-                    var opr = child_node.child(2).child(1);
-                    var reader_node = child_node.child(2);
-                    var reader = this.get_reader(reader_node, rec);
+                    var opr = node.child(2).child(1);
+                    var reader_node = node.child(2);
+                    var reader = this.get_reader(reader_node);
                     this.assign_unary(is_conditional, writer, opr, reader);
                     break;
                 case 3:
-                    var opr = child_node.child(2).child(1);
-                    var reader_node1 = child_node.child(2).child(0);
-                    var reader_node2 = child_node.child(2).child(2);
-                    var reader1 = this.get_reader(reader_node1, rec);
-                    var reader2 = this.get_reader(reader_node2, rec);
+                    var opr = node.child(2).child(1);
+                    var reader_node1 = node.child(2).child(0);
+                    var reader_node2 = node.child(2).child(2);
+                    var reader1 = this.get_reader(reader_node1);
+                    var reader2 = this.get_reader(reader_node2);
                     this.assign_binary(is_conditional, writer,reader1 ,opr, reader2);
                     break;
             }
-        } else if(child_node.type === "constant_declaration"){
-            let id = child_node.child(1).text;
-            let value = child_node.child(2).text;
+        } else if(node.type === "constant_declaration"){
+            let id = node.child(1).text;
+            let value = node.child(2).text;
             this.const[id] = value;
-        } else if(child_node.type === "data_declaration"){
-            let id = child_node.child(1).text;
-            let value = child_node.child(2).text;
+        } else if(node.type === "data_declaration"){
+            let id = node.child(1).text;
+            let value = node.child(2).text;
             this.data[id] = value;
-        } else if(child_node.type === "label"){
-            this.labels[child_node.text] = this.statements.length;
-        } else if(child_node.type === "syscall"){
+        } else if(node.type === "label"){
+            this.labels[node.text] = this.statements.length;
+        } else if(node.type === "syscall"){
             this.statements.push(new ByteCode(OP.SYSCALL));
         }
     }
 
-    get_reader(reader_node, rec){
+    get_reader(reader_node){
+        /*
         if (reader_node.type === "number") {
         return Reader(...)
         }
-        // return this.L0types.includes(reader_node.child(0).type) ? reader_node : rec.handle(reader_node, this);
+        */
+        return this.L0types.includes(reader_node.child(0).type) ? reader_node : this.handle(reader_node);
     }
 
     assign(is_conditional, writer, reader) {
@@ -86,13 +92,11 @@ class L0Builder {
 
 class L1Builder extends L0Builder {
 
-    handle(node, rec) {
-        let child_node = node.childCount > 0 ? node.child(0) : node
-
-        if (child_node.type === "goto") {
-            this.goto(child_node.child(1));
+    handle(node) {
+        if (node.type === "goto") {
+            this.goto(node.child(1));
         } else {
-            super.handle(node, this);
+            super.handle(node);
         }
     }
 
@@ -110,21 +114,16 @@ class L1Builder extends L0Builder {
 }
 
 class L2Builder extends L1Builder {
-    handle(node, rec) {
-        if (node.type === "statement") {
-            L0Builder.handle(this, node,rec)
-        }
-        
-
-        if (child_node.type === "variable") {
-            var variable_name = child_node.child(0);
-            var type = child_node.child(2);
-            var expression = child_node.child(4);
+    handle(node) {
+        if (node.type === "variable") {
+            var variable_name = node.child(0);
+            var type = node.child(2);
+            var expression = node.child(4);
             this.variable_declaration(variable_name.text, type.text, expression);
-        } else if (child_node.type === "variable_name") {
-            return this.read_variable(child_node);
+        } else if (node.type === "variable_name") {
+            return this.read_variable(node);
         } else {
-            super.handle(node, this);
+            super.handle(node);
         }
     }
 
@@ -153,25 +152,28 @@ class L2Builder extends L1Builder {
         this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.REGISTER, '$n'), new Reader(RT.DATA, updated_variable_name)]));
         return new Reader(RT.MEMORY, '$n', get_datatype(variables.variableTypes[updated_variable_name]));
     }
-
+    /*
     get_reader(readernode, rec) {
         if (readernode.type  === "variable") ...BuildSystem
         else {super().get_reader(readernode);}
-}
+    }
+    */
 }
 
 function BuildSystem(tree) {
     variables.clear();
     var builder = new L2Builder();
-    builder.handle(tree.rootNode, builder)
+    // builder.handle(tree.rootNode, builder);
+    
     for (var j = 0; j < tree.rootNode.childCount; j++){
         var subtree = tree.rootNode.child(j);
         for (var i = 0; i < subtree.childCount; i++) {
             if (subtree.child(i).text !== ";" && subtree.child(i).text !== "\n" && subtree.child(i).text !== "") {
-                builder.handle(subtree.child(i), null);
+                builder.handle(subtree.child(i));
             }
         }
     }
+    
     return new Program(builder.statements, {}, builder.data, builder.const, {});
 }
 

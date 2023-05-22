@@ -61,7 +61,8 @@ module.exports = grammar({
 				
 		reader: $ =>
 			choice(
-				$.assign,
+				$.register,
+				$.memory,
 				$.number,
 				$.variable_name,
 				$.label,
@@ -71,16 +72,11 @@ module.exports = grammar({
 
 		writer: $ =>
 			choice(
-				$.assign
-			),
-			
-		assign: $ =>
-			choice(
 				$.register,
 				$.memory
 			),
 
-			memory_access: $ =>
+		memory_access: $ =>
 			choice(
 				$.register,
 				$.constant,
