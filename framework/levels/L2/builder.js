@@ -22,5 +22,6 @@ class L2Builder extends L1Builder {
         this.data['&_' + variable_name.text] = memory_allocation;
         var _expression = this.handle(expression);
         this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.MEMORY, new Reader(RT.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(_expression)));
+        this.set_ECS(node)
     }
 }

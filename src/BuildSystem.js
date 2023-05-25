@@ -2,7 +2,7 @@ function BuildSystem(tree) {
     variables.clear();
     var builder = get_builder(parseInt(chosenLevel.value));
     builder.handle(tree.rootNode);
-    return new Program(builder.statements, {}, builder.data, builder.const, {});
+    return new Program(builder.statements,builder.ECS, builder.data, builder.const,  builder.labels);
 }
 
 function get_datatype(datatype_string){
@@ -34,10 +34,6 @@ function get_datatype(datatype_string){
     }
 }
 
-function get_ecs_for_statement(statement) {
-    return [statement.startPosition.row, statement.startIndex, statement.endIndex];
-}
-  
 const error_pattern = /(UNEXPECTED\s+'[^']+'|MISSING\s+"[^']+")/g;
 function find_error(node, errors){
     if (node.childCount == 0 && !node.isMissing()){
@@ -61,6 +57,6 @@ function find_error(node, errors){
 const variables = {
   variableTypes: {},
   clear() {
-    variableTypes = {};
+    this.variableTypes = {};
   }
 }
