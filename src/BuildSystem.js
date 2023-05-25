@@ -3,31 +3,16 @@ class L0Builder {
     const = {};
     labels = {};
     statements = [];
+    ECS = new ECS();
 
     handle(node) {
-        if (node.type === "source_file") { 
+        if (["source_file", "declarations","statements"].includes(node.type)) { 
             for (var i = 0; i < node.childCount; i++){
                 this.handle(node.child(i));
             }
         }
 
-        if (node.type === "declarations") {
-            for (var i = 0; i < node.childCount; i++) {
-                this.handle(node.child(i));
-            }
-        }
-
-        if (node.type === "statements") {
-            for (var i = 0; i < node.childCount; i++) {
-                this.handle(node.child(i));
-            }
-        }
-
-        if (node.type === "statement") { 
-            this.handle(node.child(0));
-        }
-
-        else if (node.type === "declaration") {
+        else if (["statement", "declaration"].includes(node.type)) { 
             this.handle(node.child(0));
         }
 
@@ -42,14 +27,6 @@ class L0Builder {
             }
         }
 
-        else if (node.type === "reader") {
-            return this.handle(node.child(0));
-        }
-
-        else if (node.type === "writer") {
-            return this.handle(node.child(0));
-        }
-        
         else if (node.type === "number") {
             return new Reader(RT.NUMBER, parseInt(node.text));
         }
@@ -62,7 +39,7 @@ class L0Builder {
             return new Reader(RT.DATA, node.text);
         }
 
-        else if (node.type === "memory_access") {
+        else if (["memory_access" ,"reader", "writer"].includes(node.type)) {
             return this.handle(node.child(0));
         }
 
@@ -91,61 +68,79 @@ class L0Builder {
                 case 1:
                     writer = this.handle(writer)
                     var reader = expression[0];
-                    this.assign(is_conditional, writer, reader);
+                    this.assign(node, is_conditional, writer, reader);
                     break;
                 case 2:
                     writer = this.handle(writer);
                     var opr = expression[0];
                     var reader = expression[1];
-                    this.assign_unary(is_conditional, writer, opr, reader);
+                    this.assign_unary(node, is_conditional, writer, opr, reader);
                     break;
                 case 3:
                     writer = this.handle(writer);
                     var reader1 = expression[0];
                     var opr = expression[1];
                     var reader2 = expression[2];
-                    this.assign_binary(is_conditional, writer, reader1, opr, reader2);
+                    this.assign_binary(node, is_conditional, writer, reader1, opr, reader2);
                     break;
             }
-        } else if(node.type === "constant_declaration"){
+        }
+        
+        else if(node.type === "constant_declaration"){
             let id = node.child(1).text;
             let value = node.child(2).text;
             this.const[id] = value;
-        } else if(node.type === "data_declaration"){
+        }
+        
+        else if(node.type === "data_declaration"){
             let id = node.child(1).text;
             let value = node.child(2).text;
             this.data[id] = value;
-        } else if(node.type === "label"){
+        }
+        
+        else if(node.type === "label"){
             this.labels[node.text] = this.statements.length;
-        } else if(node.type === "syscall"){
+        }
+        
+        else if(node.type === "syscall"){
             this.statements.push(new ByteCode(OP.SYSCALL));
+            this.set_ECS(node);
         }
     }
 
-    assign(is_conditional, writer, reader) {
+    assign(node, is_conditional, writer, reader) {
         this.statements.push(new ByteCode(OP.ASSIGN, [is_conditional, writer, reader]));
+        this.set_ECS(node);
     }
 
-    assign_unary(is_conditional, writer, opr, reader) {
+    assign_unary(node, is_conditional, writer, opr, reader) {
         this.statements.push(new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr.text, reader]));
+        this.set_ECS(node);
     }
 
-    assign_binary(is_conditional, writer, reader1, opr, reader2) {
+    assign_binary(node, is_conditional, writer, reader1, opr, reader2) {
         this.statements.push(new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr.text, reader2]));
+        this.set_ECS(node);
+    }
+
+    set_ECS(node){
+        this.ECS.line_number.push(node.startPosition.row);
+        this.ECS.start_index.push(node.startIndex);
+        this.ECS.end_index.push(node.endIndex);
     }
 }
 
 class L1Builder extends L0Builder {
-
     handle(node) {
         if (node.type === "goto") {
-            this.goto(node.child(1));
+            this.goto(node)//,node.child(1));
         } else {
             return super.handle(node);
         }
     }
 
-    goto(reader) {
+    goto(node) {
+        var reader = node.child(1);
         var _reader1;
         if (reader.type === "label") {
             _reader1 = new Reader(RT.LABEL, reader.text);
@@ -155,6 +150,7 @@ class L1Builder extends L0Builder {
         var _reader2 = new Reader(RT.NUMBER, 1);
         var _writer = new Writer(WT.REGISTER, '$!');
         this.statements.push(new ByteCode(OP.ASSIGN_BIN, [true, _writer, _reader1, '-', _reader2]));
+        this.set_ECS(node)
     }
 }
 
@@ -182,6 +178,7 @@ class L2Builder extends L1Builder {
         this.data['&_' + variable_name.text] = memory_allocation;
         var _expression = this.handle(expression);
         this.statements.push(new ByteCode(OP.ASSIGN, [false, new Writer(WT.MEMORY, new Reader(RT.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(_expression)));
+        this.set_ECS(node)
     }
 }
 
@@ -189,7 +186,7 @@ function BuildSystem(tree) {
     variables.clear();
     var builder = new L2Builder();
     builder.handle(tree.rootNode);
-    return new Program(builder.statements, {}, builder.data, builder.const, {});
+    return new Program(builder.statements,builder.ECS, builder.data, builder.const,  builder.labels);
 }
 
 function get_datatype(datatype_string){
@@ -221,9 +218,9 @@ function get_datatype(datatype_string){
     }
 }
 
-function get_ecs_for_statement(statement) {
-    return [statement.startPosition.row, statement.startIndex, statement.endIndex];
-}
+// function get_ecs_for_statement(statement) {
+//     return [statement.startPosition.row, statement.startIndex, statement.endIndex];
+// }
   
 const error_pattern = /(UNEXPECTED\s+'[^']+'|MISSING\s+"[^']+")/g;
 function find_error(node, errors){

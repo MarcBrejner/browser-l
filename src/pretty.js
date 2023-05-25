@@ -12,7 +12,7 @@ class PrettyPrinter {
     var instructions = this.program.instructions;
     var debugging = document.querySelector('#debugbutton').disabled;
     for (var i = 0; i < instructions.length; i++) {
-      var one_indexed = i + 1;
+      var one_indexed = i;
       var res = `<span id=line-number>${one_indexed} </span>` + instructions[i].handle(this) + this.print_label(i) +`<br>`;
       if (!debugging || state === undefined) {
         pretty_source_code += res;

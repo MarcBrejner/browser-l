@@ -1,0 +1,12 @@
+const @hej 3;
+data &HALLO "Hello World";
+f:u32=@hej;
+$?:=5;
+$m:=f+2;
+$x:=1;
+#HERE
+$m:=$m+1;
+$y:=&HALLO;
+$?:=$?-1;
+syscall;
+goto #HERE
