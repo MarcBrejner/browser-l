@@ -11,7 +11,7 @@ def create_docker():
     global container
     image_tag="from-py"
     client = docker.from_env()
-    client.images.build(path="./", tag=image_tag, rm=True, nocache=True)
+    client.images.build(path="./", tag=image_tag, rm=True)
     print("Created image")
     container = client.containers.create(image_tag)
     print("Created container")
@@ -42,28 +42,36 @@ function decode(encoded) {
 }
 
 var encoded_levels = new Array();
-var emit_functions = new Array();
 """
     #define directory paths
     for filename in os.listdir('levels'):
         level = filename.replace('L', '')
-        with open("levels/{}/emit.js".format(filename),"r") as emit_function:
-            code+= "emit_functions.push({})\n".format(emit_function.read())
+        with open("levels/{}/builder.js".format(filename),"r") as emit_function:
+            code+= "{}\n".format(emit_function.read())
         compile_L_level(level)
         with open("./temp/tree-sitter-l{}.wasm".format(level),"rb") as wasm_file:
             encoded = base64.b64encode(wasm_file.read())
             encoded_l = encoded.decode('utf-8')
         code += "encoded_levels.push(decode('{}'));\n".format(encoded_l)
     
-    code += """
-    for (var i = 0; i<=emit_functions.length-1; i++){
-        var opt = document.createElement('option');
-        opt.value = i;
-        opt.innerHTML = "L"+i;
-        document.getElementById('levels').appendChild(opt);
-    }
-    document.getElementById('levels').value = 2;
-    """
+    code += """for (var i = 0; i < encoded_levels.length; i++){
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.innerHTML = "L"+i;
+    document.getElementById('levels').appendChild(opt);
+}
+document.getElementById('levels').value = 2;\n\n"""
+
+    code += """function get_builder(level) {
+  switch (level) {"""
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        code += """
+        case {}:
+            return new {}Builder();""".format(level, filename)
+    code += "\n}\n}"
+
+    
 
 
     with open("temp/loadparser.js", "w") as output_file:
