@@ -82,13 +82,14 @@ async function run_all() {
 }
 
 async function debug() {
+  outputSpan.innerHTML = '';
   for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
     codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
   }
   
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
-  codeMirrorEditor.addLineClass(program.ECS.line_number[0], 'background', 'highlight-line');
+  codeMirrorEditor.addLineClass(program.ECS.nodes[0].startPosition.row, 'background', 'highlight-line');
   if(program.error_msg !== null){
     console.log(program.error_msg);
     return;
@@ -126,7 +127,7 @@ function color(program,pc){
     codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
   }
   
-  codeMirrorEditor.addLineClass(program.ECS.line_number[pc], 'background', 'highlight-line');
+  codeMirrorEditor.addLineClass(program.ECS.nodes[pc].startPosition.row, 'background', 'highlight-line');
 
 }
 
@@ -231,7 +232,6 @@ function reset_buttons_after_debug() {
     if (document.querySelector('.highlight-line') != null) {
       document.querySelector('.highlight-line').classList.remove('highlight-line');
     }
-    outputSpan.innerHTML = '';
 }
 
 async function test_l(source_code){

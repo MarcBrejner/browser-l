@@ -78,8 +78,6 @@ class Program {
 
 class ECS {
     constructor() {
-        this.line_number = new Array();
-        this.start_index = new Array();
-        this.end_index = new Array();
+        this.nodes = new Array();
     }
 }

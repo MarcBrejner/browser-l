@@ -113,6 +113,6 @@ class L0Builder {
 
     push_statement(node, byte_code) {
         this.statements.push(byte_code);
-        this.ECS.node = node;
+        this.ECS.nodes.push(node);
     }
 }
