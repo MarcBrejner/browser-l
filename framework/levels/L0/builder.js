@@ -95,29 +95,24 @@ class L0Builder {
         }
         
         else if(node.type === "syscall"){
-            this.statements.push(new ByteCode(OP.SYSCALL));
-            this.set_ECS(node);
+            this.push_statement(node, new ByteCode(OP.SYSCALL));
         }
     }
 
     assign(node, is_conditional, writer, reader) {
-        this.statements.push(new ByteCode(OP.ASSIGN, [is_conditional, writer, reader]));
-        this.set_ECS(node);
+        this.push_statement(node, new ByteCode(OP.ASSIGN, [is_conditional, writer, reader]));
     }
 
     assign_unary(node, is_conditional, writer, opr, reader) {
-        this.statements.push(new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr.text, reader]));
-        this.set_ECS(node);
+        this.push_statement(node, new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr.text, reader]));
     }
 
     assign_binary(node, is_conditional, writer, reader1, opr, reader2) {
-        this.statements.push(new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr.text, reader2]));
-        this.set_ECS(node);
+        this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr.text, reader2]));
     }
 
-    set_ECS(node){
-        this.ECS.line_number.push(node.startPosition.row);
-        this.ECS.start_index.push(node.startIndex);
-        this.ECS.end_index.push(node.endIndex);
+    push_statement(node, byte_code) {
+        this.statements.push(byte_code);
+        this.ECS.node = node;
     }
 }
