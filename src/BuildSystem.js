@@ -1,5 +1,5 @@
 function BuildSystem(tree) {
-    variables.clear();
+    variables = {};
     var builder = get_builder(parseInt(chosenLevel.value));
     builder.handle(tree.rootNode);
     return new Program(builder.statements,builder.ECS, builder.data, builder.const,  builder.labels);
@@ -54,9 +54,4 @@ function find_error(node, errors){
     return errors;
 }
 
-const variables = {
-  variableTypes: {},
-  clear() {
-    this.variableTypes = {};
-  }
-}
+var variables = {}
