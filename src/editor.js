@@ -22,10 +22,17 @@ chosenLevel.onchange = function(){
 
 // Fires whenever the editable window changes
 codeMirrorEditor.on('change', async function(cMirror) {
+
   var source_code = cMirror.getValue();
+
   //  Set content of prettyWindow to the pretty printed code
   var code = await parse_and_pretty_print(source_code);
   document.getElementById("prettyPretty").innerHTML = code;
+
+  //Fixes a bug with codemirror where added line classes persists too long
+  for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
+    cMirror.removeLineClass(i, 'background', 'highlight-line');
+  }
 })
 
 // Load parser
@@ -45,9 +52,8 @@ async function initialize_parser() {
 // Pretty print input sourcecode
 async function parse_and_pretty_print(source_code) {
   let parsers = await initialize_parser();
-  
-  let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
-  let program = compile(tree_L0);
+  let tree_L0 = parsers[chosenLevel.value].parse(source_code);
+  let program = BuildSystem(tree_L0);
   // parse_byte_code from pretty.js pretty prints the byte_code
   var pretty_printer = get_pretty_printer(program);
   return pretty_printer.print_program();
@@ -55,8 +61,8 @@ async function parse_and_pretty_print(source_code) {
 
 async function parse_and_read(source_code) {
   var parsers = await initialize_parser();
-  let tree_L0 = emit_down(source_code, emit_functions, parsers, chosenLevel.value);
-  let program = compile(tree_L0);
+  let tree_L0 = parsers[chosenLevel.value].parse(source_code);
+  let program = BuildSystem(tree_L0);
   return program;
 }
 
@@ -76,17 +82,25 @@ async function run_all() {
 }
 
 async function debug() {
+  for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
+    codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
+  }
+  
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
+  codeMirrorEditor.addLineClass(program.ECS.line_number[0], 'background', 'highlight-line');
   if(program.error_msg !== null){
     console.log(program.error_msg);
     return;
   }
   var VM = get_virtual_machine(program);
   show_results_in_html(VM.state);
+
+  var pretty_printer = get_pretty_printer(VM.program);
   document.querySelector('#debugbutton').disabled = true;
   document.querySelector('#exitdebug').disabled = false;
   document.querySelector('#stepbutton').disabled = false;
+  document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program(VM.state);
 }
 
 async function exit_debug() {
@@ -101,24 +115,38 @@ async function exit_debug() {
 
 function execute_all() {
   while (true) { // step
-    if (execute_step() == -1) {
+    if (execute_step(false) == -1) {
       break;
     }
   }
 }
 
-function execute_step() {
-  var VM = get_virtual_machine();
-  if (VM.state.registers['$!'] >= VM.program.instructions.length) {
-    console.log("EOF");
-    return -1;
+function color(program,pc){
+  for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
+    codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
   }
+  
+  codeMirrorEditor.addLineClass(program.ECS.line_number[pc], 'background', 'highlight-line');
 
+}
+
+function execute_step(debugging = true) {
+  var VM = get_virtual_machine();
   VM.execute_bytecode();
-
   var pretty_printer = get_pretty_printer(VM.program);
   document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program(VM.state);
   show_results_in_html(VM.state);
+
+  if (VM.state.registers['$!'] >= VM.program.instructions.length) {
+    console.log("EOF");
+    reset_buttons_after_debug()
+    return -1;
+  }
+  //color(VM.program, VM.state.registers['$!'])
+  if(debugging){
+    color(VM.program, VM.state.registers['$!'])
+  }
+
 }
 
 function show_results_in_html(state) {

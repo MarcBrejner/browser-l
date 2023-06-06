@@ -18,7 +18,9 @@
   <body>
     <div class="EditorWindows">
       <textarea id="editorWindow" cols="30" rows="10">
-$x:=1;</textarea>
+const @hej 3;
+f:u32=4;
+$x:=f+2;</textarea>
       <div id="prettyPretty"></div>
     </div>
 
@@ -61,11 +63,10 @@ $x:=1;</textarea>
       </span>
     </span>
     <script src="src/bytecode.js"></script>
-    <script src="src/emitter.js"></script>
-    <script src="src/compiler.js"></script>
     <script src="src/pretty.js"></script>
     <script src="src/vm.js"></script>
     <script src="src/editor.js"></script>
+    <script src="src/buildsystem.js"></script>
     <script>run_all()</script>
   </body>
 </html>
