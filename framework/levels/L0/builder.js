@@ -28,15 +28,15 @@ class L0Builder {
         }
 
         else if (node.type === "number") {
-            return new Reader(RT.NUMBER, parseInt(node.text));
+            return new Content(CONTENT_TYPES.NUMBER, parseInt(node.text));
         }
 
         else if (node.type === "constant") {
-            return new Reader(RT.CONSTANT, node.text);
+            return new Content(CONTENT_TYPES.CONSTANT, node.text);
         }
 
         else if (node.type === "data") {
-            return new Reader(RT.DATA, node.text);
+            return new Content(CONTENT_TYPES.DATA, node.text);
         }
 
         else if (["memory_access" ,"reader", "writer"].includes(node.type)) {
@@ -44,19 +44,11 @@ class L0Builder {
         }
 
         else if (node.type === "register") {
-            if (node.parent.type === "writer") {
-                return new Writer(WT.REGISTER, node.text);
-            } else if (node.parent.type === "reader" || node.parent.type === "memory_access") {
-                return new Reader(RT.REGISTER, node.text);
-            } 
+            return new Content(CONTENT_TYPES.REGISTER, node.text);
         }
 
         else if (node.type === "memory") {
-            if (node.parent.type === "writer") {
-                return new Writer(WT.MEMORY, this.handle(node.child(1)), get_datatype(node.child(3).text));
-            } else if (node.parent.type === "reader") {
-                return new Reader(RT.MEMORY, this.handle(node.child(1)), get_datatype(node.child(3).text));
-            }
+            return new Content(CONTENT_TYPES.MEMORY, this.handle(node.child(1)), get_datatype(node.child(3).text));
         }
 
         else if (node.type === "assignment") {
