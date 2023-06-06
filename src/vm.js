@@ -109,7 +109,7 @@ class VirtualMachine {
     
     write(writer, RHS){
         switch(writer.type){
-            case WT.MEMORY:
+            case CONTENT_TYPES.MEMORY:
                 let mem_index =  this.read(writer.id);
                 //TODO: make work with signed & float
                 let hex8_array = number_to_byte_array(RHS,writer.datatype.size)
@@ -118,7 +118,7 @@ class VirtualMachine {
                     mem_index += 1;
                 }
                 break;
-            case WT.REGISTER:
+            case CONTENT_TYPES.REGISTER:
                 if (writer.id in this.state.registers){
                     this.state.registers[writer.id] = RHS;
                 }else {
@@ -130,12 +130,12 @@ class VirtualMachine {
     
     read(reader){
         switch(reader.type){
-            case RT.REGISTER:
+            case CONTENT_TYPES.REGISTER:
                 if (reader.id in this.state.registers){
                     return this.state.registers[reader.id];
                 }
                 throw new Error("Register ",reader.id," not found");
-            case RT.MEMORY:
+            case CONTENT_TYPES.MEMORY:
                 let mem_index = this.read(reader.id);
                 let mem_chunk = new Array();
                 let return_value = -1;
@@ -153,22 +153,22 @@ class VirtualMachine {
                 }
 
                 return return_value
-            case RT.CONSTANT:
+            case CONTENT_TYPES.CONSTANT:
                 if (reader.id in this.program.constants){
                     return parseInt(this.program.constants[reader.id]);
                 }
                 throw new Error("Constant ",reader.id," not found");
-            case RT.DATA:
+            case CONTENT_TYPES.DATA:
                 if (reader.id in this.state.data){
                     return this.state.data[reader.id];
                 }
                 throw new Error("Data ",reader.id," not found")
-            case RT.LABEL:
+            case CONTENT_TYPES.LABEL:
                 if (reader.id in this.program.labels){
                     return this.program.labels[reader.id];
                 }
                 throw new Error("Label ",reader.id," not found")
-            case RT.NUMBER:
+            case CONTENT_TYPES.NUMBER:
                 //the number that the reader holds, is the id in this case
                 return reader.id;
         }

@@ -9,12 +9,7 @@ const OP = {
   ASSIGN: 6, // (OP.ASSIGN, int: line_number, (enum: writer, string: reader))
 };
 
-const WT = {
-  REGISTER: 0,
-  MEMORY: 1,
-};
-
-const RT = {
+const CONTENT_TYPES = {
   REGISTER: 0,
   MEMORY: 1,
   CONSTANT: 2,
@@ -62,19 +57,10 @@ class ByteCode {
   }
 }
 
-
-class Writer {
-  constructor(writer_type, writer_id, datatype = null) {
-    this.type = writer_type;
-    this.id = writer_id;
-    this.datatype = datatype;
-  }
-}
-
-class Reader {
-  constructor(reader_type, reader_id, datatype = null) {
-    this.type = reader_type;
-    this.id = reader_id;
+class Content {
+  constructor(type, id, datatype = null) {
+    this.type = type;
+    this.id = id;
     this.datatype = datatype;
   }
 }
@@ -97,18 +83,3 @@ class ECS {
         this.end_index = new Array();
     }
 }
-
-
-
-/*
-function handle(bytecode) {
-    bytecode.handle({
-    syscall:() => {
-
-    },
-    assign_binary: (cond, w, r1, r2) => {
-
-    }
-    })
-}
-*/

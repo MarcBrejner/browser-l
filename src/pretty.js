@@ -32,17 +32,17 @@ class PrettyPrinter {
 
   assign_binary(conditional, writer, reader1, opr, reader2) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(this.print_writer(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader2))}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_content(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_content(reader2))}${this.wrap_semicolon()}\n`
   }
 
   assign_unary(conditional, writer, opr, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(this.print_writer(writer))} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_content(reader))}${this.wrap_semicolon()}\n`
   }
 
   assign(conditional, writer, reader) {
     var cond = conditional ? '?=' : ':=';
-    return `${this.wrap_assign(this.print_writer(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_reader(reader))}${this.wrap_semicolon()}\n`
+    return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_content(reader))}${this.wrap_semicolon()}\n`
   }
 
   wrap_assign(assign) {
@@ -65,29 +65,17 @@ class PrettyPrinter {
     return `<span id=label>${label}</span>`;
   }
 
-  print_writer(writer){
-    if(writer.type == WT.MEMORY){
-      if (writer.id.type === RT.CONSTANT){
-        return `[${this.wrap_const(`${writer.id.id} (${this.program.constants[writer.id.id]})`)},${writer.datatype.type}${writer.datatype.size}]`
+  print_content(content){
+    if (content.type === CONTENT_TYPES.CONSTANT){
+      return `${this.wrap_const(`${content.id} (${this.program.constants[content.id]})`)}`
+    }else if(content.type == CONTENT_TYPES.MEMORY){
+      if (content.id.type === CONTENT_TYPES.CONSTANT){
+        return `[${this.wrap_const(`${content.id.id} (${this.program.constants[content.id.id]})`)},${content.datatype.type}${content.datatype.size}]`
       } else {
-        return `[${writer.id.id},${writer.datatype.type}${writer.datatype.size}]`
+        return `[${content.id.id},${content.datatype.type}${content.datatype.size}]`
       }
     }else{
-      return `${writer.id}`
-    }
-  }
-
-  print_reader(reader){
-    if (reader.type === RT.CONSTANT){
-      return `${this.wrap_const(`${reader.id} (${this.program.constants[reader.id]})`)}`
-    }else if(reader.type == RT.MEMORY){
-      if (reader.id.type === RT.CONSTANT){
-        return `[${this.wrap_const(`${reader.id.id} (${this.program.constants[reader.id.id]})`)},${reader.datatype.type}${reader.datatype.size}]`
-      } else {
-        return `[${reader.id.id},${reader.datatype.type}${reader.datatype.size}]`
-      }
-    }else{
-      return `${reader.id}`
+      return `${content.id}`
     }
   }
 
@@ -106,20 +94,3 @@ function getKeyByValueIfValueExists(object, value) {
     return [false, null];
   }
 }
-
-/*
-print_declaration_const(operands) {
-    var [identifier, data] = operands;
-    return `const ${identifier} ${data};\n`
-}
-
-print_declaration_data(operands) {
-    var [identifier, data] = operands;
-    return `data ${identifier} ${data};\n`
-}
-
-print_label(operands) {
-    var [label, pc_pointer] = operands;
-    return `#${label}\n`
-}
-*/
