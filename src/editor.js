@@ -143,7 +143,6 @@ function execute_step(debugging = true) {
     reset_buttons_after_debug()
     return -1;
   }
-  //color(VM.program, VM.state.registers['$!'])
   if(debugging){
     color(VM.program, VM.state.registers['$!'])
   }
