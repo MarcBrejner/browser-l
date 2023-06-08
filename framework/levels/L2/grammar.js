@@ -46,8 +46,7 @@ module.exports = grammar({
 			seq($.writer, choice(':=',"?="), $.expression),
 
 		goto: $ =>
-			seq("goto", choice($.register, $.label)),assignment: $ =>
-			seq($.writer, ':=', $.expression),
+			seq("goto", choice($.register, $.label)),
 
 		variable: $ =>
 			seq($.variable_name, ":", $.type, "=", $.expression),
