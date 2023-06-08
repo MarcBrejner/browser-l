@@ -8,7 +8,7 @@ class L3Builder extends L2Builder {
             for (var i = 0; i < node.childCount; i++){
                 this.handle(node.child(i));
             }
-            this.stack_pointer += Object.keys(frame.variables).length * this.frame_size; // minus 2 because 2 of the children are '{' and '}'
+            this.stack_pointer += Object.keys(frame.variables).length * this.frame_size;
             this.push_statement(node.child(node.childCount-1), new ByteCode(OP.ASSIGN_BIN, [false, new Content(CONTENT_TYPES.REGISTER, '$sp'), new Content(CONTENT_TYPES.REGISTER, '$sp'), '+', new Content(CONTENT_TYPES.NUMBER, Object.keys(frame.variables).length * this.frame_size)]));
             if (this.stack_pointer === 112) {
                 this.in_scope = false;
