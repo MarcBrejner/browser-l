@@ -60,7 +60,7 @@ var encoded_levels = new Array();
     opt.innerHTML = "L"+i;
     document.getElementById('levels').appendChild(opt);
 }
-document.getElementById('levels').value = 2;\n\n"""
+document.getElementById('levels').value = 3;\n\n"""
 
     code += """function get_builder(level) {
   switch (level) {"""

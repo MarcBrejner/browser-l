@@ -1,5 +1,5 @@
 module.exports = grammar({
-	name: 'L2',
+	name: 'L3',
 	
 	rules: {
 		source_file: $ => seq(optional($.declarations), $.statements),
@@ -39,8 +39,27 @@ module.exports = grammar({
 				$.syscall,
 				$.assignment,
 				$.goto,
-				$.variable
+				$.variable,
+				$.scope
 			),
+		
+		scope: $ =>
+			seq('{',
+				repeat1(
+					seq(
+						optional($.label),
+						choice(
+							$.syscall,
+							$.assignment,
+							$.goto,
+							$.variable,
+							$.scope,
+						),
+						';', 
+						optional('\n')
+					)
+				)
+			,'}'),
 
 		assignment: $ =>
 			seq($.writer, choice(':=',"?="), $.expression),
@@ -103,7 +122,7 @@ module.exports = grammar({
 
 		string: () => /".+"/,
 
-		variable_name: () => /[_a-zA-Z]+/
+		variable_name: () => /[_a-zA-Z]+/,
 
 		//address: () => /[a-zA-Z_]+/,
 	}

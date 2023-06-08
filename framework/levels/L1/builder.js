@@ -17,6 +17,6 @@ class L1Builder extends L0Builder {
         }
         var reader2 = new Content(CONTENT_TYPES.NUMBER, 1);
         var writer = new Content(CONTENT_TYPES.REGISTER, '$!');
-        this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [true, writer, reader1, '-', reader2]));
+        this.assign_binary(node, true, writer, reader1, '-', reader2);
     }
 }

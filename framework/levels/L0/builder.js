@@ -66,14 +66,14 @@ class L0Builder {
                     writer = this.handle(writer);
                     var opr = expression[0];
                     var reader = expression[1];
-                    this.assign_unary(node, is_conditional, writer, opr, reader);
+                    this.assign_unary(node, is_conditional, writer, opr.text, reader);
                     break;
                 case 3:
                     writer = this.handle(writer);
                     var reader1 = expression[0];
                     var opr = expression[1];
                     var reader2 = expression[2];
-                    this.assign_binary(node, is_conditional, writer, reader1, opr, reader2);
+                    this.assign_binary(node, is_conditional, writer, reader1, opr.text, reader2);
                     break;
             }
         }
@@ -104,11 +104,11 @@ class L0Builder {
     }
 
     assign_unary(node, is_conditional, writer, opr, reader) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr.text, reader]));
+        this.push_statement(node, new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr, reader]));
     }
 
     assign_binary(node, is_conditional, writer, reader1, opr, reader2) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr.text, reader2]));
+        this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr, reader2]));
     }
 
     push_statement(node, byte_code) {
