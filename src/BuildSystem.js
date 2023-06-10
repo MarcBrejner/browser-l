@@ -33,6 +33,11 @@ function get_datatype(datatype_string){
     }
 }
 
+function get_variable_bytesize(datatype_string) {
+    var datatype = get_datatype(datatype_string);
+    return datatype.size / 8;
+}
+
 const error_pattern = /(UNEXPECTED\s+'[^']+'|MISSING\s+"[^']+")/g;
 function find_error(node, errors){
     if (node.childCount == 0 && !node.isMissing()){

@@ -39,8 +39,27 @@ module.exports = grammar({
 				$.syscall,
 				$.assignment,
 				$.goto,
-				$.variable
+				$.variable,
+				$.scope
 			),
+		
+		scope: $ =>
+			seq('{',
+				repeat1(
+					seq(
+						optional($.label),
+						choice(
+							$.syscall,
+							$.assignment,
+							$.goto,
+							$.variable,
+							$.scope,
+						),
+						';',
+						optional('\n')
+					)
+				)
+			,'}'),
 
 		assignment: $ =>
 			seq($.writer, choice(':=',"?="), $.expression),
@@ -75,12 +94,12 @@ module.exports = grammar({
 				$.memory
 			),
 
-		memory_access: $ =>
+			memory_access: $ =>
 			choice(
 				$.register,
 				$.constant,
 				$.data,
-				$.number
+				$.number,
 			),
 
 		memory: $ => seq('[', $.memory_access, ',', $.type, ']'),
@@ -103,7 +122,7 @@ module.exports = grammar({
 
 		string: () => /".+"/,
 
-		variable_name: () => /[_a-zA-Z]+/
+		variable_name: () => /[_a-zA-Z]+/,
 
 		//address: () => /[a-zA-Z_]+/,
 	}
