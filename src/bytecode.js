@@ -60,7 +60,7 @@ class ByteCode {
 class Content {
   constructor(type, id, datatype = null) {
     this.type = type;
-    this.id = id;
+    this.id = id; // 2+3
     this.datatype = datatype;
   }
 }
