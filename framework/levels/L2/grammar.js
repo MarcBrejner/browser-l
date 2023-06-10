@@ -30,6 +30,7 @@ module.exports = grammar({
 					optional($.label),
 					$.statement, 
 					';', 
+					optional($.comment),
 					optional('\n')
 				)
 			),
@@ -124,6 +125,6 @@ module.exports = grammar({
 
 		variable_name: () => /[_a-zA-Z]+/,
 
-		//address: () => /[a-zA-Z_]+/,
+		comment: () => /\/\/[a-zA-Z0-9 ]+/
 	}
 });

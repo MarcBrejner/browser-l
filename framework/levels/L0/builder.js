@@ -12,6 +12,10 @@ class L0Builder {
             }
         }
 
+        else if (node.type === "comment") {
+            return;
+        }
+
         else if (["statement", "declaration"].includes(node.type)) { 
             this.handle(node.child(0));
         }

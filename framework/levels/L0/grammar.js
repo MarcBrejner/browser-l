@@ -30,6 +30,7 @@ module.exports = grammar({
 					optional($.label),
 					$.statement, 
 					';', 
+					optional($.comment),
 					optional('\n')
 				)
 			),
@@ -92,6 +93,8 @@ module.exports = grammar({
 
 		number: () => /[0-9]+/,
 
-		string: () => /".+"/
+		string: () => /".+"/,
+
+		comment: () => /\/\/[a-zA-Z0-9 ]+/
 	}
 });
