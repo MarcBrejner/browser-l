@@ -31,6 +31,8 @@ class L2Builder extends L1Builder {
                 }   
                 current = current.next;
             }
+            // TODO: check if node.text is in variable dict otherwise return error
+            return new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + node.text), get_datatype(this.variables["&_" + node.text]));
         }
         else if (node.type === "variable") { 
             this.variable_declaration(node);
@@ -54,16 +56,6 @@ class L2Builder extends L1Builder {
         this.data['&_' + variable_name.text] = memory_allocation;
         var expression = this.handle(expression);
         this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(this.convert_expression_to_array(expression))));
-    }
-
-    get_frame_size(variables) {
-        var max = 0;
-        for (var key in variables) {
-            if (variables[key][0] > max) {
-                max = variables[key][0];
-            }
-        }
-        return max;
     }
 
     get_opcode(expression) {
