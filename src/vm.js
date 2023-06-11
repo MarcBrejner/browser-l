@@ -40,7 +40,7 @@ class VirtualMachine {
 
     memorySize = 112;
 
-    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0, '$n':0, '$m':0, '$sp': this.memorySize, '$vp': this.memorySize}) {
+    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0, '$n':0, '$m':0, '$sp': this.memorySize}) {
         this.program = program;
         this.state = this.init_state(memory, registers);
     }
@@ -151,7 +151,6 @@ class VirtualMachine {
                         console.log("Memory index out of bounds");
                     }
                 }
-
                 return return_value
             case CONTENT_TYPES.CONSTANT:
                 if (reader.id in this.program.constants){
@@ -171,6 +170,12 @@ class VirtualMachine {
             case CONTENT_TYPES.NUMBER:
                 //the number that the reader holds, is the id in this case
                 return reader.id;
+            case CONTENT_TYPES.EXPRESSION:
+                return this.read(reader.reader1);
+            case CONTENT_TYPES.UN_EXPRESSION:
+                return this.evaluate_unary(reader.opr, reader.reader1);
+            case CONTENT_TYPES.BIN_EXPRESSION:
+                return this.evaluate_binary(reader.reader1, reader.opr, reader.reader2);
         }
     }
     

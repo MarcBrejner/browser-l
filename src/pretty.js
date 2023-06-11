@@ -69,13 +69,18 @@ class PrettyPrinter {
     if (content.type === CONTENT_TYPES.CONSTANT){
       return `${this.wrap_const(`${content.id} (${this.program.constants[content.id]})`)}`
     }else if(content.type == CONTENT_TYPES.MEMORY){
-      if (content.id.type === CONTENT_TYPES.CONSTANT){
-        return `[${this.wrap_const(`${content.id.id} (${this.program.constants[content.id.id]})`)},${content.datatype.type}${content.datatype.size}]`
-      } else {
-        return `[${content.id.id},${content.datatype.type}${content.datatype.size}]`
-      }
+      return this.print_memory(content);
     }else{
       return `${content.id}`
+    }
+  }
+
+  print_memory(content) {
+    if (content.id.type === CONTENT_TYPES.BIN_EXPRESSION) {
+      return `[${content.id.reader1.get_text()} ${content.id.opr} ${content.id.reader2.get_text()},${content.datatype.type}${content.datatype.size}]`
+    }
+    else {
+      return `[${content.get_text()},${content.datatype.type}${content.datatype.size}]`
     }
   }
 

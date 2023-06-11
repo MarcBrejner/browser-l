@@ -20,14 +20,14 @@ class L0Builder {
             this.handle(node.child(0));
         }
 
-        else if (node.type === "expression") {
+        else if (["expression", "memory_expression"].includes(node.type)) {
             switch (node.childCount) {
                 case 1:
-                    return [this.handle(node.child(0))];
+                    return new Expression(CONTENT_TYPES.EXPRESSION, this.handle(node.child(0)));
                 case 2:
-                    return [node.child(0), this.handle(node.child(1))];
+                    return new Expression(CONTENT_TYPES.UN_EXPRESSION, this.handle(node.child(1)), node.child(0).text);
                 case 3:
-                    return [this.handle(node.child(0)), node.child(1), this.handle(node.child(2))];
+                    return new Expression(CONTENT_TYPES.BIN_EXPRESSION, this.handle(node.child(0)), node.child(1).text, this.handle(node.child(2)));
             }
         }
 
@@ -43,7 +43,7 @@ class L0Builder {
             return new Content(CONTENT_TYPES.DATA, node.text);
         }
 
-        else if (["memory_access" ,"reader", "writer"].includes(node.type)) {
+        else if (["memory_reader" ,"reader", "writer"].includes(node.type)) {
             return this.handle(node.child(0));
         }
 
@@ -60,24 +60,18 @@ class L0Builder {
             var writer = node.child(0);
             var expression = this.handle(node.child(2));
             // TODO: Change such that assign take an expression as input?
-            switch (expression.length) {
-                case 1:
+            switch (expression.type) {
+                case CONTENT_TYPES.EXPRESSION:
                     writer = this.handle(writer)
-                    var reader = expression[0];
-                    this.assign(node, is_conditional, writer, reader);
+                    this.assign(node, is_conditional, writer, expression.reader1);
                     break;
-                case 2:
+                case CONTENT_TYPES.UN_EXPRESSION:
                     writer = this.handle(writer);
-                    var opr = expression[0];
-                    var reader = expression[1];
-                    this.assign_unary(node, is_conditional, writer, opr.text, reader);
+                    this.assign_unary(node, is_conditional, writer, expression.opr, expression.reader1);
                     break;
-                case 3:
+                case CONTENT_TYPES.BIN_EXPRESSION:
                     writer = this.handle(writer);
-                    var reader1 = expression[0];
-                    var opr = expression[1];
-                    var reader2 = expression[2];
-                    this.assign_binary(node, is_conditional, writer, reader1, opr.text, reader2);
+                    this.assign_binary(node, is_conditional, writer, expression.reader1, expression.opr, expression.reader2);
                     break;
             }
         }
