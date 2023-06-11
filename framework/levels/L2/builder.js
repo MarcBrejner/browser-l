@@ -11,6 +11,7 @@ class L2Builder extends L1Builder {
             }
             var offset = Stack.pop() - this.variable_pointer;
             this.variable_pointer += offset;
+            //TODO: SÆT this.head til frame.next for at vise variable efter man er gået ud af et scope
             this.push_statement(node.child(node.childCount-1), new ByteCode(OP.ASSIGN_BIN, [false, new Content(CONTENT_TYPES.REGISTER, '$vp'), new Content(CONTENT_TYPES.REGISTER, '$vp'), '+', new Content(CONTENT_TYPES.NUMBER, offset)]));
             if (this.variable_pointer === 112) {
                 this.in_scope = false;
@@ -21,8 +22,10 @@ class L2Builder extends L1Builder {
             this.variable_pointer -= variable_size;
             this.head.variables[node.child(0).text] = [this.stack_pointer - this.variable_pointer, node.child(2).text];
             var expression = super.handle(node.child(4));
-            this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [false, new Content(CONTENT_TYPES.REGISTER, '$vp'), new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER, this.stack_pointer - this.variable_pointer)]));
-            this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.REGISTER, '$vp'), get_datatype(node.child(2).text))].concat(expression)))            
+            const snapshot = structuredClone(this.head.variables);
+            
+            this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [false, new Content(CONTENT_TYPES.REGISTER, '$vp'), new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER, this.stack_pointer - this.variable_pointer)]),L2Draw, [snapshot]);
+            this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.REGISTER, '$vp'), get_datatype(node.child(2).text))].concat(expression)), L2Draw, [snapshot])            
         }
         else if (node.type === "variable_name" && this.in_scope) {
             var current = this.head;
@@ -55,7 +58,9 @@ class L2Builder extends L1Builder {
         }
         this.data['&_' + variable_name.text] = memory_allocation;
         var _expression = this.handle(expression);
-        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(_expression)));
+        var memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text));
+        const snapshot = structuredClone(this.variables);
+        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, memory_access].concat(_expression)), L2Draw, [snapshot]);
     }
 
     get_frame_size(variables) {
@@ -98,4 +103,43 @@ const Stack = {
             return "Underflow";
         return this.items.pop();
     }
+}
+
+
+var L2Draw = function(params, vm) {
+
+    var container = document.getElementById("lx-container");
+
+    var existing_table = container.querySelector("L2-table")
+    if(existing_table){
+        container.removeChild(existing_table)
+    }
+
+    var table = document.createElement("L2-table");
+    table.style.width = "50%";
+    table.style.border = "1p"
+    variables = params[0];
+
+    for(var name in variables){
+        var row = document.createElement("tr");
+
+        var nameCell = document.createElement("td");
+        nameCell.textContent = name;
+        row.appendChild(nameCell);
+
+
+        var value = variables[name];
+        var valueCell = document.createElement("td");
+        //Check if scoped
+        if(Array.isArray(value)){
+            memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, 112-value[0]), get_datatype(value[1]))
+        }else{
+            memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, name), get_datatype(value))
+        }
+        
+        valueCell.textContent = vm.read(memory_access);
+        row.appendChild(valueCell);
+        table.appendChild(row);
+    }
+    container.appendChild(table);
 }

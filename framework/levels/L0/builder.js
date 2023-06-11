@@ -115,8 +115,10 @@ class L0Builder {
         this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr, reader2]));
     }
 
-    push_statement(node, byte_code) {
+    push_statement(node, byte_code, drawfun = null, drawparams = null) {
         this.statements.push(byte_code);
         this.ECS.nodes.push(node);
+        this.ECS.draws.push(drawfun);
+        this.ECS.drawparams.push(drawparams);
     }
 }
