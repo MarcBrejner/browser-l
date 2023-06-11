@@ -10,8 +10,8 @@ class L2Builder extends L1Builder {
                 this.handle(node.child(i));
             }
             var offset = Stack.pop() - this.variable_pointer;
+            this.head = frame.next;
             this.variable_pointer += offset;
-            this.push_statement(node.child(node.childCount-1), new ByteCode(OP.ASSIGN_BIN, [false, new Content(CONTENT_TYPES.REGISTER, '$vp'), new Content(CONTENT_TYPES.REGISTER, '$vp'), '+', new Content(CONTENT_TYPES.NUMBER, offset)]));
             if (this.variable_pointer === 112) {
                 this.in_scope = false;
             }
@@ -21,15 +21,13 @@ class L2Builder extends L1Builder {
             this.variable_pointer -= variable_size;
             this.head.variables[node.child(0).text] = [this.stack_pointer - this.variable_pointer, node.child(2).text];
             var expression = super.handle(node.child(4));
-            this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [false, new Content(CONTENT_TYPES.REGISTER, '$vp'), new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER, this.stack_pointer - this.variable_pointer)]));
-            this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.REGISTER, '$vp'), get_datatype(node.child(2).text))].concat(expression)))            
+            this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Expression(CONTENT_TYPES.BIN_EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER, this.stack_pointer - this.variable_pointer)), get_datatype(node.child(2).text))].concat(this.convert_expression_to_array(expression))));            
         }
         else if (node.type === "variable_name" && this.in_scope) {
             var current = this.head;
             while (current != null) {
                 if (node.text in current.variables) {
-                    this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [false, new Content(CONTENT_TYPES.REGISTER, '$vp'), new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER,  current.variables[node.text][0])]));
-                    return new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.REGISTER, '$vp'),  get_datatype(current.variables[node.text][1]));
+                    return new Content(CONTENT_TYPES.MEMORY, new Expression(CONTENT_TYPES.BIN_EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER,  current.variables[node.text][0])),  get_datatype(current.variables[node.text][1]));
                 }   
                 current = current.next;
             }
@@ -54,9 +52,8 @@ class L2Builder extends L1Builder {
             memory_allocation += "0";
         }
         this.data['&_' + variable_name.text] = memory_allocation;
-        var _expression = this.handle(expression);
-        // TODO: Check size of expression and give correct op code
-        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(_expression)));
+        var expression = this.handle(expression);
+        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(this.convert_expression_to_array(expression))));
     }
 
     get_frame_size(variables) {
@@ -69,11 +66,32 @@ class L2Builder extends L1Builder {
         return max;
     }
 
+    get_opcode(expression) {
+        if (expression.type === CONTENT_TYPES.BIN_EXPRESSION) {
+            return OP.ASSIGN_BIN;
+        } else if (expression.type === CONTENT_TYPES.UN_EXPRESSION) {
+            return OP.ASSIGN_UN;
+        } else if (expression.type === CONTENT_TYPES.EXPRESSION) {
+            return OP.ASSIGN;
+        }
+    }
+
     variables = {}
     head = null
     stack_pointer = 112;
     variable_pointer = 112;
     in_scope = false;
+
+    convert_expression_to_array(expression) {
+        switch (expression.type) {
+            case CONTENT_TYPES.EXPRESSION:
+                return [expression.reader1];
+            case CONTENT_TYPES.UN_EXPRESSION:
+                return [expression.opr, expression.reader1];
+            case CONTENT_TYPES.BIN_EXPRESSION:
+                return [expression.reader1, expression.opr, expression.reader2]
+        }
+    }
 }
 
 class StackFrame {

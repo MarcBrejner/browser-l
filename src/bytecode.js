@@ -16,6 +16,9 @@ const CONTENT_TYPES = {
   DATA: 3,
   LABEL: 4,
   NUMBER: 5,
+  EXPRESSION: 6,
+  UN_EXPRESSION: 7,
+  BIN_EXPRESSION: 8,
 };
 
 const DT = {
@@ -60,8 +63,24 @@ class ByteCode {
 class Content {
   constructor(type, id, datatype = null) {
     this.type = type;
-    this.id = id; // 2+3
+    this.id = id;//[$x+2,u32]:=2;
     this.datatype = datatype;
+  }
+
+  get_text() {
+    if (this.id.id == null) {
+      return this.id;
+    }
+    return this.id.get_text();
+  }
+}
+
+class Expression {
+  constructor(type, reader1, opr = null, reader2 = null) {
+    this.type = type;
+    this.reader1 = reader1;
+    this.opr = opr;
+    this.reader2 = reader2;
   }
 }
 
