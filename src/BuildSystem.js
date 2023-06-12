@@ -1,5 +1,6 @@
 function BuildSystem(tree) {
     var builder = get_builder(parseInt(chosenLevel.value));
+    console.log(tree.rootNode.toString());
     builder.handle(tree.rootNode);
     return new Program(builder.statements, builder.ECS, builder.data, builder.const, builder.labels);
 }
