@@ -22,8 +22,9 @@ class L2Builder extends L1Builder {
         var variable_size = get_variable_bytesize(var_size);
         this.variable_pointer -= variable_size;
         this.head.variables[var_name] = [this.stack_pointer - this.variable_pointer, var_size];
-        var expression = super.handle(node_expression);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Expression(CONTENT_TYPES.BIN_EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER, this.stack_pointer - this.variable_pointer)), get_datatype(var_size))].concat(this.convert_expression_to_array(expression))));
+        var expression = this.handle(node_expression);
+        var writer = this.read_temp_var(var_name);
+        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, writer].concat(this.convert_expression_to_array(expression))));
     }
 
     read_temp_var(var_name) {
