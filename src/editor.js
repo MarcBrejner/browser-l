@@ -90,6 +90,7 @@ async function debug() {
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
   codeMirrorEditor.addLineClass(program.ECS.nodes[0].startPosition.row, 'background', 'highlight-line');
+
   if(program.error_msg !== null){
     console.log(program.error_msg);
     return;
@@ -122,6 +123,15 @@ function execute_all() {
   }
 }
 
+function draw(VM){
+  var pc = VM.state.registers['$!']-1;
+  var draw_function = VM.program.ECS.draws[pc];
+  var draw_parameters = VM.program.ECS.drawparams[pc]
+  if(draw_function !== null){
+    draw_function(draw_parameters,VM)
+  }
+}
+
 function color(program,pc){
   for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
     codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
@@ -140,11 +150,13 @@ function execute_step(debugging = true) {
 
   if (VM.state.registers['$!'] >= VM.program.instructions.length) {
     console.log("EOF");
+    draw(VM)
     reset_buttons_after_debug()
     return -1;
   }
   if(debugging){
     color(VM.program, VM.state.registers['$!'])
+    draw(VM)
   }
 
 }
