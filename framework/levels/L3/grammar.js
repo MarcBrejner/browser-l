@@ -46,20 +46,7 @@ module.exports = grammar({
 		
 		scope: $ =>
 			seq('{',
-				repeat1(
-					seq(
-						optional($.label),
-						choice(
-							$.syscall,
-							$.assignment,
-							$.goto,
-							$.variable,
-							$.scope,
-						),
-						';',
-						optional('\n')
-					)
-				)
+				$.statements
 			,'}'),
 
 		assignment: $ =>

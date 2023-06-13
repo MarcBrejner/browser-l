@@ -1,7 +1,9 @@
 class L2Builder extends L1Builder {
     handle(node) {
         if (node.type === "scope") { 
-            this.create_scope(node);
+            this.start_scope();
+            this.handle(node.child(1));
+            this.end_scope();
         } 
         else if (node.type === "variable" && this.in_scope) {
             this.create_temp_var(node, node.child(0).text, node.child(2).text, node.child(4));
@@ -24,7 +26,7 @@ class L2Builder extends L1Builder {
         this.head.variables[var_name] = [this.stack_pointer - this.variable_pointer, var_size];
         var expression = this.handle(node_expression);
         var writer = this.read_temp_var(var_name);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, writer].concat(this.convert_expression_to_array(expression))));
+        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, writer].concat(this.convert_content_to_array(expression))));
     }
 
     read_temp_var(var_name) {
@@ -39,17 +41,17 @@ class L2Builder extends L1Builder {
         return new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(this.variables["&_" + var_name]));
     }
 
-    create_scope(node) {
+    start_scope() {
         var frame = new StackFrame();
         frame.next = this.head;
         this.head = frame;
         this.in_scope = true;
         Stack.push(this.variable_pointer);
-        for (var i = 0; i < node.childCount; i++){
-            this.handle(node.child(i));
-        }
+    }
+
+    end_scope() {
         var offset = Stack.pop() - this.variable_pointer;
-        this.head = frame.next;
+        this.head = this.head.next;
         this.variable_pointer += offset;
         if (this.variable_pointer === 112) {
             this.in_scope = false;
@@ -68,7 +70,7 @@ class L2Builder extends L1Builder {
         }
         this.data['&_' + variable_name.text] = memory_allocation;
         var expression = this.handle(expression);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(this.convert_expression_to_array(expression))));
+        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(this.convert_content_to_array(expression))));
     }
 
     get_opcode(expression) {
@@ -87,16 +89,16 @@ class L2Builder extends L1Builder {
     variable_pointer = 112;
     in_scope = false;
 
-    convert_expression_to_array(expression) {
-        switch (expression.type) {
+    convert_content_to_array(content) {
+        switch (content.type) {
             case CONTENT_TYPES.EXPRESSION:
-                return [expression.reader1];
+                return [content.reader1];
             case CONTENT_TYPES.UN_EXPRESSION:
-                return [expression.opr, expression.reader1];
+                return [content.opr, content.reader1];
             case CONTENT_TYPES.BIN_EXPRESSION:
-                return [expression.reader1, expression.opr, expression.reader2]
+                return [content.reader1, content.opr, content.reader2]
             default:
-                return [expression];
+                return [content];
         }
     }
 }
