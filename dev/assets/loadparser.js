@@ -268,12 +268,12 @@ class L3Builder extends L2Builder {
             var left_expression = this.handle(get_left_child(node));
             // If right child is an expression, we have to save the result of the left child in a temporary variable
             if (get_right_child(node).type === 'expression') {
-                this.create_temp_var_with_content(node, 'u8', left_expression);;
+                this.create_temp_var_with_content(get_left_child(node), 'u8', left_expression);;
                 left_expression = this.read_temp_var(`${this.frame_pointer}`)
             }
             // Else we can just write it directly into $x
             else {    
-                this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_expression);
+                this.assign(get_left_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_expression);
                 left_expression = new Content(CONTENT_TYPES.REGISTER, '$x');
             }
             var right_expression = this.handle(get_right_child(node));
@@ -294,13 +294,15 @@ class L3Builder extends L2Builder {
     emit_full_expression (node, right_expression, left_expression) {
         // If it is a binary assignment we have to save the right expression in a register before combining it with the left expression
         if (get_opcode(right_expression) === OP.ASSIGN_BIN) {
-            this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), right_expression);
+            this.assign(get_right_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), right_expression);
             return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_expression, get_operator(node).text, new Content(CONTENT_TYPES.REGISTER, '$x'));
         } else {
             return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_expression, get_operator(node).text, right_expression);
         }
     }
 
+    // Copy of L2 function that takes an already handled expression as input
+    // We need to be able to set a temp variable to a content object rather than a tree-sitter node
     create_temp_var_with_content(node, var_size, content_expression) {
         var variable_size = get_variable_bytesize(var_size);
         this.frame_pointer -= variable_size;

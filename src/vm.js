@@ -47,6 +47,7 @@ class VirtualMachine {
 
     init_state(memory, registers){
         var state_data={};
+        // Secondary array identical to memory, this will hold a grouping of memory that belongs to the same data and is used for coloring in the memory array
         var memory_id = new Array(this.memorySize).fill('');
         map_strings_to_memory(this.program.data);
 
