@@ -91,12 +91,14 @@ class L0Builder {
         }
     }
 
-    assign(node, is_conditional, writer, expression) {
-        this.push_statement(node, new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))));
+    assign(node, is_conditional, writer, expression, drawfun = null, drawparams = null) {
+        this.push_statement(node, new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))), drawfun, drawparams);
     }
 
-    push_statement(node, byte_code) {
+    push_statement(node, byte_code, drawfun, drawparams) {
         this.statements.push(byte_code);
         this.ECS.nodes.push(node);
+        this.ECS.draws.push(drawfun);
+        this.ECS.drawparams.push(drawparams);
     }
 }

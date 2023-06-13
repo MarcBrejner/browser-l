@@ -26,7 +26,8 @@ class L2Builder extends L1Builder {
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var expression = this.handle(node_expression);
         var writer = this.read_temp_var(var_name);
-        this.assign(node, false, writer, expression);
+        const snapshot = structuredClone(this.head.variables);
+        this.assign(node, false, writer, expression,this.L2Draw, [snapshot]);
     }
 
     read_temp_var(var_name) {
@@ -70,7 +71,8 @@ class L2Builder extends L1Builder {
         }
         this.data['&_' + variable_name.text] = memory_allocation;
         var expression = this.handle(expression);
-        this.assign(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text)), expression);
+        const snapshot = structuredClone(this.variables);
+        this.assign(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text)), expression, this.L2Draw, [snapshot]);
     }
 
     variables = {}
@@ -78,6 +80,50 @@ class L2Builder extends L1Builder {
     stack_pointer = 112;
     frame_pointer = 112;
     in_scope = false;
+
+
+    L2Draw = function(params, vm) {
+
+        var container = document.getElementById("lx-container");
+    
+        var existing_table = container.querySelector("L2-table")
+        if(existing_table){
+            container.removeChild(existing_table)
+        }
+    
+        var table = document.createElement("L2-table");
+        table.style.width = "50%";
+        table.style.border = "1p"
+        var variables = params[0];
+    
+        for(var name in variables){
+            var row = document.createElement("tr");
+    
+            var nameCell = document.createElement("td");
+            nameCell.textContent = name;
+            row.appendChild(nameCell);
+    
+    
+            var value = variables[name];
+            var valueCell = document.createElement("td");
+            var memory_access;
+            //Check if scoped
+            if(Array.isArray(value)){
+                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, 112-value[0]), get_datatype(value[1]));
+            }else{
+                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, name), get_datatype(value));
+            }
+            
+            valueCell.textContent = vm.read(memory_access);
+            row.appendChild(valueCell);
+            table.appendChild(row);
+        }
+        container.appendChild(table);
+    }
+
+
+
+
 }
 
 class StackFrame {
@@ -104,3 +150,4 @@ const Stack = {
         return this.items.pop();
     }
 }
+
