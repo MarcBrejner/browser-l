@@ -96,7 +96,9 @@ class Program {
 }
 
 class ECS {
-    constructor() {
-        this.nodes = new Array();
-    }
+  constructor() {
+      this.nodes = new Array();
+      this.draws = new Array();
+      this.drawparams = new Array();
+  }
 }

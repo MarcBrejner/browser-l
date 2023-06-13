@@ -30,7 +30,7 @@ codeMirrorEditor.on('change', async function(cMirror) {
   document.getElementById("prettyPretty").innerHTML = code;
 
   //Fixes a bug with codemirror where added line classes persists too long
-  clear_highlights()
+  clear_highlights();
 })
 
 // Load parser
@@ -122,6 +122,15 @@ function execute_all() {
   }
 }
 
+function draw(VM){
+  var pc = VM.state.registers['$!']-1;
+  var draw_function = VM.program.ECS.draws[pc];
+  var draw_parameters = VM.program.ECS.drawparams[pc]
+  if(draw_function !== null){
+    draw_function(draw_parameters,VM)
+  }
+}
+
 function clear_highlights(){
   const marks = codeMirrorEditor.getAllMarks();
   marks.forEach(mark => {
@@ -149,11 +158,13 @@ function execute_step(debugging = true) {
 
   if (VM.state.registers['$!'] >= VM.program.instructions.length) {
     console.log("EOF");
+    draw(VM)
     reset_buttons_after_debug()
     return -1;
   }
   if(debugging){
     color(VM.program, VM.state.registers['$!'])
+    draw(VM)
   }
 
 }
