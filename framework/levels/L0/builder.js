@@ -30,8 +30,8 @@ class L0Builder {
                     var left_reader = this.handle(get_left_child(node));
                     var right_reader = this.handle(get_right_child(node));
                     if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
-                        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader]));
-                        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader]));
+                        this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader);
+                        this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader);
                         left_reader = new Content(CONTENT_TYPES.REGISTER, '$x');
                         right_reader = new Content(CONTENT_TYPES.REGISTER, '$y');
                     } 
@@ -65,23 +65,9 @@ class L0Builder {
 
         else if (node.type === "assignment") {
             var is_conditional = node.child(1).text === "?=" ? true : false;
-            var writer = node.child(0);
+            var writer = this.handle(node.child(0));
             var expression = this.handle(node.child(2));
-            // TODO: Change such that assign take an expression as input?
-            switch (expression.type) {
-                case CONTENT_TYPES.EXPRESSION:
-                    writer = this.handle(writer)
-                    this.assign(node, is_conditional, writer, expression.reader1);
-                    break;
-                case CONTENT_TYPES.UN_EXPRESSION:
-                    writer = this.handle(writer);
-                    this.assign_unary(node, is_conditional, writer, expression.opr, expression.reader1);
-                    break;
-                case CONTENT_TYPES.BIN_EXPRESSION:
-                    writer = this.handle(writer);
-                    this.assign_binary(node, is_conditional, writer, expression.reader1, expression.opr, expression.reader2);
-                    break;
-            }
+            this.assign(node, is_conditional, writer, expression);
         }
         
         else if(node.type === "constant_declaration"){
@@ -105,16 +91,8 @@ class L0Builder {
         }
     }
 
-    assign(node, is_conditional, writer, reader) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN, [is_conditional, writer, reader]));
-    }
-
-    assign_unary(node, is_conditional, writer, opr, reader) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr, reader]));
-    }
-
-    assign_binary(node, is_conditional, writer, reader1, opr, reader2) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr, reader2]));
+    assign(node, is_conditional, writer, expression) {
+        this.push_statement(node, new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))));
     }
 
     push_statement(node, byte_code) {

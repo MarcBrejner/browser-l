@@ -4,7 +4,7 @@ class L3Builder extends L2Builder {
             // If the assignment has multiple expressions
             if (this.has_sub_expression(node.child(0))) {
                 var head_expression = this.handle(node.child(0));
-                this.push_statement(node, new ByteCode(this.get_opcode(head_expression), [false, new Content(CONTENT_TYPES.REGISTER, '$x')].concat(this.convert_content_to_array(head_expression))));
+                this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), head_expression);
                 return new Expression(CONTENT_TYPES.EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$x'));
             }
             return this.handle(node.child(0));
@@ -28,10 +28,10 @@ class L3Builder extends L2Builder {
             if (node.childCount === 7) {
                 this.start_scope();
                 var left_expression = this.handle(get_left_child(node));
-                this.push_statement(node, new ByteCode(this.get_opcode(left_expression), [false, new Content(CONTENT_TYPES.REGISTER, '$x')].concat(this.convert_content_to_array(left_expression))));
+                this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_expression);
                 this.create_temp_var_with_content(node, 'u8', new Content(CONTENT_TYPES.REGISTER, '$x'));
                 var right_expression = this.handle(get_right_child(node));
-                this.push_statement(node, new ByteCode(this.get_opcode(right_expression), [false, new Content(CONTENT_TYPES.REGISTER, '$x')].concat(this.convert_content_to_array(right_expression))));
+                this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), right_expression);
                 var final_expression = new Expression(CONTENT_TYPES.BIN_EXPRESSION, this.read_temp_var(`${this.variable_pointer}`), get_operator(node).text, new Content(CONTENT_TYPES.REGISTER, '$x'));
                 this.end_scope();
                 return final_expression;
@@ -46,7 +46,7 @@ class L3Builder extends L2Builder {
         this.variable_pointer -= variable_size;
         this.head.variables[this.variable_pointer] = [this.stack_pointer - this.variable_pointer, var_size];
         var writer = this.read_temp_var(this.variable_pointer);
-        this.push_statement(node, new ByteCode(this.get_opcode(content_expression), [false, writer].concat(this.convert_content_to_array(content_expression))));
+        this.assign(node, false, writer, content_expression);
     }
 
     has_sub_expression(expression) {

@@ -44,8 +44,8 @@ class L0Builder {
                     var left_reader = this.handle(get_left_child(node));
                     var right_reader = this.handle(get_right_child(node));
                     if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
-                        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader]));
-                        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader]));
+                        this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader);
+                        this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader);
                         left_reader = new Content(CONTENT_TYPES.REGISTER, '$x');
                         right_reader = new Content(CONTENT_TYPES.REGISTER, '$y');
                     } 
@@ -79,23 +79,9 @@ class L0Builder {
 
         else if (node.type === "assignment") {
             var is_conditional = node.child(1).text === "?=" ? true : false;
-            var writer = node.child(0);
+            var writer = this.handle(node.child(0));
             var expression = this.handle(node.child(2));
-            // TODO: Change such that assign take an expression as input?
-            switch (expression.type) {
-                case CONTENT_TYPES.EXPRESSION:
-                    writer = this.handle(writer)
-                    this.assign(node, is_conditional, writer, expression.reader1);
-                    break;
-                case CONTENT_TYPES.UN_EXPRESSION:
-                    writer = this.handle(writer);
-                    this.assign_unary(node, is_conditional, writer, expression.opr, expression.reader1);
-                    break;
-                case CONTENT_TYPES.BIN_EXPRESSION:
-                    writer = this.handle(writer);
-                    this.assign_binary(node, is_conditional, writer, expression.reader1, expression.opr, expression.reader2);
-                    break;
-            }
+            this.assign(node, is_conditional, writer, expression);
         }
         
         else if(node.type === "constant_declaration"){
@@ -119,16 +105,8 @@ class L0Builder {
         }
     }
 
-    assign(node, is_conditional, writer, reader) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN, [is_conditional, writer, reader]));
-    }
-
-    assign_unary(node, is_conditional, writer, opr, reader) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr, reader]));
-    }
-
-    assign_binary(node, is_conditional, writer, reader1, opr, reader2) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr, reader2]));
+    assign(node, is_conditional, writer, expression) {
+        this.push_statement(node, new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))));
     }
 
     push_statement(node, byte_code) {
@@ -156,7 +134,8 @@ class L1Builder extends L0Builder {
         }
         var reader2 = new Content(CONTENT_TYPES.NUMBER, 1);
         var writer = new Content(CONTENT_TYPES.REGISTER, '$!');
-        this.assign_binary(node, true, writer, reader1, '-', reader2);
+        var expression = new Expression(CONTENT_TYPES.BIN_EXPRESSION, reader1, '-', reader2);
+        this.assign(node, true, writer, expression);
     }
 }
 encoded_levels.push(decode('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ABIACAAHAAEABwAJAAEACAANAAEADwAPAAEAEAAWAAEAIwAbAAEAIAAkAAEAGwAxAAIAHAAdAAQAEwABAAAAMgABAAIANgABABQANAAFAAcACAAOAA8AEAAEAAkAAQAIABkAAQAjADMAAQAfAC4ABQAMAA0ADgAPABIABAAJAAEACAAZAAEAIwAvAAEAHwAuAAUADAANAA4ADwASAAQAOAABAAAAOgABAAIAPgABABQAPAAFAAcACAAOAA8AEAADAEAAAQAAAEIAAQACAEQABQAHAAgADgAPABAAAwA4AAEAAAA6AAEAAgA8AAUABwAIAA4ADwAQAAEARgAHAAMABAAHAAgADgAPABAAAQBIAAYAAAAHAAgADgAPABAAAQBAAAYAAAAHAAgADgAPABAAAwAXAAEAIgAlAAEAIQBKAAQADAANAA8AEgABADgABgAAAAcACAAOAA8AEAACACwAAQAiAEoABAAMAA0ADwASAAEATAAEAAEABQAGABEAAQBOAAIABQAGAAIAUAABAAkAUgABABEAAQBUAAIACQARAAEAVgACAAEAEQABAFgAAgAOAA8AAQBaAAIABQAGAAIAXAABAAEAXgABABEAAQBgAAEAAAABAGIAAQACAAEAZAABAAEAAQBmAAEAAQABAGgAAQALAAEAagABAAwAAQBsAAEAAAABAG4AAQABAAEAcAABAAkAAQByAAEAAQABAHQAAQATAAEAdgABABIAAQB4AAEAAQABAHoAAQABAAEAfAABAAoAAQB+AAEACQABAIAAAQABAAEAggABAAEAAQCEAAEAAQABAIYAAQAAAAEAiAABAAEAAQCKAAEADQABAIwAAQABAAAAAAAjAAAARgAAAGkAAACBAAAAmQAAALAAAADKAAAA2wAAAOwAAAD9AAAADgEAABwBAAAqAQAANAEAAD0BAABGAQAAUwEAAFwBAABmAQAAbQEAAHIBAAB5AQAAfgEAAIMBAACIAQAAjQEAAJQBAACYAQAAnAEAAKABAACkAQAAqAEAAKwBAACwAQAAtAEAALgBAAC8AQAAwAEAAMQBAADIAQAAzAEAANABAADUAQAA2AEAANwBAADgAQAA5AEAAOgBAADsAQAAAAAAAAAAAAAAAQABAAABAAABAAABAAABAAABAAABAAABAAABAAABAAABAQABAQABAQABAQABAQAB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'));
@@ -188,7 +167,7 @@ class L2Builder extends L1Builder {
         this.head.variables[var_name] = [this.stack_pointer - this.variable_pointer, var_size];
         var expression = this.handle(node_expression);
         var writer = this.read_temp_var(var_name);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, writer].concat(this.convert_content_to_array(expression))));
+        this.assign(node, false, writer, expression);
     }
 
     read_temp_var(var_name) {
@@ -231,17 +210,7 @@ class L2Builder extends L1Builder {
         }
         this.data['&_' + variable_name.text] = memory_allocation;
         var expression = this.handle(expression);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(this.convert_content_to_array(expression))));
-    }
-
-    get_opcode(expression) {
-        if (expression.type === CONTENT_TYPES.BIN_EXPRESSION) {
-            return OP.ASSIGN_BIN;
-        } else if (expression.type === CONTENT_TYPES.UN_EXPRESSION) {
-            return OP.ASSIGN_UN;
-        } else {
-            return OP.ASSIGN;
-        }
+        this.assign(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text)), expression);
     }
 
     variables = {}
@@ -249,19 +218,6 @@ class L2Builder extends L1Builder {
     stack_pointer = 112;
     variable_pointer = 112;
     in_scope = false;
-
-    convert_content_to_array(content) {
-        switch (content.type) {
-            case CONTENT_TYPES.EXPRESSION:
-                return [content.reader1];
-            case CONTENT_TYPES.UN_EXPRESSION:
-                return [content.opr, content.reader1];
-            case CONTENT_TYPES.BIN_EXPRESSION:
-                return [content.reader1, content.opr, content.reader2]
-            default:
-                return [content];
-        }
-    }
 }
 
 class StackFrame {
@@ -295,7 +251,7 @@ class L3Builder extends L2Builder {
             // If the assignment has multiple expressions
             if (this.has_sub_expression(node.child(0))) {
                 var head_expression = this.handle(node.child(0));
-                this.push_statement(node, new ByteCode(this.get_opcode(head_expression), [false, new Content(CONTENT_TYPES.REGISTER, '$x')].concat(this.convert_content_to_array(head_expression))));
+                this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), head_expression);
                 return new Expression(CONTENT_TYPES.EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$x'));
             }
             return this.handle(node.child(0));
@@ -319,10 +275,10 @@ class L3Builder extends L2Builder {
             if (node.childCount === 7) {
                 this.start_scope();
                 var left_expression = this.handle(get_left_child(node));
-                this.push_statement(node, new ByteCode(this.get_opcode(left_expression), [false, new Content(CONTENT_TYPES.REGISTER, '$x')].concat(this.convert_content_to_array(left_expression))));
+                this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_expression);
                 this.create_temp_var_with_content(node, 'u8', new Content(CONTENT_TYPES.REGISTER, '$x'));
                 var right_expression = this.handle(get_right_child(node));
-                this.push_statement(node, new ByteCode(this.get_opcode(right_expression), [false, new Content(CONTENT_TYPES.REGISTER, '$x')].concat(this.convert_content_to_array(right_expression))));
+                this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), right_expression);
                 var final_expression = new Expression(CONTENT_TYPES.BIN_EXPRESSION, this.read_temp_var(`${this.variable_pointer}`), get_operator(node).text, new Content(CONTENT_TYPES.REGISTER, '$x'));
                 this.end_scope();
                 return final_expression;
@@ -337,7 +293,7 @@ class L3Builder extends L2Builder {
         this.variable_pointer -= variable_size;
         this.head.variables[this.variable_pointer] = [this.stack_pointer - this.variable_pointer, var_size];
         var writer = this.read_temp_var(this.variable_pointer);
-        this.push_statement(node, new ByteCode(this.get_opcode(content_expression), [false, writer].concat(this.convert_content_to_array(content_expression))));
+        this.assign(node, false, writer, content_expression);
     }
 
     has_sub_expression(expression) {

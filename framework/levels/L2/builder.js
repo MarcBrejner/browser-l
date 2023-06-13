@@ -26,7 +26,7 @@ class L2Builder extends L1Builder {
         this.head.variables[var_name] = [this.stack_pointer - this.variable_pointer, var_size];
         var expression = this.handle(node_expression);
         var writer = this.read_temp_var(var_name);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, writer].concat(this.convert_content_to_array(expression))));
+        this.assign(node, false, writer, expression);
     }
 
     read_temp_var(var_name) {
@@ -69,17 +69,7 @@ class L2Builder extends L1Builder {
         }
         this.data['&_' + variable_name.text] = memory_allocation;
         var expression = this.handle(expression);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(this.convert_content_to_array(expression))));
-    }
-
-    get_opcode(expression) {
-        if (expression.type === CONTENT_TYPES.BIN_EXPRESSION) {
-            return OP.ASSIGN_BIN;
-        } else if (expression.type === CONTENT_TYPES.UN_EXPRESSION) {
-            return OP.ASSIGN_UN;
-        } else {
-            return OP.ASSIGN;
-        }
+        this.assign(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text)), expression);
     }
 
     variables = {}
@@ -87,19 +77,6 @@ class L2Builder extends L1Builder {
     stack_pointer = 112;
     variable_pointer = 112;
     in_scope = false;
-
-    convert_content_to_array(content) {
-        switch (content.type) {
-            case CONTENT_TYPES.EXPRESSION:
-                return [content.reader1];
-            case CONTENT_TYPES.UN_EXPRESSION:
-                return [content.opr, content.reader1];
-            case CONTENT_TYPES.BIN_EXPRESSION:
-                return [content.reader1, content.opr, content.reader2]
-            default:
-                return [content];
-        }
-    }
 }
 
 class StackFrame {

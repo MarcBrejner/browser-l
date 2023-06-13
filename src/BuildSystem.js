@@ -84,3 +84,26 @@ function get_operator(expression) {
   }
 }
 
+function get_opcode(content) {
+  if (content.type === CONTENT_TYPES.BIN_EXPRESSION) {
+      return OP.ASSIGN_BIN;
+  } else if (content.type === CONTENT_TYPES.UN_EXPRESSION) {
+      return OP.ASSIGN_UN;
+  } else {
+      return OP.ASSIGN;
+  }
+}
+
+function convert_content_to_array(content) {
+  switch (content.type) {
+      case CONTENT_TYPES.EXPRESSION:
+          return [content.reader1];
+      case CONTENT_TYPES.UN_EXPRESSION:
+          return [content.opr, content.reader1];
+      case CONTENT_TYPES.BIN_EXPRESSION:
+          return [content.reader1, content.opr, content.reader2]
+      default:
+          return [content];
+  }
+}
+
