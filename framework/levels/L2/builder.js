@@ -22,8 +22,8 @@ class L2Builder extends L1Builder {
 
     create_temp_var(node, var_name, var_size, node_expression) {
         var variable_size = get_variable_bytesize(var_size);
-        this.variable_pointer -= variable_size;
-        this.head.variables[var_name] = [this.stack_pointer - this.variable_pointer, var_size];
+        this.frame_pointer -= variable_size;
+        this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var expression = this.handle(node_expression);
         var writer = this.read_temp_var(var_name);
         this.assign(node, false, writer, expression);
@@ -33,7 +33,7 @@ class L2Builder extends L1Builder {
         var current = this.head;
         while (current != null) {
             if (var_name in current.variables) {
-                return new Content(CONTENT_TYPES.MEMORY, new Expression(CONTENT_TYPES.BIN_EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER,  current.variables[var_name][0])),  get_datatype(current.variables[var_name][1]));
+                return new Content(CONTENT_TYPES.MEMORY, new Expression(CONTENT_TYPES.BIN_EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$fp'), '-', new Content(CONTENT_TYPES.NUMBER,  current.variables[var_name][0])),  get_datatype(current.variables[var_name][1]));
             }   
             current = current.next;
         }
@@ -46,14 +46,14 @@ class L2Builder extends L1Builder {
         frame.next = this.head;
         this.head = frame;
         this.in_scope = true;
-        Stack.push(this.variable_pointer);
+        Stack.push(this.frame_pointer);
     }
 
     end_scope() {
-        var offset = Stack.pop() - this.variable_pointer;
+        var offset = Stack.pop() - this.frame_pointer;
         this.head = this.head.next;
-        this.variable_pointer += offset;
-        if (this.variable_pointer === 112) {
+        this.frame_pointer += offset;
+        if (this.frame_pointer === 112) {
             this.in_scope = false;
         }
     }
@@ -75,7 +75,7 @@ class L2Builder extends L1Builder {
     variables = {}
     head = null
     stack_pointer = 112;
-    variable_pointer = 112;
+    frame_pointer = 112;
     in_scope = false;
 }
 
