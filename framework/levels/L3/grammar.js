@@ -50,15 +50,13 @@ module.exports = grammar({
 			,'}'),
 
 		assignment: $ =>
-			seq($.writer, choice(':=',"?="), $.head_expression),
+			seq($.writer, choice(':=',"?="), $.expression),
 
 		goto: $ =>
 			seq("goto", choice($.register, $.label)),
 
 		variable: $ =>
-			seq($.variable_name, ":", $.type, "=", $.head_expression),
-
-		head_expression: $ => $.expression,
+			seq($.variable_name, ":", $.type, "=", $.expression),
 
 		expression: $ =>
             choice(
@@ -67,9 +65,22 @@ module.exports = grammar({
 				prec.left(1, seq('(', $.expression, ')', '+', '(', $.expression, ')')),
 				prec.left(1, seq('(', $.expression, ')', '-', '(', $.expression, ')')),
 
-                seq($.reader, $.operator, $.reader),
-                seq($.operator, $.reader),
-                $.reader
+				prec.left(2, seq('(', $.expression, ')', '*', $.reader)),
+				prec.left(2, seq('(', $.expression, ')', '/', $.reader)),
+				prec.left(1, seq('(', $.expression, ')', '+', $.reader)),
+				prec.left(1, seq('(', $.expression, ')', '-', $.reader)),
+
+				prec.left(2, seq($.reader, '*', '(', $.expression, ')')),
+				prec.left(2, seq($.reader, '/', '(', $.expression, ')')),
+				prec.left(1, seq($.reader, '+', '(', $.expression, ')')),
+				prec.left(1, seq($.reader, '-', '(', $.expression, ')')),
+
+				prec.left(2, seq($.reader, '*', $.reader)),
+				prec.left(2, seq($.reader, '/', $.reader)),
+				prec.left(1, seq($.reader, '+', $.reader)),
+				prec.left(1, seq($.reader, '-', $.reader)),
+                seq('-', $.reader),
+                $.reader,
             ),
 				
 		reader: $ =>
@@ -116,7 +127,7 @@ module.exports = grammar({
 
 		syscall: () => 'syscall',
 
-		operator: () => /[+-/\*]+/,
+		operator: () => /[+-/\*]/,
 
 		logical_operator: () => /[|&><=]+/,
 
