@@ -22,18 +22,18 @@ class L2Builder extends L1Builder {
 
     create_temp_var(node, var_name, var_size, node_expression) {
         var variable_size = get_variable_bytesize(var_size);
-        this.variable_pointer -= variable_size;
-        this.head.variables[var_name] = [this.stack_pointer - this.variable_pointer, var_size];
+        this.frame_pointer -= variable_size;
+        this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var expression = this.handle(node_expression);
         var writer = this.read_temp_var(var_name);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, writer].concat(this.convert_content_to_array(expression))));
+        this.assign(node, false, writer, expression);
     }
 
     read_temp_var(var_name) {
         var current = this.head;
         while (current != null) {
             if (var_name in current.variables) {
-                return new Content(CONTENT_TYPES.MEMORY, new Expression(CONTENT_TYPES.BIN_EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$sp'), '-', new Content(CONTENT_TYPES.NUMBER,  current.variables[var_name][0])),  get_datatype(current.variables[var_name][1]));
+                return new Content(CONTENT_TYPES.MEMORY, new Expression(CONTENT_TYPES.BIN_EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$fp'), '-', new Content(CONTENT_TYPES.NUMBER,  current.variables[var_name][0])),  get_datatype(current.variables[var_name][1]));
             }   
             current = current.next;
         }
@@ -46,14 +46,15 @@ class L2Builder extends L1Builder {
         frame.next = this.head;
         this.head = frame;
         this.in_scope = true;
-        Stack.push(this.variable_pointer);
+
+        Stack.push(this.frame_pointer);
     }
 
     end_scope() {
-        var offset = Stack.pop() - this.variable_pointer;
+        var offset = Stack.pop() - this.frame_pointer;
         this.head = this.head.next;
-        this.variable_pointer += offset;
-        if (this.variable_pointer === 112) {
+        this.frame_pointer += offset;
+        if (this.head === null) {
             this.in_scope = false;
         }
     }
@@ -62,45 +63,21 @@ class L2Builder extends L1Builder {
         var variable_name = node.child(0);
         var type = node.child(2);
         var expression = node.child(4);
-        var variable_size = parseInt(type.text.replace(/\D/g, ''));
         this.variables['&_' + variable_name.text] = type.text;
         var memory_allocation = "";
-        for (var i = 0; i < variable_size/8; i++) {
+        for (var i = 0; i < get_variable_bytesize(type.text); i++) {
             memory_allocation += "0";
         }
         this.data['&_' + variable_name.text] = memory_allocation;
         var expression = this.handle(expression);
-        this.push_statement(node, new ByteCode(this.get_opcode(expression), [false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text))].concat(this.convert_content_to_array(expression))));
-    }
-
-    get_opcode(expression) {
-        if (expression.type === CONTENT_TYPES.BIN_EXPRESSION) {
-            return OP.ASSIGN_BIN;
-        } else if (expression.type === CONTENT_TYPES.UN_EXPRESSION) {
-            return OP.ASSIGN_UN;
-        } else {
-            return OP.ASSIGN;
-        }
+        this.assign(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text)), expression);
     }
 
     variables = {}
     head = null
     stack_pointer = 112;
-    variable_pointer = 112;
+    frame_pointer = 112;
     in_scope = false;
-
-    convert_content_to_array(content) {
-        switch (content.type) {
-            case CONTENT_TYPES.EXPRESSION:
-                return [content.reader1];
-            case CONTENT_TYPES.UN_EXPRESSION:
-                return [content.opr, content.reader1];
-            case CONTENT_TYPES.BIN_EXPRESSION:
-                return [content.reader1, content.opr, content.reader2]
-            default:
-                return [content];
-        }
-    }
 }
 
 class StackFrame {

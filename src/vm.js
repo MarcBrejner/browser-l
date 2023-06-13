@@ -40,7 +40,7 @@ class VirtualMachine {
 
     memorySize = 112;
 
-    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0, '$n':0, '$m':0, '$sp': this.memorySize}) {
+    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0, '$n':0, '$m':0, '$fp': this.memorySize}) {
         this.program = program;
         this.state = this.init_state(memory, registers);
     }
@@ -65,6 +65,8 @@ class VirtualMachine {
                     memory[pointer] = number_to_byte_array(str.charCodeAt(char),8)[0];
                     pointer += 1;
                 }
+                memory_id[pointer] = id;
+                memory[pointer] = number_to_byte_array(0, 1);
                 pointer += 1;
             });
         }
