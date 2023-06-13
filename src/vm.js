@@ -65,6 +65,8 @@ class VirtualMachine {
                     memory[pointer] = number_to_byte_array(str.charCodeAt(char),8)[0];
                     pointer += 1;
                 }
+                memory_id[pointer] = id;
+                memory[pointer] = number_to_byte_array(0, 1);
                 pointer += 1;
             });
         }

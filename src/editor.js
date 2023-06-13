@@ -153,7 +153,6 @@ function show_results_in_html(state) {
   registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
   var rows = ""
   var rowText = "";
-  var tbody = "";
   for (var i = 0; i < state.memory.length; i += 16) {
     rowText = "";
     // Print the actual memory
