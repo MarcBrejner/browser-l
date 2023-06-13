@@ -53,6 +53,8 @@ class L3Builder extends L2Builder {
         }
     }
 
+    // Copy of L2 function that takes an already handled expression as input
+    // We need to be able to set a temp variable to a content object rather than a tree-sitter node
     create_temp_var_with_content(node, var_size, content_expression) {
         var variable_size = get_variable_bytesize(var_size);
         this.frame_pointer -= variable_size;
