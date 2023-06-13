@@ -28,13 +28,13 @@ class L0Builder {
                     return new Expression(CONTENT_TYPES.UN_EXPRESSION, this.handle(node.child(1)), node.child(0).text);
                 case 3:
                     var left_reader = this.handle(node.child(0));
-                    if (left_reader.type === CONTENT_TYPES.MEMORY) {
-                        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader]));
-                    } 
                     var right_reader = this.handle(node.child(2));
-                    if (right_reader.type === CONTENT_TYPES.MEMORY) {
+                    if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
+                        this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader]));
                         this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader]));
-                    }
+                        left_reader = new Content(CONTENT_TYPES.REGISTER, '$x');
+                        right_reader = new Content(CONTENT_TYPES.REGISTER, '$y');
+                    } 
                     return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_reader, node.child(1).text,  right_reader);
             }
         }
