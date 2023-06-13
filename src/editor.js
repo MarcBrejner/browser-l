@@ -30,9 +30,7 @@ codeMirrorEditor.on('change', async function(cMirror) {
   document.getElementById("prettyPretty").innerHTML = code;
 
   //Fixes a bug with codemirror where added line classes persists too long
-  for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
-    cMirror.removeLineClass(i, 'background', 'highlight-line');
-  }
+  clear_highlights()
 })
 
 // Load parser
@@ -124,11 +122,16 @@ function execute_all() {
   }
 }
 
-function color(program,pc){
+function clear_highlights(){
   const marks = codeMirrorEditor.getAllMarks();
   marks.forEach(mark => {
     mark.clear();
   });
+}
+
+function color(program,pc){
+
+  clear_highlights()
   
   const start = {line: program.ECS.nodes[pc].startPosition.row , ch: program.ECS.nodes[pc].startPosition.column}
   const end = {line: program.ECS.nodes[pc].endPosition.row , ch: program.ECS.nodes[pc].endPosition.column}
