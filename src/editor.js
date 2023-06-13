@@ -123,11 +123,19 @@ function execute_all() {
 }
 
 function color(program,pc){
-  for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
-    codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
-  }
+  // for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
+  //   codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
+  // }
+
+  // get all marks
+  const marks = codeMirrorEditor.getAllMarks();
+
+  // remove all marks
+  marks.forEach(mark => {
+    mark.clear();
+  });
   
-  codeMirrorEditor.addLineClass(program.ECS.nodes[pc].startPosition.row, 'background', 'highlight-line');
+  codeMirrorEditor.markText(program.ECS.nodes[pc].startIndex, program.ECS.nodes[pc].endIndex , 'background', 'highlight-line');
 
 }
 

@@ -1,8 +1,10 @@
 function BuildSystem(tree) {
     var builder = get_builder(parseInt(chosenLevel.value));
     console.log(tree.rootNode.toString());
+    var error_msg = find_error(tree.rootNode, new Array())[0];
     builder.handle(tree.rootNode);
-    return new Program(builder.statements, builder.ECS, builder.data, builder.const, builder.labels);
+    return new Program(builder.statements, builder.ECS, builder.data, builder.const, builder.labels, error_msg);
+    
 }
 
 function get_datatype(datatype_string){
