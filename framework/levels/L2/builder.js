@@ -46,6 +46,7 @@ class L2Builder extends L1Builder {
         frame.next = this.head;
         this.head = frame;
         this.in_scope = true;
+
         Stack.push(this.frame_pointer);
     }
 
@@ -53,7 +54,7 @@ class L2Builder extends L1Builder {
         var offset = Stack.pop() - this.frame_pointer;
         this.head = this.head.next;
         this.frame_pointer += offset;
-        if (this.frame_pointer === 112) {
+        if (this.head === null) {
             this.in_scope = false;
         }
     }
