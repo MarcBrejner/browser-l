@@ -62,10 +62,9 @@ class L2Builder extends L1Builder {
         var variable_name = node.child(0);
         var type = node.child(2);
         var expression = node.child(4);
-        var variable_size = parseInt(type.text.replace(/\D/g, ''));
         this.variables['&_' + variable_name.text] = type.text;
         var memory_allocation = "";
-        for (var i = 0; i < variable_size/8; i++) {
+        for (var i = 0; i < get_variable_bytesize(type.text); i++) {
             memory_allocation += "0";
         }
         this.data['&_' + variable_name.text] = memory_allocation;

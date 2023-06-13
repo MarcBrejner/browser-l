@@ -58,3 +58,29 @@ function find_error(node, errors){
 
     return errors;
 }
+
+function get_left_child(expression) {
+  for (var i = 0; i < expression.childCount; i++) {
+      if (expression.child(i).type === 'expression' || expression.child(i).type === 'reader') {
+          return expression.child(i);
+      }
+  }
+}
+
+function get_right_child(expression) {
+  for (var i = expression.childCount-1; i > 0; i--) {
+      if (expression.child(i).type === 'expression' || expression.child(i).type === 'reader') {
+          return expression.child(i);
+      }
+  }
+}
+
+function get_operator(expression) {
+  var operators = ['*', '/', '-', '+', 'logical_operator', 'operator'];
+  for (var i = 0; i < expression.childCount; i++) {
+      if (operators.includes(expression.child(i).type)) {
+          return expression.child(i);
+      }
+  }
+}
+

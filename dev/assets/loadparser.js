@@ -41,15 +41,15 @@ class L0Builder {
                 case 2:
                     return new Expression(CONTENT_TYPES.UN_EXPRESSION, this.handle(node.child(1)), node.child(0).text);
                 case 3:
-                    var left_reader = this.handle(node.child(0));
-                    var right_reader = this.handle(node.child(2));
+                    var left_reader = this.handle(get_left_child(node));
+                    var right_reader = this.handle(get_right_child(node));
                     if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
                         this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader]));
                         this.push_statement(node, new ByteCode(OP.ASSIGN, [false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader]));
                         left_reader = new Content(CONTENT_TYPES.REGISTER, '$x');
                         right_reader = new Content(CONTENT_TYPES.REGISTER, '$y');
                     } 
-                    return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_reader, node.child(1).text,  right_reader);
+                    return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_reader, get_operator(node).text,  right_reader);
             }
         }
 
@@ -224,10 +224,9 @@ class L2Builder extends L1Builder {
         var variable_name = node.child(0);
         var type = node.child(2);
         var expression = node.child(4);
-        var variable_size = parseInt(type.text.replace(/\D/g, ''));
         this.variables['&_' + variable_name.text] = type.text;
         var memory_allocation = "";
-        for (var i = 0; i < variable_size/8; i++) {
+        for (var i = 0; i < get_variable_bytesize(type.text); i++) {
             memory_allocation += "0";
         }
         this.data['&_' + variable_name.text] = memory_allocation;
@@ -301,6 +300,7 @@ class L3Builder extends L2Builder {
             }
             return this.handle(node.child(0));
         } else if (node.type === 'expression') {
+            
             // if the expression does not contain any sub-expressions it should be sent down to L0 instead of being handled here.
             if (!this.has_sub_expression(node)) {
                 return super.handle(node);
@@ -315,14 +315,15 @@ class L3Builder extends L2Builder {
             // end scope
 
             // Only works when both children are expressions
+
             if (node.childCount === 7) {
                 this.start_scope();
-                var left_expression = this.handle(node.child(1));
+                var left_expression = this.handle(get_left_child(node));
                 this.push_statement(node, new ByteCode(this.get_opcode(left_expression), [false, new Content(CONTENT_TYPES.REGISTER, '$x')].concat(this.convert_content_to_array(left_expression))));
                 this.create_temp_var_with_content(node, 'u8', new Content(CONTENT_TYPES.REGISTER, '$x'));
-                var right_expression = this.handle(node.child(5));
+                var right_expression = this.handle(get_right_child(node));
                 this.push_statement(node, new ByteCode(this.get_opcode(right_expression), [false, new Content(CONTENT_TYPES.REGISTER, '$x')].concat(this.convert_content_to_array(right_expression))));
-                var final_expression = new Expression(CONTENT_TYPES.BIN_EXPRESSION, this.read_temp_var(`${this.variable_pointer}`), node.child(3).text, new Content(CONTENT_TYPES.REGISTER, '$x'));
+                var final_expression = new Expression(CONTENT_TYPES.BIN_EXPRESSION, this.read_temp_var(`${this.variable_pointer}`), get_operator(node).text, new Content(CONTENT_TYPES.REGISTER, '$x'));
                 this.end_scope();
                 return final_expression;
             }

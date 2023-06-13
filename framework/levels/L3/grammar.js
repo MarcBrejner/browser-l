@@ -66,6 +66,7 @@ module.exports = grammar({
 				prec.left(2, seq('(', $.expression, ')', '/', '(', $.expression, ')')),
 				prec.left(1, seq('(', $.expression, ')', '+', '(', $.expression, ')')),
 				prec.left(1, seq('(', $.expression, ')', '-', '(', $.expression, ')')),
+
                 seq($.reader, $.operator, $.reader),
                 seq($.operator, $.reader),
                 $.reader
