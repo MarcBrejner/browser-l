@@ -89,11 +89,13 @@ async function debug() {
   
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
-  codeMirrorEditor.addLineClass(program.ECS.nodes[0].startPosition.row, 'background', 'highlight-line');
+  //codeMirrorEditor.addLineClass(program.ECS.nodes[0].startPosition.row, 'background', 'highlight-line');
+  
   if(program.error_msg !== null){
     console.log(program.error_msg);
     return;
   }
+  color(program, 0)
   var VM = get_virtual_machine(program);
   show_results_in_html(VM.state);
 
@@ -123,19 +125,15 @@ function execute_all() {
 }
 
 function color(program,pc){
-  // for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
-  //   codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
-  // }
-
-  // get all marks
   const marks = codeMirrorEditor.getAllMarks();
-
-  // remove all marks
   marks.forEach(mark => {
     mark.clear();
   });
   
-  codeMirrorEditor.markText(program.ECS.nodes[pc].startIndex, program.ECS.nodes[pc].endIndex , 'background', 'highlight-line');
+  const start = {line: program.ECS.nodes[pc].startPosition.row , ch: program.ECS.nodes[pc].startPosition.column}
+  const end = {line: program.ECS.nodes[pc].endPosition.row , ch: program.ECS.nodes[pc].endPosition.column}
+  console.log(start, end)
+  codeMirrorEditor.markText(start, end, { className: 'highlight-line' });
 
 }
 
