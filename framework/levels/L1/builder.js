@@ -1,6 +1,13 @@
-class L1Builder extends L0Builder {
+class L1Visitor extends L0Visitor {  
+
     goto(node) {
         var reader = node.child(1);
+        this._emitter.emit_goto(node,reader)
+    }
+}
+
+class L1Emitter extends L0Emitter{
+    emit_goto(node,reader){
         var reader1;
         if (reader.type === "label") {
             reader1 = new Content(CONTENT_TYPES.LABEL, reader.text);
@@ -10,6 +17,7 @@ class L1Builder extends L0Builder {
         var reader2 = new Content(CONTENT_TYPES.NUMBER, 1);
         var writer = new Content(CONTENT_TYPES.REGISTER, '$!');
         var expression = new Expression(CONTENT_TYPES.BIN_EXPRESSION, reader1, '-', reader2);
-        this.assign(node, true, writer, expression);
+        this.emit_assignment(node, true, writer, expression);
     }
+
 }

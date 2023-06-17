@@ -1,44 +1,71 @@
-class L2Builder extends L1Builder {
+class L2Visitor extends L1Visitor {
     scope(node) {
-        this.start_scope();
+        this._emitter.start_scope();
         this.visit(node.child(1));
-        this.end_scope();
+        this._emitter.end_scope();
     }
 
     variable(node)  {
-        return this.emit_variable(node);
+        var var_name = node.child(0).text;
+        var var_size = node.child(2).text;
+        var expression = this.visit(node.child(4));
+        return this._emitter.emit_variable(node, var_name, var_size, expression);
     }
 
     variable_name(node) {
-        return this.emit_variable_name(node);
+        var var_name = node.text;
+        return this._emitter.emit_variable_name(var_name);
     }
 
-    emit_variable(node) {
-        if (node.type === "variable" && this.in_scope) {
-            this.create_temp_var(node, node.child(0).text, node.child(2).text, node.child(4));
-        }
-        else if (node.type === "variable") { 
-            this.variable_declaration(node)
+
+}
+
+class L2Emitter extends L1Emitter{
+    variables = {}
+    head = null
+    stack_pointer = 112;
+    frame_pointer = 112;
+    in_scope = false;
+
+    Stack = {
+        items: [],
+    
+        push(element)
+        {
+            this.items.push(element);
+        },
+    
+        pop()
+        {
+            if (this.items.length == 0)
+                return "Underflow";
+            return this.items.pop();
         }
     }
 
-    emit_variable_name(node) {
-        if (node.type === "variable_name" && this.in_scope) {
-            return this.read_temp_var(node.text);
-        }
-        else if (node.type === "variable_name") {
-            return new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + node.text), get_datatype(this.variables["&_" + node.text]));
+    emit_variable(node, var_name, var_size, expression) {
+        if (this.in_scope) {
+            this.create_temp_var(node, var_name, var_size, expression);
+        } else {
+            this.variable_declaration(node, var_name, var_size, expression)
         }
     }
 
-    create_temp_var(node, var_name, var_size, node_expression) {
+    emit_variable_name(var_name) {
+        if (this.in_scope) {
+            return this.read_temp_var(var_name);
+        } else {
+            return new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(this.variables["&_" + var_name]));
+        }
+    }
+
+    create_temp_var(node, var_name, var_size, expression) {
         var variable_size = get_variable_bytesize(var_size);
         this.frame_pointer -= variable_size;
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
-        var expression = this.visit(node_expression);
         var writer = this.read_temp_var(var_name);
         const snapshot = structuredClone(this.head.variables);
-        this.assign(node, false, writer, expression,this.L2Draw, [snapshot]);
+        this.emit_assignment(node, false, writer, expression);
     }
 
     read_temp_var(var_name) {
@@ -59,11 +86,11 @@ class L2Builder extends L1Builder {
         this.head = frame;
         this.in_scope = true;
 
-        Stack.push(this.frame_pointer);
+        this.Stack.push(this.frame_pointer);
     }
 
     end_scope() {
-        var offset = Stack.pop() - this.frame_pointer;
+        var offset = this.Stack.pop() - this.frame_pointer;
         this.head = this.head.next;
         this.frame_pointer += offset;
         if (this.head === null) {
@@ -71,71 +98,18 @@ class L2Builder extends L1Builder {
         }
     }
 
-    variable_declaration(node) {
-        var variable_name = node.child(0);
-        var type = node.child(2);
-        var expression = node.child(4);
-        this.variables['&_' + variable_name.text] = type.text;
+    variable_declaration(node, var_name, var_size, expression) {
+        this.variables['&_' + var_name] = var_size;
         var memory_allocation = "";
-        for (var i = 0; i < get_variable_bytesize(type.text); i++) {
+        for (var i = 0; i < get_variable_bytesize(var_size); i++) {
             memory_allocation += "0";
         }
-        this._data['&_' + variable_name.text] = memory_allocation;
-        var expression = this.visit(expression);
+        this._data['&_' + var_name] = memory_allocation;
         const snapshot = structuredClone(this.variables);
-        this.assign(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text)), expression, this.L2Draw, [snapshot]);
+        this.emit_assignment(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(var_size)), expression);
     }
-
-    variables = {}
-    head = null
-    stack_pointer = 112;
-    frame_pointer = 112;
-    in_scope = false;
-
-
-    L2Draw = function(params, vm) {
-
-        var container = document.getElementById("lx-container");
-    
-        var existing_table = container.querySelector("L2-table")
-        if(existing_table){
-            container.removeChild(existing_table)
-        }
-    
-        var table = document.createElement("L2-table");
-        table.style.width = "50%";
-        table.style.border = "1p"
-        var variables = params[0];
-    
-        for(var name in variables){
-            var row = document.createElement("tr");
-    
-            var nameCell = document.createElement("td");
-            nameCell.textContent = name;
-            row.appendChild(nameCell);
-    
-    
-            var value = variables[name];
-            var valueCell = document.createElement("td");
-            var memory_access;
-            //Check if scoped
-            if(Array.isArray(value)){
-                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, 112-value[0]), get_datatype(value[1]));
-            }else{
-                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, name), get_datatype(value));
-            }
-            
-            valueCell.textContent = vm.read(memory_access);
-            row.appendChild(valueCell);
-            table.appendChild(row);
-        }
-        container.appendChild(table);
-    }
-
-
-
-
 }
+
 
 class StackFrame {
     next;
@@ -146,19 +120,44 @@ class StackFrame {
     }
 }
 
-const Stack = {
-    items: [],
 
-    push(element)
-    {
-        this.items.push(element);
-    },
 
-    pop()
-    {
-        if (this.items.length == 0)
-            return "Underflow";
-        return this.items.pop();
+
+L2Draw = function(params, vm) {
+
+    var container = document.getElementById("lx-container");
+
+    var existing_table = container.querySelector("L2-table")
+    if(existing_table){
+        container.removeChild(existing_table)
     }
-}
 
+    var table = document.createElement("L2-table");
+    table.style.width = "50%";
+    table.style.border = "1p"
+    var variables = params[0];
+
+    for(var name in variables){
+        var row = document.createElement("tr");
+
+        var nameCell = document.createElement("td");
+        nameCell.textContent = name;
+        row.appendChild(nameCell);
+
+
+        var value = variables[name];
+        var valueCell = document.createElement("td");
+        var memory_access;
+        //Check if scoped
+        if(Array.isArray(value)){
+            memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, 112-value[0]), get_datatype(value[1]));
+        }else{
+            memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, name), get_datatype(value));
+        }
+        
+        valueCell.textContent = vm.read(memory_access);
+        row.appendChild(valueCell);
+        table.appendChild(row);
+    }
+    container.appendChild(table);
+}

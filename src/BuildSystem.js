@@ -1,10 +1,13 @@
 function BuildSystem(tree) {
-    var builder = get_builder(parseInt(chosenLevel.value));
+    var level = parseInt(chosenLevel.value);
+    var emitter = get_emitter(level);
+    var visitor = get_visitor(level);
+    visitor._emitter = emitter;
     //console.log(tree.rootNode.toString());
     var error_msg = find_error(tree.rootNode, new Array())[0];
     //builder.handle(tree.rootNode);
-    builder.visit(tree.rootNode);
-    return new Program(builder._statements, builder._ECS, builder._data, builder._const, builder._labels, error_msg);
+    visitor.visit(tree.rootNode);
+    return new Program(visitor._emitter._statements, visitor._emitter._ECS, visitor._emitter._data, visitor._emitter._const, visitor._emitter._labels, error_msg);
     
 }
 

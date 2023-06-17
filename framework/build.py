@@ -62,14 +62,24 @@ var encoded_levels = new Array();
 }
 document.getElementById('levels').value = 3;\n\n"""
 
-    code += """function get_builder(level) {
+    code += """function get_visitor(level) {
   switch (level) {"""
     for filename in os.listdir('levels'):
         level = filename.replace('L', '')
         code += """
         case {}:
-            return new {}Builder();""".format(level, filename)
+            return new {}Visitor();""".format(level, filename)
+    code += "\n}\n}\n"
+    
+    code += """function get_emitter(level) {
+  switch (level) {"""
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        code += """
+        case {}:
+            return new {}Emitter();""".format(level, filename)
     code += "\n}\n}"
+
 
     
 
