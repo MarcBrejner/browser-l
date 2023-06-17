@@ -1,12 +1,4 @@
 class L1Builder extends L0Builder {
-    handle(node) {
-        if (node.type === "goto") {
-            this.goto(node)
-        } else {
-            return super.handle(node);
-        }
-    }
-
     goto(node) {
         var reader = node.child(1);
         var reader1;

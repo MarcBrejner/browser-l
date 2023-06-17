@@ -1,22 +1,33 @@
 class L2Builder extends L1Builder {
-    handle(node) {
-        if (node.type === "scope") { 
-            this.start_scope();
-            this.handle(node.child(1));
-            this.end_scope();
-        } 
-        else if (node.type === "variable" && this.in_scope) {
+    scope(node) {
+        this.start_scope();
+        this.visit(node.child(1));
+        this.end_scope();
+    }
+
+    variable(node)  {
+        return this.emit_variable(node);
+    }
+
+    variable_name(node) {
+        return this.emit_variable_name(node);
+    }
+
+    emit_variable(node) {
+        if (node.type === "variable" && this.in_scope) {
             this.create_temp_var(node, node.child(0).text, node.child(2).text, node.child(4));
         }
-        else if (node.type === "variable_name" && this.in_scope) {
+        else if (node.type === "variable") { 
+            this.variable_declaration(node)
+        }
+    }
+
+    emit_variable_name(node) {
+        if (node.type === "variable_name" && this.in_scope) {
             return this.read_temp_var(node.text);
         }
-        else if (node.type === "variable") { 
-            this.variable_declaration(node);
-        } else if (node.type === "variable_name") {
+        else if (node.type === "variable_name") {
             return new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + node.text), get_datatype(this.variables["&_" + node.text]));
-        } else {
-            return super.handle(node);
         }
     }
 
@@ -24,7 +35,7 @@ class L2Builder extends L1Builder {
         var variable_size = get_variable_bytesize(var_size);
         this.frame_pointer -= variable_size;
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
-        var expression = this.handle(node_expression);
+        var expression = this.visit(node_expression);
         var writer = this.read_temp_var(var_name);
         const snapshot = structuredClone(this.head.variables);
         this.assign(node, false, writer, expression,this.L2Draw, [snapshot]);
@@ -69,8 +80,8 @@ class L2Builder extends L1Builder {
         for (var i = 0; i < get_variable_bytesize(type.text); i++) {
             memory_allocation += "0";
         }
-        this.data['&_' + variable_name.text] = memory_allocation;
-        var expression = this.handle(expression);
+        this._data['&_' + variable_name.text] = memory_allocation;
+        var expression = this.visit(expression);
         const snapshot = structuredClone(this.variables);
         this.assign(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + variable_name.text), get_datatype(type.text)), expression, this.L2Draw, [snapshot]);
     }

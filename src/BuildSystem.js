@@ -2,8 +2,9 @@ function BuildSystem(tree) {
     var builder = get_builder(parseInt(chosenLevel.value));
     //console.log(tree.rootNode.toString());
     var error_msg = find_error(tree.rootNode, new Array())[0];
-    builder.handle(tree.rootNode);
-    return new Program(builder.statements, builder.ECS, builder.data, builder.const, builder.labels, error_msg);
+    //builder.handle(tree.rootNode);
+    builder.visit(tree.rootNode);
+    return new Program(builder._statements, builder._ECS, builder._data, builder._const, builder._labels, error_msg);
     
 }
 
