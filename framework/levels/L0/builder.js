@@ -20,14 +20,22 @@ class L0Builder {
             this.handle(node.child(0));
         }
 
-        else if (node.type === "expression") {
+        else if (["expression", "memory_expression"].includes(node.type)) {
             switch (node.childCount) {
                 case 1:
-                    return [this.handle(node.child(0))];
+                    return new Expression(CONTENT_TYPES.EXPRESSION, this.handle(node.child(0)));
                 case 2:
-                    return [node.child(0), this.handle(node.child(1))];
+                    return new Expression(CONTENT_TYPES.UN_EXPRESSION, this.handle(node.child(1)), node.child(0).text);
                 case 3:
-                    return [this.handle(node.child(0)), node.child(1), this.handle(node.child(2))];
+                    var left_reader = this.handle(get_left_child(node));
+                    var right_reader = this.handle(get_right_child(node));
+                    if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
+                        this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader);
+                        this.assign(node, false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader);
+                        left_reader = new Content(CONTENT_TYPES.REGISTER, '$x');
+                        right_reader = new Content(CONTENT_TYPES.REGISTER, '$y');
+                    } 
+                    return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_reader, get_operator(node).text,  right_reader);
             }
         }
 
@@ -43,7 +51,7 @@ class L0Builder {
             return new Content(CONTENT_TYPES.DATA, node.text);
         }
 
-        else if (["memory_access" ,"reader", "writer"].includes(node.type)) {
+        else if (["memory_reader" ,"reader", "writer"].includes(node.type)) {
             return this.handle(node.child(0));
         }
 
@@ -57,29 +65,9 @@ class L0Builder {
 
         else if (node.type === "assignment") {
             var is_conditional = node.child(1).text === "?=" ? true : false;
-            var writer = node.child(0);
+            var writer = this.handle(node.child(0));
             var expression = this.handle(node.child(2));
-            // TODO: Change such that assign take an expression as input?
-            switch (expression.length) {
-                case 1:
-                    writer = this.handle(writer)
-                    var reader = expression[0];
-                    this.assign(node, is_conditional, writer, reader);
-                    break;
-                case 2:
-                    writer = this.handle(writer);
-                    var opr = expression[0];
-                    var reader = expression[1];
-                    this.assign_unary(node, is_conditional, writer, opr.text, reader);
-                    break;
-                case 3:
-                    writer = this.handle(writer);
-                    var reader1 = expression[0];
-                    var opr = expression[1];
-                    var reader2 = expression[2];
-                    this.assign_binary(node, is_conditional, writer, reader1, opr.text, reader2);
-                    break;
-            }
+            this.assign(node, is_conditional, writer, expression);
         }
         
         else if(node.type === "constant_declaration"){
@@ -103,20 +91,14 @@ class L0Builder {
         }
     }
 
-    assign(node, is_conditional, writer, reader) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN, [is_conditional, writer, reader]));
+    assign(node, is_conditional, writer, expression, drawfun = null, drawparams = null) {
+        this.push_statement(node, new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))), drawfun, drawparams);
     }
 
-    assign_unary(node, is_conditional, writer, opr, reader) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN_UN, [is_conditional, writer, opr, reader]));
-    }
-
-    assign_binary(node, is_conditional, writer, reader1, opr, reader2) {
-        this.push_statement(node, new ByteCode(OP.ASSIGN_BIN, [is_conditional, writer, reader1, opr, reader2]));
-    }
-
-    push_statement(node, byte_code) {
+    push_statement(node, byte_code, drawfun, drawparams) {
         this.statements.push(byte_code);
         this.ECS.nodes.push(node);
+        this.ECS.draws.push(drawfun);
+        this.ECS.drawparams.push(drawparams);
     }
 }

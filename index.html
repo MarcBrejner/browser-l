@@ -18,9 +18,7 @@
   <body>
     <div class="EditorWindows">
       <textarea id="editorWindow" cols="30" rows="10">
-const @hej 3;
-{f:u32=4;
-$x:=f+2;}</textarea>
+$x:=(1+1)*(2+2);</textarea>
       <div id="prettyPretty"></div>
     </div>
 
@@ -39,7 +37,7 @@ $x:=f+2;}</textarea>
     <button class="button" id="stepbutton" onclick="execute_step()">
       STEP
     </button>
-
+    <div id="lx-container"></div>
     <script>
       document.querySelector('#stepbutton').disabled = true;
       document.querySelector('#exitdebug').disabled = true;

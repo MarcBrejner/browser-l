@@ -30,9 +30,7 @@ codeMirrorEditor.on('change', async function(cMirror) {
   document.getElementById("prettyPretty").innerHTML = code;
 
   //Fixes a bug with codemirror where added line classes persists too long
-  for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
-    cMirror.removeLineClass(i, 'background', 'highlight-line');
-  }
+  clear_highlights();
 })
 
 // Load parser
@@ -89,11 +87,13 @@ async function debug() {
   
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
-  codeMirrorEditor.addLineClass(program.ECS.nodes[0].startPosition.row, 'background', 'highlight-line');
+  //codeMirrorEditor.addLineClass(program.ECS.nodes[0].startPosition.row, 'background', 'highlight-line');
+  
   if(program.error_msg !== null){
     console.log(program.error_msg);
     return;
   }
+  color(program, 0)
   var VM = get_virtual_machine(program);
   show_results_in_html(VM.state);
 
@@ -122,12 +122,30 @@ function execute_all() {
   }
 }
 
-function color(program,pc){
-  for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
-    codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
+function draw(VM){
+  var pc = VM.state.registers['$!']-1;
+  var draw_function = VM.program.ECS.draws[pc];
+  var draw_parameters = VM.program.ECS.drawparams[pc]
+  if(draw_function !== null){
+    draw_function(draw_parameters,VM)
   }
+}
+
+function clear_highlights(){
+  const marks = codeMirrorEditor.getAllMarks();
+  marks.forEach(mark => {
+    mark.clear();
+  });
+}
+
+function color(program,pc){
+
+  clear_highlights()
   
-  codeMirrorEditor.addLineClass(program.ECS.nodes[pc].startPosition.row, 'background', 'highlight-line');
+  const start = {line: program.ECS.nodes[pc].startPosition.row , ch: program.ECS.nodes[pc].startPosition.column}
+  const end = {line: program.ECS.nodes[pc].endPosition.row , ch: program.ECS.nodes[pc].endPosition.column}
+  console.log(start, end)
+  codeMirrorEditor.markText(start, end, { className: 'highlight-line' });
 
 }
 
@@ -140,11 +158,13 @@ function execute_step(debugging = true) {
 
   if (VM.state.registers['$!'] >= VM.program.instructions.length) {
     console.log("EOF");
+    draw(VM)
     reset_buttons_after_debug()
     return -1;
   }
   if(debugging){
     color(VM.program, VM.state.registers['$!'])
+    draw(VM)
   }
 
 }
@@ -153,7 +173,6 @@ function show_results_in_html(state) {
   registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
   var rows = ""
   var rowText = "";
-  var tbody = "";
   for (var i = 0; i < state.memory.length; i += 16) {
     rowText = "";
     // Print the actual memory

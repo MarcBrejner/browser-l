@@ -1,5 +1,5 @@
 module.exports = grammar({
-	name: 'L1',
+	name: 'L3',
 	
 	rules: {
 		source_file: $ => seq(optional($.declarations), $.statements),
@@ -40,7 +40,14 @@ module.exports = grammar({
 				$.syscall,
 				$.assignment,
 				$.goto,
+				$.variable,
+				$.scope
 			),
+		
+		scope: $ =>
+			seq('{',
+				$.statements
+			,'}'),
 
 		assignment: $ =>
 			seq($.writer, choice(':=',"?="), $.expression),
@@ -48,22 +55,44 @@ module.exports = grammar({
 		goto: $ =>
 			seq("goto", choice($.register, $.label)),
 
+		variable: $ =>
+			seq($.variable_name, ":", $.type, "=", $.expression),
+
 		expression: $ =>
-			choice(
-				seq($.reader, $.operator, $.reader),
-				seq($.operator, $.reader),
-				$.reader
-			),
+            choice(
+				prec.left(2, seq('(', $.expression, ')', '*', '(', $.expression, ')')),
+				prec.left(2, seq('(', $.expression, ')', '/', '(', $.expression, ')')),
+				prec.left(1, seq('(', $.expression, ')', '+', '(', $.expression, ')')),
+				prec.left(1, seq('(', $.expression, ')', '-', '(', $.expression, ')')),
+
+				prec.left(2, seq('(', $.expression, ')', '*', $.reader)),
+				prec.left(2, seq('(', $.expression, ')', '/', $.reader)),
+				prec.left(1, seq('(', $.expression, ')', '+', $.reader)),
+				prec.left(1, seq('(', $.expression, ')', '-', $.reader)),
+
+				prec.left(2, seq($.reader, '*', '(', $.expression, ')')),
+				prec.left(2, seq($.reader, '/', '(', $.expression, ')')),
+				prec.left(1, seq($.reader, '+', '(', $.expression, ')')),
+				prec.left(1, seq($.reader, '-', '(', $.expression, ')')),
+
+				prec.left(2, seq($.reader, '*', $.reader)),
+				prec.left(2, seq($.reader, '/', $.reader)),
+				prec.left(1, seq($.reader, '+', $.reader)),
+				prec.left(1, seq($.reader, '-', $.reader)),
+                seq('-', $.reader),
+                $.reader,
+            ),
 				
 		reader: $ =>
 			choice(
 				$.register,
 				$.memory,
 				$.number,
+				$.variable_name,
 				$.label,
 				$.constant,
 				$.data
-			),
+			),		
 
 		writer: $ =>
 			choice(
@@ -85,7 +114,7 @@ module.exports = grammar({
 			),
 
 		memory: $ => seq('[', choice($.memory_expression, $.memory_reader), ',', $.type, ']'),
-		
+
 		type: () => /i8|i16|i32|i64|u8|u16|u32|u64|f8|f16|f32|f64/,
 
 		constant: () => /@[_a-zA-Z]+/,
@@ -98,11 +127,15 @@ module.exports = grammar({
 
 		syscall: () => 'syscall',
 
-		operator: () => /[+-/\*|&><=]+/,
+		operator: () => /[+-/\*]/,
+
+		logical_operator: () => /[|&><=]+/,
 
 		number: () => /[0-9]+/,
 
 		string: () => /".+"/,
+
+		variable_name: () => /[_a-zA-Z]+/,
 
 		comment: () => /\/\/[a-zA-Z0-9 ]+/
 	}

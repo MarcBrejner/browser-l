@@ -40,13 +40,14 @@ class VirtualMachine {
 
     memorySize = 112;
 
-    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0, '$n':0, '$m':0, '$sp': this.memorySize, '$vp': this.memorySize}) {
+    update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0, '$n':0, '$m':0, '$fp': this.memorySize}) {
         this.program = program;
         this.state = this.init_state(memory, registers);
     }
 
     init_state(memory, registers){
         var state_data={};
+        // Secondary array identical to memory, this will hold a grouping of memory that belongs to the same data and is used for coloring in the memory array
         var memory_id = new Array(this.memorySize).fill('');
         map_strings_to_memory(this.program.data);
 
@@ -65,6 +66,8 @@ class VirtualMachine {
                     memory[pointer] = number_to_byte_array(str.charCodeAt(char),8)[0];
                     pointer += 1;
                 }
+                memory_id[pointer] = id;
+                memory[pointer] = number_to_byte_array(0, 1);
                 pointer += 1;
             });
         }
@@ -151,7 +154,6 @@ class VirtualMachine {
                         console.log("Memory index out of bounds");
                     }
                 }
-
                 return return_value
             case CONTENT_TYPES.CONSTANT:
                 if (reader.id in this.program.constants){
@@ -171,6 +173,12 @@ class VirtualMachine {
             case CONTENT_TYPES.NUMBER:
                 //the number that the reader holds, is the id in this case
                 return reader.id;
+            case CONTENT_TYPES.EXPRESSION:
+                return this.read(reader.reader1);
+            case CONTENT_TYPES.UN_EXPRESSION:
+                return this.evaluate_unary(reader.opr, reader.reader1);
+            case CONTENT_TYPES.BIN_EXPRESSION:
+                return this.evaluate_binary(reader.reader1, reader.opr, reader.reader2);
         }
     }
     

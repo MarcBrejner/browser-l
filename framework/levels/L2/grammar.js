@@ -46,20 +46,7 @@ module.exports = grammar({
 		
 		scope: $ =>
 			seq('{',
-				repeat1(
-					seq(
-						optional($.label),
-						choice(
-							$.syscall,
-							$.assignment,
-							$.goto,
-							$.variable,
-							$.scope,
-						),
-						';',
-						optional('\n')
-					)
-				)
+				$.statements
 			,'}'),
 
 		assignment: $ =>
@@ -95,15 +82,20 @@ module.exports = grammar({
 				$.memory
 			),
 
-			memory_access: $ =>
+		memory_expression: $ =>
 			choice(
-				$.register,
-				$.constant,
-				$.data,
-				$.number,
+				seq($.memory_reader, $.operator, $.memory_reader),
 			),
 
-		memory: $ => seq('[', $.memory_access, ',', $.type, ']'),
+		memory_reader: $ => 
+			choice(
+				$.register,
+				$.number,
+				$.constant,
+				$.data
+			),
+
+		memory: $ => seq('[', choice($.memory_expression, $.memory_reader), ',', $.type, ']'),
 
 		type: () => /i8|i16|i32|i64|u8|u16|u32|u64|f8|f16|f32|f64/,
 

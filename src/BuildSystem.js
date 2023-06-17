@@ -1,7 +1,10 @@
 function BuildSystem(tree) {
     var builder = get_builder(parseInt(chosenLevel.value));
+    //console.log(tree.rootNode.toString());
+    var error_msg = find_error(tree.rootNode, new Array())[0];
     builder.handle(tree.rootNode);
-    return new Program(builder.statements, builder.ECS, builder.data, builder.const, builder.labels);
+    return new Program(builder.statements, builder.ECS, builder.data, builder.const, builder.labels, error_msg);
+    
 }
 
 function get_datatype(datatype_string){
@@ -57,3 +60,52 @@ function find_error(node, errors){
 
     return errors;
 }
+
+function get_left_child(expression) {
+  for (var i = 0; i < expression.childCount; i++) {
+      if (expression.child(i).type === 'expression' || expression.child(i).type === 'reader') {
+          return expression.child(i);
+      }
+  }
+}
+
+function get_right_child(expression) {
+  for (var i = expression.childCount-1; i > 0; i--) {
+      if (expression.child(i).type === 'expression' || expression.child(i).type === 'reader') {
+          return expression.child(i);
+      }
+  }
+}
+
+function get_operator(expression) {
+  var operators = ['*', '/', '-', '+', 'logical_operator', 'operator'];
+  for (var i = 0; i < expression.childCount; i++) {
+      if (operators.includes(expression.child(i).type)) {
+          return expression.child(i);
+      }
+  }
+}
+
+function get_opcode(content) {
+  if (content.type === CONTENT_TYPES.BIN_EXPRESSION) {
+      return OP.ASSIGN_BIN;
+  } else if (content.type === CONTENT_TYPES.UN_EXPRESSION) {
+      return OP.ASSIGN_UN;
+  } else {
+      return OP.ASSIGN;
+  }
+}
+
+function convert_content_to_array(content) {
+  switch (content.type) {
+      case CONTENT_TYPES.EXPRESSION:
+          return [content.reader1];
+      case CONTENT_TYPES.UN_EXPRESSION:
+          return [content.opr, content.reader1];
+      case CONTENT_TYPES.BIN_EXPRESSION:
+          return [content.reader1, content.opr, content.reader2]
+      default:
+          return [content];
+  }
+}
+
