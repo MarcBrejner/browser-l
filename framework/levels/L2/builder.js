@@ -16,8 +16,6 @@ class L2Visitor extends L1Visitor {
         var var_name = node.text;
         return this._emitter.variable_name(var_name);
     }
-
-
 }
 
 class L2Emitter extends L1Emitter{
@@ -55,7 +53,8 @@ class L2Emitter extends L1Emitter{
         if (this.in_scope) {
             return this.read_temp_var(var_name);
         } else {
-            return new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(this.variables["&_" + var_name]));
+            var p_var = '&_' + var_name;
+            return this.memory(this.data(p_var), get_datatype(this.variables[p_var]));
         }
     }
 
@@ -72,12 +71,13 @@ class L2Emitter extends L1Emitter{
         var current = this.head;
         while (current != null) {
             if (var_name in current.variables) {
-                return new Content(CONTENT_TYPES.MEMORY, new Expression(CONTENT_TYPES.BIN_EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$fp'), '-', new Content(CONTENT_TYPES.NUMBER,  current.variables[var_name][0])),  get_datatype(current.variables[var_name][1]));
+                return this.memory(this.binary_expression(null, this.register('$fp'), '-', this.number(current.variables[var_name][0])), get_datatype(current.variables[var_name][1]))
             }   
             current = current.next;
         }
         // TODO: check if node.text is in variable dict otherwise return error
-        return new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(this.variables["&_" + var_name]));
+        var p_var = '&_' + var_name;
+        return this.memory(this.data(p_var), get_datatype(this.variables[p_var]));
     }
 
     start_scope() {
@@ -99,14 +99,19 @@ class L2Emitter extends L1Emitter{
     }
 
     variable_declaration(node, var_name, var_size, expression) {
-        this.variables['&_' + var_name] = var_size;
+        var p_var = '&_' + var_name;
+        this.variables[p_var] = var_size;
         var memory_allocation = "";
+
         for (var i = 0; i < get_variable_bytesize(var_size); i++) {
             memory_allocation += "0";
         }
-        this._data['&_' + var_name] = memory_allocation;
+        this._data[p_var] = memory_allocation;
         const snapshot = structuredClone(this.variables);
-        this.assignment(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(var_size)), expression);
+        this.assignment(node,
+            false, 
+            this.memory(this.data(p_var), get_datatype(var_size)), 
+            expression);
     }
 }
 

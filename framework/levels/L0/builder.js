@@ -89,7 +89,11 @@ class L0Visitor {
 
     label(node) {
         var label_id = node.text;
-        this._emitter.label(label_id);
+        if(node.parent.type === 'statements'){
+            this._emitter.set_label(label_id);
+        }else{
+            return this._emitter.get_label(label_id);
+        }
     }
 
     syscall(node) {
@@ -152,8 +156,12 @@ class L0Emitter{
         this._data[data_id] = data_value;
     }   
 
-    label(label_id) {
+    set_label(label_id) {
         this._labels[label_id] = this._statements.length;
+    }
+
+    get_label(label_id) {
+        return new Content(CONTENT_TYPES.LABEL, label_id);
     }
 
     syscall(node) {

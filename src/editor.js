@@ -126,7 +126,7 @@ function draw(VM){
   var pc = VM.state.registers['$!']-1;
   var draw_function = VM.program.ECS.draws[pc];
   var draw_parameters = VM.program.ECS.drawparams[pc]
-  if(draw_function !== null){
+  if(draw_function !== null && draw_function !== undefined){
     draw_function(draw_parameters,VM)
   }
 }
@@ -144,7 +144,6 @@ function color(program,pc){
   
   const start = {line: program.ECS.nodes[pc].startPosition.row , ch: program.ECS.nodes[pc].startPosition.column}
   const end = {line: program.ECS.nodes[pc].endPosition.row , ch: program.ECS.nodes[pc].endPosition.column}
-  console.log(start, end)
   codeMirrorEditor.markText(start, end, { className: 'highlight-line' });
 
 }

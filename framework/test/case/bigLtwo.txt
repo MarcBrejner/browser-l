@@ -9,4 +9,4 @@ $m:=$m+1;
 $y:=&HALLO;
 $?:=$?-1;
 syscall;
-goto #HERE
+goto #HERE;
