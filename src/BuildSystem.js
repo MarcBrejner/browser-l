@@ -5,6 +5,7 @@ function BuildSystem(tree) {
     visitor._emitter = emitter;
     //console.log(tree.rootNode.toString());
     var error_msg = find_error(tree.rootNode, new Array())[0];
+    console.log(tree.rootNode.toString())
     //builder.handle(tree.rootNode);
     visitor.visit(tree.rootNode);
     return new Program(visitor._emitter._statements, visitor._emitter._ECS, visitor._emitter._data, visitor._emitter._const, visitor._emitter._labels, error_msg);
