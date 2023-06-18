@@ -16,53 +16,39 @@ class L0Visitor {
 
     visit(node) {
         if ([';', '\n'].includes(node.type)) return;
-        return this[node.type](node);
+        if (this[node.type] === undefined) {
+            return this.default(node);
+        } else {
+            return this[node.type](node);
+        }
     }
 
-    source_file(node) {
-        node.children.forEach(child => {
-            this.visit(child);
-        });
-    }
-
-    declarations(node) {
-        node.children.forEach(child => {
-            this.visit(child);
-        });
-    }
-
-    statements(node) {
-        node.children.forEach(child => {
-            this.visit(child);
-        });
+    default(node) {
+        if (node.childCount == 1) {
+            return this.visit(node.child(0));
+        } else {
+            node.children.forEach(c => { this.visit(c) });
+        }
     }
 
     comment(node) {
         return;
     }
 
-    statement(node) {
-        this.visit(node.child(0));
-    }
-
-    declaration(node) {
-        this.visit(node.child(0));
-    }
-
     expression(node) {
         switch (node.childCount) {
             case 1:
                 var reader = this.visit(node.child(0));
-                return this._emitter.emit_expression(reader)
+                return this._emitter.expression(reader)
             case 2:
                 var oper = node.child(0).text;
                 var reader =  this.visit(node.child(1));
-                return this._emitter.emit_unary_expression(oper, reader)
+                return this._emitter.unary_expression(oper, reader)
             case 3:
                 var left_reader = this.visit(get_left_child(node));
                 var oper = get_operator(node).text;
                 var right_reader = this.visit(get_right_child(node));
-                return this._emitter.emit_binary_expression(node, left_reader, oper, right_reader);
+                return this._emitter.binary_expression(node, left_reader, oper, right_reader);
         }
     }
 
@@ -72,68 +58,56 @@ class L0Visitor {
 
     number(node) {
         var number = parseInt(node.text);
-        return this._emitter.emit_number(number);
+        return this._emitter.number(number);
     }
 
     constant(node) {
         var constant_id = node.text;
-        return this._emitter.emit_constant(constant_id);
+        return this._emitter.constant(constant_id);
     }
 
     data(node) {
         var data_id = node.text;
-        return this._emitter.emit_data(data_id);
-    }
-
-    memory_reader(node) {
-        return this.visit(node.child(0));
-    }
-
-    reader(node) {
-        return this.visit(node.child(0));
-    }
-
-    writer(node) {
-        return this.visit(node.child(0));
+        return this._emitter.data(data_id);
     }
 
     register(node) {
         var register_id = node.text;
-        return this._emitter.emit_register(register_id);
+        return this._emitter.register(register_id);
     }
 
     memory(node) {
         var memory_id = this.visit(node.child(1));
         var datatype = get_datatype(node.child(3).text);
-        return this._emitter.emit_memory(memory_id, datatype);
+        return this._emitter.memory(memory_id, datatype);
     }
 
     assignment(node) {
         var is_conditional = node.child(1).text === "?=" ? true : false;
         var writer = this.visit(node.child(0));
         var expression = this.visit(node.child(2));
-        this._emitter.emit_assignment(node, is_conditional, writer, expression);
+        this._emitter.assignment(node, is_conditional, writer, expression);
     }
 
     constant_declaration(node) {
         let constant_id = node.child(1).text;
         let value = node.child(2).text;
-        this._emitter.emit_constant_declaration(constant_id,value);
+        this._emitter.constant_declaration(constant_id,value);
     }
 
     data_declaration(node) {
         let data_id = node.child(1).text;
         let value = node.child(2).text;
-        this._emitter.emit_data_declaration(data_id,value);
+        this._emitter.data_declaration(data_id,value);
     }   
 
     label(node) {
         var label_id = node.text;
-        this._emitter.emit_label(label_id);
+        this._emitter.label(label_id);
     }
 
     syscall(node) {
-        this._emitter.emit_syscall(node);
+        this._emitter.syscall(node);
     }
 }
 
@@ -145,18 +119,18 @@ class L0Emitter{
     _ECS = new ECS();
 
 
-    emit_expression(reader){
+    expression(reader){
         return new Expression(CONTENT_TYPES.EXPRESSION, reader);
     }
 
-    emit_unary_expression(oper, reader){
+    unary_expression(oper, reader){
         return new Expression(CONTENT_TYPES.UN_EXPRESSION, reader, oper);
     }
 
-    emit_binary_expression(node, left_reader, oper, right_reader){
+    binary_expression(node, left_reader, oper, right_reader){
         if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
-            this.emit_assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader);
-            this.emit_assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader);
+            this.assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader);
+            this.assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader);
             left_reader = new Content(CONTENT_TYPES.REGISTER, '$x');
             right_reader = new Content(CONTENT_TYPES.REGISTER, '$y');
         }
@@ -164,44 +138,44 @@ class L0Emitter{
         return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_reader, oper,  right_reader);
     }
 
-    emit_number(number) {
+    number(number) {
         return new Content(CONTENT_TYPES.NUMBER, number);
     }
 
-    emit_constant(constant_id) {
+    constant(constant_id) {
         return new Content(CONTENT_TYPES.CONSTANT, constant_id);
     }
 
-    emit_data(data_id) {
+    data(data_id) {
         return new Content(CONTENT_TYPES.DATA, data_id);
     }
 
-    emit_register(register_id) {
+    register(register_id) {
         return new Content(CONTENT_TYPES.REGISTER, register_id);
     }
 
-    emit_memory(memory_id, datatype) {
+    memory(memory_id, datatype) {
         return new Content(CONTENT_TYPES.MEMORY, memory_id, datatype);
     }
 
-    emit_constant_declaration(constant_id, constant_value) {
+    constant_declaration(constant_id, constant_value) {
         this._const[constant_id] = constant_value;
     }
 
-    emit_data_declaration(data_id, data_value) {
+    data_declaration(data_id, data_value) {
         this._data[data_id] = data_value;
     }   
 
-    emit_label(label_id) {
+    label(label_id) {
         this._labels[label_id] = this._statements.length;
     }
 
-    emit_syscall(node) {
+    syscall(node) {
         this.push_statement(node, new ByteCode(OP.SYSCALL));
     }
 
 
-    emit_assignment(node, is_conditional, writer, expression, drawfun = null, drawparams = null) {
+    assignment(node, is_conditional, writer, expression, drawfun = null, drawparams = null) {
         this.push_statement(node, new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))), drawfun, drawparams);
     }
 
@@ -217,12 +191,12 @@ class L1Visitor extends L0Visitor {
 
     goto(node) {
         var reader = node.child(1);
-        this._emitter.emit_goto(node,reader)
+        this._emitter.goto(node,reader)
     }
 }
 
 class L1Emitter extends L0Emitter{
-    emit_goto(node,reader){
+    goto(node,reader){
         var reader1;
         if (reader.type === "label") {
             reader1 = new Content(CONTENT_TYPES.LABEL, reader.text);
@@ -232,7 +206,7 @@ class L1Emitter extends L0Emitter{
         var reader2 = new Content(CONTENT_TYPES.NUMBER, 1);
         var writer = new Content(CONTENT_TYPES.REGISTER, '$!');
         var expression = new Expression(CONTENT_TYPES.BIN_EXPRESSION, reader1, '-', reader2);
-        this.emit_assignment(node, true, writer, expression);
+        this.assignment(node, true, writer, expression);
     }
 
 }
@@ -248,12 +222,12 @@ class L2Visitor extends L1Visitor {
         var var_name = node.child(0).text;
         var var_size = node.child(2).text;
         var expression = this.visit(node.child(4));
-        return this._emitter.emit_variable(node, var_name, var_size, expression);
+        return this._emitter.variable(node, var_name, var_size, expression);
     }
 
     variable_name(node) {
         var var_name = node.text;
-        return this._emitter.emit_variable_name(var_name);
+        return this._emitter.variable_name(var_name);
     }
 
 
@@ -282,7 +256,7 @@ class L2Emitter extends L1Emitter{
         }
     }
 
-    emit_variable(node, var_name, var_size, expression) {
+    variable(node, var_name, var_size, expression) {
         if (this.in_scope) {
             this.create_temp_var(node, var_name, var_size, expression);
         } else {
@@ -290,7 +264,7 @@ class L2Emitter extends L1Emitter{
         }
     }
 
-    emit_variable_name(var_name) {
+    variable_name(var_name) {
         if (this.in_scope) {
             return this.read_temp_var(var_name);
         } else {
@@ -304,7 +278,7 @@ class L2Emitter extends L1Emitter{
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var writer = this.read_temp_var(var_name);
         const snapshot = structuredClone(this.head.variables);
-        this.emit_assignment(node, false, writer, expression);
+        this.assignment(node, false, writer, expression);
     }
 
     read_temp_var(var_name) {
@@ -345,7 +319,7 @@ class L2Emitter extends L1Emitter{
         }
         this._data['&_' + var_name] = memory_allocation;
         const snapshot = structuredClone(this.variables);
-        this.emit_assignment(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(var_size)), expression);
+        this.assignment(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(var_size)), expression);
     }
 }
 
@@ -422,14 +396,14 @@ class L3Visitor extends L2Visitor {
 
         var left_expression = this.visit(get_left_child(node));
         var is_nested_expression = get_right_child(node).type === 'expression';
-        left_expression = this._emitter.emit_left_expression(node, left_expression, is_nested_expression);
+        left_expression = this._emitter.left_expression(node, left_expression, is_nested_expression);
 
         var right_expression = this.visit(get_right_child(node));
-        var full_expression = this._emitter.emit_full_expression(node, right_expression, left_expression);
+        var full_expression = this._emitter.full_expression(node, right_expression, left_expression);
         this._emitter.end_scope();
 
         
-        return this._emitter.emit_result(node, full_expression);
+        return this._emitter.result(node, full_expression);
     }
 
     has_sub_expression(expression) {
@@ -443,32 +417,32 @@ class L3Visitor extends L2Visitor {
 }
 
 class L3Emitter extends L2Emitter{
-    emit_left_expression (node, left_expression, is_nested_expression ){
+    left_expression (node, left_expression, is_nested_expression ){
         if (is_nested_expression) {
             this.create_temp_var_with_content(get_left_child(node), 'u8', left_expression);;
             return left_expression = this.read_temp_var(`${this.frame_pointer}`)
         }
         // Else we can just write it directly into $x
         else {
-            this.emit_assignment(get_left_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_expression);
-            return left_expression = this.emit_register('$x');
+            this.assignment(get_left_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_expression);
+            return left_expression = this.register('$x');
         }
     }
 
-    emit_full_expression (node, right_expression, left_expression) {
+    full_expression (node, right_expression, left_expression) {
         // If it is a binary assignment we have to save the right expression in a register before combining it with the left expression
         if (get_opcode(right_expression) === OP.ASSIGN_BIN) {
-            this.emit_assignment(get_right_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), right_expression);
+            this.assignment(get_right_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), right_expression);
             return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_expression, get_operator(node).text, new Content(CONTENT_TYPES.REGISTER, '$x'));
         } else {
             return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_expression, get_operator(node).text, right_expression);
         }
     }
 
-    emit_result(node, full_expression){
+    result(node, full_expression){
         // If we are out of the scope we know we have handled the entire expression and we can save the final expression in $x and return $x to the caller (assignment)
         if (!this.in_scope) {
-            this.emit_assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), full_expression);
+            this.assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), full_expression);
             return new Expression(CONTENT_TYPES.EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$x'));
         }else{
             return full_expression;
@@ -482,7 +456,7 @@ class L3Emitter extends L2Emitter{
         this.frame_pointer -= variable_size;
         this.head.variables[this.frame_pointer] = [this.stack_pointer - this.frame_pointer, var_size];
         var writer = this.read_temp_var(this.frame_pointer);
-        this.emit_assignment(node, false, writer, content_expression);
+        this.assignment(node, false, writer, content_expression);
     }
 }
 encoded_levels.push(decode('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BwABAAUACQABAAkACwABABIADQABABgADwABABkAEQABABoAEwABAB4AAwABADIAJwABADAALgABAC0ATQABACYAFQACAAAABgA6AAQAJwAoACkAKgANABkAAQAFABwAAQAJAB8AAQASACIAAQAYACUAAQAZACgAAQAaACsAAQAeAAMAAQAyACcAAQAwAC4AAQAtAE0AAQAmABcAAgAAAAYAOgAEACcAKAApACoADQAHAAEABQAJAAEACQALAAEAEgANAAEAGAAPAAEAGQARAAEAGgATAAEAHgACAAEAMgAnAAEAMAAuAAEALQBHAAEAJQBNAAEAJgA6AAQAJwAoACkAKgANAAcAAQAFAAkAAQAJAAsAAQASAA0AAQAYAA8AAQAZABEAAQAaABMAAQAeAAIAAQAyACcAAQAwAC4AAQAtAEAAAQAlAE0AAQAmADoABAAnACgAKQAqAAcAAwABAAMABQABAAQACAABADEAPwABACIAMQACACMAJAAwAAMACQAaAB4ALgAEAAUAEgAYABkACgAHAAEABQAJAAEACQALAAEAEgAPAAEAGQARAAEAGgATAAEAHgAnAAEAMAAuAAEALQBCAAEAJgA6AAQAJwAoACkAKgAHADIAAQADADUAAQAEAAgAAQAxAD8AAQAiADEAAgAjACQAOgADAAkAGgAeADgABAAFABIAGAAZAAcACwABABIAPAABAAwAPgABABEAHgABACwAHwABADAATAABACsAQAAGABYAFwAYABkAHAAeAAcACwABABIAPAABAAwAPgABABEAHgABACwAHwABADAASwABACsAQAAGABYAFwAYABkAHAAeAAcACwABABIAPAABAAwAPgABABEAHgABACwAHwABADAARgABACsAQAAGABYAFwAYABkAHAAeAAcACwABABIAPAABAAwAPgABABEAHgABACwAHwABADAARQABACsAQAAGABYAFwAYABkAHAAeAAcACwABABIAPAABAAwAPgABABEAHgABACwAHwABADAAPQABACsAQAAGABYAFwAYABkAHAAeAAcACwABABIAPAABAAwAPgABABEAHgABACwAHwABADAANwABACsAQAAGABYAFwAYABkAHAAeAAcACwABABIAPAABAAwAPgABABEAHgABACwAHwABADAAPgABACsAQAAGABYAFwAYABkAHAAeAAQAQgABAAAARAABAAIASAABAB8ARgAIAAUABgAJABIAGAAZABoAHgAEABcAAQAAAEoAAQACAE4AAQAfAEwACAAFAAYACQASABgAGQAaAB4ABQALAAEAEgBQAAEADAAfAAEAMAAqAAEALABAAAYAFgAXABgAGQAcAB4AAwBSAAEAAABUAAEAAgBWAAgABQAGAAkAEgAYABkAGgAeAAMAQgABAAAARAABAAIARgAIAAUABgAJABIAGAAZABoAHgAFAAsAAQASAFgAAQAMAB8AAQAwACgAAQAsAEAABgAWABcAGAAZABwAHgAFAAsAAQASAFoAAQAMAB8AAQAwACMAAQAsAEAABgAWABcAGAAZABwAHgAFAAsAAQASAFwAAQAMAB8AAQAwAC0AAQAsAEAABgAWABcAGAAZABwAHgACAGAAAwAJABoAHgBeAAYAAAAFAAYAEgAYABkABAALAAEAEgAfAAEAMAAmAAEALABAAAYAFgAXABgAGQAcAB4AAgBGAAMACQAaAB4AQgAGAAAABQAGABIAGAAZAAIAZAAEAAUAEgAYABkAYgAFAAMABAAJABoAHgACAFYAAwAJABoAHgBSAAYAAAAFAAYAEgAYABkAAQBmAAgAAQAHAAgADQAOAA8AEAARAAMAaAACAAEADQBqAAIADgAPAGwAAgAQABEAAQBuAAYAAQANAA4ADwAQABEAAwApAAEALwBDAAEALgBwAAQAFgAXABkAHAACADMAAQAvAHAABAAWABcAGQAcAAIAcgACAA4ADwB0AAIAEAARAAEAdgACAAEADQABAHgAAgAYABkAAQB6AAIAAQANAAEAfAACAAEADQABAH4AAgAHAAgAAQCAAAIAAQANAAIAggABABMAhAABABsAAQCAAAIAAQANAAIAhgABABMAiAABABsAAQB6AAIAAQANAAEAdgACAAEADQABAIoAAgAHAAgAAQCMAAEAAgABAI4AAQABAAEAkAABAAEAAQCSAAEAFAABAJQAAQATAAEAlgABAAAAAQCYAAEACwABAJoAAQAKAAEAnAABAA0AAQCeAAEAFgABAKAAAQAVAAEAogABAAEAAQCkAAEAAQABAKYAAQABAAEAqAABAAEAAQCqAAEAAQABAKwAAQABAAEArgABAAAAAQCwAAEAFQABALIAAQABAAEAggABABMAAQC0AAEAAQABALYAAQANAAEAuAABAA0AAQC6AAEABgABALwAAQAdAAEAvgABABcAAQDAAAEAHAABAMIAAQANAAEAxAABAA0AAQDGAAEAAQABAMgAAQAAAAAAAAAAAAAALAAAAFgAAACDAAAArgAAAMoAAADsAAAACAEAACMBAAA+AQAAWQEAAHQBAACPAQAAqgEAAMUBAADZAQAA7QEAAAICAAATAgAAJAIAADkCAABOAgAAYwIAAHECAACDAgAAkQIAAJ8CAACtAgAAuAIAAMUCAADOAgAA2wIAAOUCAADuAgAA8wIAAPgCAAD9AgAAAgMAAAcDAAAMAwAAEwMAABgDAAAfAwAAJAMAACkDAAAuAwAAMgMAADYDAAA6AwAAPgMAAEIDAABGAwAASgMAAE4DAABSAwAAVgMAAFoDAABeAwAAYgMAAGYDAABqAwAAbgMAAHIDAAB2AwAAegMAAH4DAACCAwAAhgMAAIoDAACOAwAAkgMAAJYDAACaAwAAngMAAKIDAACmAwAAqgMAAAAAAAAAAAAAAAAAAAABAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAEBAAAAAAAAAAAAAAAAAAAAAAEAAgADAAQABQAGAAcACAAJAAoACwAMAA0ADgAPABAAEQASABMAFAAVABYAFwAYABkAGgAbABwAHQAeAB8AIAAhACIAIwAkACUAJgAnACgAKQAqACsALAAtAC4ALwAwADEAMgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAQAAAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABQAHAAAAAAAAAAkAAAAAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA0ADwARAAAAAAAAABMAAAA0AAUAPwAxADEATgBNADoAOgA6ADoAAAAAAC4AAAAAACcABgACAAAAAAAAAAAAAAAAAAEAAAAAAAAAAwAAAAAAAAABAAAAAAAAAAAAOAAAAAAAAQAAAAAAAAAAAEkAAAAAAAEBAAAAAAAAAAAEAAAAAAABAAAAAAAAAAAAJAAAAAAAAQEAAAAAAAAAACAAAAAAAAEBAAAAAAAAAAAHAAAAAAABAQAAAAAAAAAAJwAAAAAAAQAAAAAAAAAAADoAAAAAAAEAAAAAAAAAAAA2AAAAAAABAQAAAAAAAAEBJQAAAAAAAQEAAAAAAAABAjIAAAAAAAIBAAAAAAAAAQIyAAAAAAAAAAQAAAEAAAIAAAAAAAAAAQIyAAAAAAAAACQAAAEAAAIBAAAAAAAAAQIyAAAAAAAAACAAAAEAAAIBAAAAAAAAAQIyAAAAAAAAAAcAAAEAAAIBAAAAAAAAAQIyAAAAAAAAACcAAAEAAAIAAAAAAAAAAQIyAAAAAAAAADoAAAEAAAIAAAAAAAAAAQIyAAAAAAAAADYAAAEAAAEBAAAAAAAAAQEhAAAAAAABAAAAAAAAAAEBIQAAAAAAAgAAAAAAAAABAjEAAAAAAAAAOAAAAQAAAgAAAAAAAAABAjEAAAAAAAAASQAAAQAAAQEAAAAAAAABAjEAAAAAAAEAAAAAAAAAAQIxAAAAAAABAQAAAAAAAAAADgAAAAAAAQEAAAAAAAAAABkAAAAAAAEBAAAAAAAAAAAfAAAAAAABAQAAAAAAAAEDMgAAAAAAAQEAAAAAAAAAABwAAAAAAAEAAAAAAAAAAQMyAAAAAAABAAAAAAAAAAAAEwAAAAAAAQEAAAAAAAAAABoAAAAAAAEAAAAAAAAAAQIyAAAAAAABAAAAAAAAAAAAFAAAAAAAAQEAAAAAAAAAAAsAAAAAAAEBAAAAAAAAAQQyAAAAAAABAQAAAAAAAAAAGAAAAAAAAQAAAAAAAAABBDIAAAAAAAEBAAAAAAAAAAAMAAAAAAABAQAAAAAAAAAACgAAAAAAAQEAAAAAAAAAAAkAAAAAAAEBAAAAAAAAAQUyAAAAAAABAAAAAAAAAAEFMgAAAAAAAQAAAAAAAAABAzEAAAAAAAEBAAAAAAAAAQMxAAAAAAABAQAAAAAAAAEFMAAAAAAAAQEAAAAAAAABASsAAAAAAAEBAAAAAAAAAAAVAAAAAAABAQAAAAAAAAAAEgAAAAAAAQEAAAAAAAABASwAAAAAAAEB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'));

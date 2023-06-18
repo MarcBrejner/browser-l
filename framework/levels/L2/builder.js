@@ -9,12 +9,12 @@ class L2Visitor extends L1Visitor {
         var var_name = node.child(0).text;
         var var_size = node.child(2).text;
         var expression = this.visit(node.child(4));
-        return this._emitter.emit_variable(node, var_name, var_size, expression);
+        return this._emitter.variable(node, var_name, var_size, expression);
     }
 
     variable_name(node) {
         var var_name = node.text;
-        return this._emitter.emit_variable_name(var_name);
+        return this._emitter.variable_name(var_name);
     }
 
 
@@ -43,7 +43,7 @@ class L2Emitter extends L1Emitter{
         }
     }
 
-    emit_variable(node, var_name, var_size, expression) {
+    variable(node, var_name, var_size, expression) {
         if (this.in_scope) {
             this.create_temp_var(node, var_name, var_size, expression);
         } else {
@@ -51,7 +51,7 @@ class L2Emitter extends L1Emitter{
         }
     }
 
-    emit_variable_name(var_name) {
+    variable_name(var_name) {
         if (this.in_scope) {
             return this.read_temp_var(var_name);
         } else {
@@ -65,7 +65,7 @@ class L2Emitter extends L1Emitter{
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var writer = this.read_temp_var(var_name);
         const snapshot = structuredClone(this.head.variables);
-        this.emit_assignment(node, false, writer, expression);
+        this.assignment(node, false, writer, expression);
     }
 
     read_temp_var(var_name) {
@@ -106,7 +106,7 @@ class L2Emitter extends L1Emitter{
         }
         this._data['&_' + var_name] = memory_allocation;
         const snapshot = structuredClone(this.variables);
-        this.emit_assignment(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(var_size)), expression);
+        this.assignment(node, false, new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, '&_' + var_name), get_datatype(var_size)), expression);
     }
 }
 

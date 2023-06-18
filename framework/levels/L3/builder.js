@@ -19,14 +19,14 @@ class L3Visitor extends L2Visitor {
 
         var left_expression = this.visit(get_left_child(node));
         var is_nested_expression = get_right_child(node).type === 'expression';
-        left_expression = this._emitter.emit_left_expression(node, left_expression, is_nested_expression);
+        left_expression = this._emitter.left_expression(node, left_expression, is_nested_expression);
 
         var right_expression = this.visit(get_right_child(node));
-        var full_expression = this._emitter.emit_full_expression(node, right_expression, left_expression);
+        var full_expression = this._emitter.full_expression(node, right_expression, left_expression);
         this._emitter.end_scope();
 
         
-        return this._emitter.emit_result(node, full_expression);
+        return this._emitter.result(node, full_expression);
     }
 
     has_sub_expression(expression) {
@@ -40,32 +40,32 @@ class L3Visitor extends L2Visitor {
 }
 
 class L3Emitter extends L2Emitter{
-    emit_left_expression (node, left_expression, is_nested_expression ){
+    left_expression (node, left_expression, is_nested_expression ){
         if (is_nested_expression) {
             this.create_temp_var_with_content(get_left_child(node), 'u8', left_expression);;
             return left_expression = this.read_temp_var(`${this.frame_pointer}`)
         }
         // Else we can just write it directly into $x
         else {
-            this.emit_assignment(get_left_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_expression);
-            return left_expression = this.emit_register('$x');
+            this.assignment(get_left_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_expression);
+            return left_expression = this.register('$x');
         }
     }
 
-    emit_full_expression (node, right_expression, left_expression) {
+    full_expression (node, right_expression, left_expression) {
         // If it is a binary assignment we have to save the right expression in a register before combining it with the left expression
         if (get_opcode(right_expression) === OP.ASSIGN_BIN) {
-            this.emit_assignment(get_right_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), right_expression);
+            this.assignment(get_right_child(node), false, new Content(CONTENT_TYPES.REGISTER, '$x'), right_expression);
             return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_expression, get_operator(node).text, new Content(CONTENT_TYPES.REGISTER, '$x'));
         } else {
             return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_expression, get_operator(node).text, right_expression);
         }
     }
 
-    emit_result(node, full_expression){
+    result(node, full_expression){
         // If we are out of the scope we know we have handled the entire expression and we can save the final expression in $x and return $x to the caller (assignment)
         if (!this.in_scope) {
-            this.emit_assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), full_expression);
+            this.assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), full_expression);
             return new Expression(CONTENT_TYPES.EXPRESSION, new Content(CONTENT_TYPES.REGISTER, '$x'));
         }else{
             return full_expression;
@@ -79,6 +79,6 @@ class L3Emitter extends L2Emitter{
         this.frame_pointer -= variable_size;
         this.head.variables[this.frame_pointer] = [this.stack_pointer - this.frame_pointer, var_size];
         var writer = this.read_temp_var(this.frame_pointer);
-        this.emit_assignment(node, false, writer, content_expression);
+        this.assignment(node, false, writer, content_expression);
     }
 }
