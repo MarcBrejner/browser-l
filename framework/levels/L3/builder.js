@@ -2,6 +2,7 @@ class L3Visitor extends L2Visitor {
     expression(node) {
         // if the expression does not contain any sub-expressions it should be sent down to L0 instead of being handled here.
         if (!this.has_sub_expression(node)) {
+            //node_stack.push(node);
             return super.expression(node);
         }
         // The algo:
@@ -17,19 +18,34 @@ class L3Visitor extends L2Visitor {
 
         this._emitter.start_scope();
 
-        var left_expression = this.visit(get_left_child(node));
-        var is_nested_expression = get_right_child(node).type === 'expression';
-        node_stack.push(get_left_child(node));
+        var left_child = get_left_child(node);
+        var right_child = get_right_child(node);
+
+        //Handle left side
+        var left_expression = this.visit(left_child);
+        node_stack.push(left_child);
+        var is_nested_expression = right_child.type === 'expression';
         left_expression = this._emitter.left_expression(left_expression, is_nested_expression);
 
-        var right_expression = this.visit(get_right_child(node));
+        //Handle right side
+        node_stack.push(node)
+        var right_expression = this.visit(right_child);
+        if(this.is_binary_expression(right_child)){
+            node_stack.push(right_child);
+            this._emitter.save_to_register_x(right_expression)
+        }
+
+        //Sum both sides
+        node_stack.push(node)
         var operator = get_operator(node).text;
-        var full_expression = this._emitter.full_expression(node, right_expression, operator, left_expression);
-        node_stack.push(node);
+        var full_expression = this._emitter.full_expression(left_expression, operator, right_expression);
         this._emitter.end_scope();
 
-        
-        return this._emitter.result(node,full_expression);
+        var result = this._emitter.result(full_expression);
+        if(!this._emitter.in_scope){
+            this.clean_stack()
+        }
+        return result;
     }
 
     has_sub_expression(expression) {
@@ -40,6 +56,16 @@ class L3Visitor extends L2Visitor {
         }
         return false;
     }
+
+    is_binary_expression(node){
+        return node.childCount >= 3;
+    }
+
+    clean_stack(){
+        while(node_stack.peek().type !== 'statement'){
+            node_stack.pop()
+        }
+    }
 }
 
 class L3Emitter extends L2Emitter{
@@ -47,33 +73,32 @@ class L3Emitter extends L2Emitter{
         if (is_nested_expression) {
             var bytesize = 'u8';
             this.create_temp_var(this.frame_pointer - get_variable_bytesize(bytesize), bytesize, left_expression);
-            return left_expression = this.read_temp_var(`${this.frame_pointer}`);
+            return this.read_temp_var(`${this.frame_pointer}`);
         }
         // Else we can just write it directly into $x
         else {
-            this.assignment(false, this.register('$x'), left_expression);
-            return left_expression = this.register('$x');
+            this.save_to_register_x(left_expression);
+            return this.register('$x');
         }
     }
 
-    full_expression(node, right_expression, operator, left_expression) {
+    save_to_register_x(expression){
+        this.assignment(false, this.register('$x'), expression);
+    }
+
+    full_expression(left_expression, operator, right_expression) {
         // If it is a binary assignment we have to save the right expression in a register before combining it with the left expression
         if (get_opcode(right_expression) === OP.ASSIGN_BIN) {
-            node_stack.push(get_right_child(node));
-            this.assignment(false, this.register('$x'), right_expression);
-            node_stack.push(node);
             return this.binary_expression(left_expression, operator, this.register('$x'));
         } else {
-            node_stack.push(node);
             return this.binary_expression(left_expression, operator, right_expression);
         }
     }
 
-    result(node, full_expression){
+    result(full_expression){
         // If we are out of the scope we know we have handled the entire expression and we can save the final expression in $x and return $x to the caller (assignment)
         if (!this.in_scope) {
-            node_stack.push(node);
-            this.assignment(false, this.register('$x'), full_expression);
+            this.save_to_register_x(full_expression);
             return this.expression(this.register('$x'));
         }else{
             return full_expression;
