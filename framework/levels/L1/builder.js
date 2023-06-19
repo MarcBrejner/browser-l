@@ -2,15 +2,15 @@ class L1Visitor extends L0Visitor {
     goto(node) {
         var reader = node.child(1);
         var pos = this.visit(reader);
-        this._emitter.goto(node,pos)
+        this._emitter.goto(pos)
     }
 }
 
 class L1Emitter extends L0Emitter{
-    goto(node,pos){
-        this.assignment(node,
+    goto(pos){
+        this.assignment(
             true, 
             this.register('$!'), 
-            this.binary_expression(node, pos, '-', this.number(1)));
+            this.binary_expression(pos, '-', this.number(1)));
     }
 }

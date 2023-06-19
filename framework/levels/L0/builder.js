@@ -2,6 +2,7 @@ class L0Visitor {
 
     visit(node) {
         if ([';', '\n'].includes(node.type)) return;
+        if (node.type === 'statement') node_stack.push(node);
         if (this[node.type] === undefined) {
             return this.default(node);
         } else {
@@ -34,7 +35,7 @@ class L0Visitor {
                 var left_reader = this.visit(get_left_child(node));
                 var oper = get_operator(node).text;
                 var right_reader = this.visit(get_right_child(node));
-                return this._emitter.binary_expression(node, left_reader, oper, right_reader);
+                return this._emitter.binary_expression(left_reader, oper, right_reader);
         }
     }
 
@@ -72,7 +73,7 @@ class L0Visitor {
         var is_conditional = node.child(1).text === "?=" ? true : false;
         var writer = this.visit(node.child(0));
         var expression = this.visit(node.child(2));
-        this._emitter.assignment(node, is_conditional, writer, expression);
+        this._emitter.assignment(is_conditional, writer, expression);
     }
 
     constant_declaration(node) {
@@ -117,12 +118,12 @@ class L0Emitter{
         return new Expression(CONTENT_TYPES.UN_EXPRESSION, reader, oper);
     }
 
-    binary_expression(node, left_reader, oper, right_reader){
+    binary_expression(left_reader, oper, right_reader){
         if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
-            this.assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$x'), left_reader);
-            this.assignment(node, false, new Content(CONTENT_TYPES.REGISTER, '$y'), right_reader);
-            left_reader = new Content(CONTENT_TYPES.REGISTER, '$x');
-            right_reader = new Content(CONTENT_TYPES.REGISTER, '$y');
+            this.assignment(false, this.register('$x'), left_reader);
+            this.assignment(false, this.register('$y'), right_reader);
+            left_reader = this.register('$x');
+            right_reader = this.register('$y');
         }
 
         return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_reader, oper,  right_reader);
@@ -165,18 +166,34 @@ class L0Emitter{
     }
 
     syscall(node) {
-        this.push_statement(node, new ByteCode(OP.SYSCALL));
+        this.push_statement(new ByteCode(OP.SYSCALL));
     }
 
 
-    assignment(node, is_conditional, writer, expression, drawfun = null, drawparams = null) {
-        this.push_statement(node, new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))), drawfun, drawparams);
+    assignment(is_conditional, writer, expression, drawfun = null, drawparams = null) {
+        this.push_statement(new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))), drawfun, drawparams);
     }
 
-    push_statement(node, byte_code, drawfun, drawparams) {
+    push_statement(byte_code, drawfun, drawparams) {
         this._statements.push(byte_code);
-        this._ECS.nodes.push(node);
+        this._ECS.nodes.push(node_stack.pop());
         this._ECS.draws.push(drawfun);
         this._ECS.drawparams.push(drawparams);
     }
 }
+
+
+
+var node_stack = {
+    stack: [],
+
+    push(node) {
+        this.stack.push(node);
+    },
+
+    pop() {
+        if (this.stack.length == 0)
+            return "Underflow";
+        return this.stack.pop();
+    }
+};
