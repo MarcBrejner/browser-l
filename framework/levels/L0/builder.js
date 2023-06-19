@@ -4,9 +4,11 @@ class L0Visitor {
         if ([';', '\n'].includes(node.type)) return;
         if (node.type === 'statement') node_stack.push(node);
         if (this[node.type] === undefined) {
-            return this.default(node);
+            var r = this.default(node);
+            return r;
         } else {
-            return this[node.type](node);
+            var r = this[node.type](node);
+            return r;
         }
     }
 
@@ -176,7 +178,7 @@ class L0Emitter{
 
     push_statement(byte_code, drawfun, drawparams) {
         this._statements.push(byte_code);
-        this._ECS.nodes.push(node_stack.pop());
+        this._ECS.nodes.push(node_stack.peek());
         this._ECS.draws.push(drawfun);
         this._ECS.drawparams.push(drawparams);
     }
@@ -195,5 +197,9 @@ var node_stack = {
         if (this.stack.length == 0)
             return "Underflow";
         return this.stack.pop();
+    },
+
+    peek(){
+        return this.stack[this.stack.length-1];
     }
 };

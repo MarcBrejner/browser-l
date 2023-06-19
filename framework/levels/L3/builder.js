@@ -29,7 +29,7 @@ class L3Visitor extends L2Visitor {
         this._emitter.end_scope();
 
         
-        return this._emitter.result(full_expression);
+        return this._emitter.result(node,full_expression);
     }
 
     has_sub_expression(expression) {
@@ -68,9 +68,10 @@ class L3Emitter extends L2Emitter{
         }
     }
 
-    result(full_expression){
+    result(node, full_expression){
         // If we are out of the scope we know we have handled the entire expression and we can save the final expression in $x and return $x to the caller (assignment)
         if (!this.in_scope) {
+            node_stack.push(node);
             this.assignment(false, this.register('$x'), full_expression);
             return this.expression(this.register('$x'));
         }else{
