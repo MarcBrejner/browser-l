@@ -45,7 +45,8 @@ class L3Visitor extends L2Visitor {
 class L3Emitter extends L2Emitter{
     left_expression (left_expression, is_nested_expression ){
         if (is_nested_expression) {
-            this.create_temp_var_with_content('u8', left_expression);
+            var bytesize = 'u8';
+            this.create_temp_var(this.frame_pointer - get_variable_bytesize(bytesize), bytesize, left_expression);
             return left_expression = this.read_temp_var(`${this.frame_pointer}`);
         }
         // Else we can just write it directly into $x
@@ -77,15 +78,5 @@ class L3Emitter extends L2Emitter{
         }else{
             return full_expression;
         }
-    }
-
-    // Copy of L2 function that takes an already handled expression as input
-    // We need to be able to set a temp variable to a content object rather than a tree-sitter node
-    create_temp_var_with_content(var_size, content_expression) {
-        var variable_size = get_variable_bytesize(var_size);
-        this.frame_pointer -= variable_size;
-        this.head.variables[this.frame_pointer] = [this.stack_pointer - this.frame_pointer, var_size];
-        var writer = this.read_temp_var(this.frame_pointer);
-        this.assignment(false, writer, content_expression);
     }
 }
