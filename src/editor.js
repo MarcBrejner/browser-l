@@ -52,9 +52,10 @@ async function parse_and_pretty_print(source_code) {
   let parsers = await initialize_parser();
   let tree_L0 = parsers[chosenLevel.value].parse(source_code);
   let program = BuildSystem(tree_L0);
+  var VM = get_virtual_machine(program);
   // parse_byte_code from pretty.js pretty prints the byte_code
-  var pretty_printer = get_pretty_printer(program);
-  return pretty_printer.print_program();
+  //var pretty_printer = get_pretty_printer(program);
+  return static_draw(VM);
 }
 
 async function parse_and_read(source_code) {
@@ -97,17 +98,15 @@ async function debug() {
   var VM = get_virtual_machine(program);
   show_results_in_html(VM.state);
 
-  var pretty_printer = get_pretty_printer(VM.program);
   document.querySelector('#debugbutton').disabled = true;
   document.querySelector('#exitdebug').disabled = false;
   document.querySelector('#stepbutton').disabled = false;
-  document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program(VM.state);
+  document.getElementById("prettyPretty").innerHTML = static_draw(VM);
 }
 
 async function exit_debug() {
   reset_buttons_after_debug();
-  var pretty_printer = get_pretty_printer();
-  document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program();
+  document.getElementById("prettyPretty").innerHTML = static_draw(VM);
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
   var VM = get_virtual_machine(program);
@@ -122,12 +121,20 @@ function execute_all() {
   }
 }
 
+function static_draw(VM) {
+  var draw_object = VM.program.ECS.static_draws[0];
+  var draw_parameters = VM.program.ECS.static_draw_params[0]
+  if(draw_object !== null && draw_object !== undefined){
+    return draw_object.draw(draw_parameters, VM)
+  }
+}
+
 function draw(VM){
   var pc = VM.state.registers['$!']-1;
-  var draw_function = VM.program.ECS.draws[pc];
+  var draw_object = VM.program.ECS.draws[pc];
   var draw_parameters = VM.program.ECS.drawparams[pc]
-  if(draw_function !== null && draw_function !== undefined){
-    draw_function(draw_parameters,VM)
+  if(draw_object !== null && draw_object !== undefined){
+    draw_object.draw(draw_parameters,VM)
   }
 }
 
@@ -151,8 +158,9 @@ function color(program,pc){
 function execute_step(debugging = true) {
   var VM = get_virtual_machine();
   VM.execute_bytecode();
-  var pretty_printer = get_pretty_printer(VM.program);
-  document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program(VM.state);
+  document.getElementById("prettyPretty").innerHTML = static_draw(VM);
+  //var pretty_printer = get_pretty_printer(VM.program);
+  //document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program(VM.state);
   show_results_in_html(VM.state);
 
   if (VM.state.registers['$!'] >= VM.program.instructions.length) {
@@ -226,7 +234,7 @@ function get_virtual_machine(program) {
   _VirtualMachine.update_vm(program)
   return _VirtualMachine;
 }
-
+/*
 function get_pretty_printer(program) {
   if (_PrettyPrinter == null) {
     _PrettyPrinter = new PrettyPrinter();
@@ -241,6 +249,7 @@ function get_pretty_printer(program) {
   _PrettyPrinter.update_program(program)
   return _PrettyPrinter;
 }
+*/
 
 function reset_buttons_after_debug() {
     document.querySelector('#debugbutton').disabled = false;

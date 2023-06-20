@@ -131,41 +131,43 @@ class StackFrame {
 
 
 
-L2Draw = function(params, vm) {
+const L2Draw = {
 
-    var container = document.getElementById("lx-container");
+    draw(params, vm) {
+        var container = document.getElementById("lx-container");
 
-    var existing_table = container.querySelector("L2-table")
-    if(existing_table){
-        container.removeChild(existing_table)
-    }
-
-    var table = document.createElement("L2-table");
-    table.style.width = "50%";
-    table.style.border = "1p";
-    var variables = params[0];
-
-    for(var name in variables){
-        var row = document.createElement("tr");
-
-        var nameCell = document.createElement("td");
-        nameCell.textContent = name;
-        row.appendChild(nameCell);
-
-
-        var value = variables[name];
-        var valueCell = document.createElement("td");
-        var memory_access;
-        //Check if scoped
-        if(Array.isArray(value)){
-            memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, 112-value[0]), get_datatype(value[1]));
-        }else{
-            memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, name), get_datatype(value));
+        var existing_table = container.querySelector("L2-table")
+        if(existing_table){
+            container.removeChild(existing_table)
         }
-        
-        valueCell.textContent = vm.read(memory_access);
-        row.appendChild(valueCell);
-        table.appendChild(row);
+
+        var table = document.createElement("L2-table");
+        table.style.width = "50%";
+        table.style.border = "1p";
+        var variables = params[0];
+
+        for(var name in variables){
+            var row = document.createElement("tr");
+
+            var nameCell = document.createElement("td");
+            nameCell.textContent = name;
+            row.appendChild(nameCell);
+
+
+            var value = variables[name];
+            var valueCell = document.createElement("td");
+            var memory_access;
+            //Check if scoped
+            if(Array.isArray(value)){
+                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, 112-value[0]), get_datatype(value[1]));
+            }else{
+                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, name), get_datatype(value));
+            }
+            
+            valueCell.textContent = vm.read(memory_access);
+            row.appendChild(valueCell);
+            table.appendChild(row);
+        }
+        container.appendChild(table);
     }
-    container.appendChild(table);
 }

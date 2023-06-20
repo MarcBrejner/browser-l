@@ -3,6 +3,7 @@ function BuildSystem(tree) {
     var emitter = get_emitter(level);
     var visitor = get_visitor(level);
     visitor._emitter = emitter;
+    node_stack.stack = [];
     //console.log(tree.rootNode.toString());
     var error_msg = find_error(tree.rootNode, new Array())[0];
     console.log(tree.rootNode.toString())

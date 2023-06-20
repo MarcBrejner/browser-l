@@ -100,5 +100,7 @@ class ECS {
       this.nodes = new Array();
       this.draws = new Array();
       this.drawparams = new Array();
+      this.static_draws = new Array();
+      this.static_draw_params = new Array();
   }
 }

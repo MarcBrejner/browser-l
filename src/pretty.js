@@ -1,4 +1,4 @@
-class PrettyPrinter {
+/*class PrettyPrinter {
 
   update_program(program) {
     this.program = program; 
@@ -91,6 +91,7 @@ class PrettyPrinter {
   }
 
 }
+*/
 
 function getKeyByValueIfValueExists(object, value) {
   if(Object.values(object).includes(value)){

@@ -84,7 +84,7 @@ class L3Emitter extends L2Emitter{
     }
 
     save_to_register_x(expression){
-        this.assignment(false, this.register('$x'), expression,L3Draw,[]);
+        this.assignment(false, this.register('$x'), expression, L3Draw,[]);
     }
 
     full_expression(left_expression, operator, right_expression) {
@@ -107,10 +107,10 @@ class L3Emitter extends L2Emitter{
     }
 }
 
-L3Draw = function() {
+const L3Draw = {
 
+    draw() {
     var container = document.getElementById("lx-container");
-
    
     var table = document.createElement("L3-table");
     table.style.width = "50%";
@@ -131,4 +131,5 @@ L3Draw = function() {
     table.appendChild(row);
 
     container.appendChild(table);
+    }
 }
