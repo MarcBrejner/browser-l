@@ -1,7 +1,6 @@
 class L2Visitor extends L1Visitor {
     scope(node) {
         this._emitter.start_scope();
-        node_stack.push(node);
         this.visit(node.child(1));
         this._emitter.end_scope();
     }
@@ -113,7 +112,9 @@ class L2Emitter extends L1Emitter{
         this.assignment(
             false, 
             this.memory(this.data(p_var), get_datatype(var_size)), 
-            expression);
+            expression,
+            L2Draw,
+            [snapshot]);
     }
 }
 
@@ -141,7 +142,7 @@ L2Draw = function(params, vm) {
 
     var table = document.createElement("L2-table");
     table.style.width = "50%";
-    table.style.border = "1p"
+    table.style.border = "1p";
     var variables = params[0];
 
     for(var name in variables){

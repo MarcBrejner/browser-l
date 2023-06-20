@@ -22,8 +22,9 @@ class L3Visitor extends L2Visitor {
         var right_child = get_right_child(node);
 
         //Handle left side
-        var left_expression = this.visit(left_child);
         node_stack.push(left_child);
+        var left_expression = this.visit(left_child);
+        
         var is_nested_expression = right_child.type === 'expression';
         left_expression = this._emitter.left_expression(left_expression, is_nested_expression);
 
@@ -83,7 +84,7 @@ class L3Emitter extends L2Emitter{
     }
 
     save_to_register_x(expression){
-        this.assignment(false, this.register('$x'), expression);
+        this.assignment(false, this.register('$x'), expression,L3Draw,[]);
     }
 
     full_expression(left_expression, operator, right_expression) {
@@ -104,4 +105,30 @@ class L3Emitter extends L2Emitter{
             return full_expression;
         }
     }
+}
+
+L3Draw = function() {
+
+    var container = document.getElementById("lx-container");
+
+   
+    var table = document.createElement("L3-table");
+    table.style.width = "50%";
+    table.style.border = "1p";
+    var row = document.createElement("tr");
+    var nameCell = document.createElement("td");
+    nameCell.textContent = "l3hej";
+    row.appendChild(nameCell);
+
+
+    var valueCell = document.createElement("td");
+    var memory_access;
+    //Check if scoped
+
+    
+    valueCell.textContent = "yeet"
+    row.appendChild(valueCell);
+    table.appendChild(row);
+
+    container.appendChild(table);
 }
