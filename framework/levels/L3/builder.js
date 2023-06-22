@@ -22,22 +22,21 @@ class L3Visitor extends L2Visitor {
         var right_child = get_right_child(node);
 
         //Handle left side
-        node_stack.push(left_child);
+        this._emitter.node_stack.push(left_child);
         var left_expression = this.visit(left_child);
         
         var is_nested_expression = right_child.type === 'expression';
         left_expression = this._emitter.left_expression(left_expression, is_nested_expression);
 
         //Handle right side
-        node_stack.push(node)
         var right_expression = this.visit(right_child);
         if(this.is_binary_expression(right_child)){
-            node_stack.push(right_child);
+            this._emitter.node_stack.push(right_child);
             this._emitter.save_to_register_x(right_expression)
         }
 
         //Sum both sides
-        node_stack.push(node)
+        this._emitter.node_stack.push(node)
         var operator = get_operator(node).text;
         var full_expression = this._emitter.full_expression(left_expression, operator, right_expression);
         this._emitter.end_scope();
@@ -63,8 +62,8 @@ class L3Visitor extends L2Visitor {
     }
 
     clean_stack(){
-        while(node_stack.peek().type !== 'statement'){
-            node_stack.pop()
+        while(this._emitter.node_stack.peek().type !== 'statement'){
+            this._emitter.node_stack.pop()
         }
     }
 }

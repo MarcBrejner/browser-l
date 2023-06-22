@@ -1,8 +1,7 @@
 class L0Visitor {
 
     visit(node) {
-        if ([';', '\n'].includes(node.type)) return;
-        if (node.type === 'statement') node_stack.push(node);
+        if (node.type === "statement") this._emitter.node_stack.push(node);
         if (this[node.type] === undefined) {
             var r = this.default(node);
             return r;
@@ -100,17 +99,21 @@ class L0Visitor {
     }
 
     syscall(node) {
-        this._emitter.syscall(node);
+        this._emitter.syscall();
     }
 }
 
-class L0Emitter{
+class L0Emitter {
     _data = {};
     _const = {};
     _labels = {};
     _statements = [];
     _ECS = new ECS();
+    _static_draws = {};
 
+    constructor() {
+        this._static_draws.L0 = L0Draw;
+    }
 
     expression(reader){
         return new Expression(CONTENT_TYPES.EXPRESSION, reader);
@@ -143,7 +146,7 @@ class L0Emitter{
         return new Content(CONTENT_TYPES.DATA, data_id);
     }
 
-    register(register_id) {
+    register(register_id) {;
         return new Content(CONTENT_TYPES.REGISTER, register_id);
     }
 
@@ -167,30 +170,46 @@ class L0Emitter{
         return new Content(CONTENT_TYPES.LABEL, label_id);
     }
 
-    syscall(node) {
+    syscall() {
         this.push_statement(new ByteCode(OP.SYSCALL));
     }
 
 
-    assignment(is_conditional, writer, expression, drawfun = null, drawparams = null, static_draw = null, static_draw_params = null) {
-        this.push_statement(new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))), drawfun, drawparams, L0Draw, static_draw_params);
+    assignment(is_conditional, writer, expression, drawfun = null, drawparams = null) {
+        this.push_statement(new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))), drawfun, drawparams);
     }
 
-    push_statement(byte_code, drawfun, drawparams, static_draw, static_draw_params) {
+    push_statement(byte_code, drawfun, drawparams) {
         this._statements.push(byte_code);
-        this._ECS.nodes.push(node_stack.peek());
+        this._ECS.nodes.push(this.node_stack.peek());
         this._ECS.draws.push(drawfun);
         this._ECS.drawparams.push(drawparams);
-        this._ECS.static_draws.push(static_draw);
-        this._ECS.static_draw_params.push(static_draw_params);
     }
+
+    node_stack = {
+        stack: [],
+    
+        push(node) {
+            this.stack.push(node);
+        },
+    
+        pop() {
+            if (this.stack.length == 0)
+                return "Underflow";
+            return this.stack.pop();
+        },
+    
+        peek(){
+            return this.stack[this.stack.length-1];
+        }
+    };
 }
 
 const L0Draw = {
     program: null,
     state: null,
 
-    draw(params, vm) {
+    draw(vm) {
         this.program = vm.program;
         this.state = vm.state;
         if(this.program.error_msg !== null){
@@ -213,7 +232,7 @@ const L0Draw = {
             }
           }
         }
-        return pretty_source_code;
+        document.getElementById("prettyPretty").innerHTML = pretty_source_code;
       },
     
       syscall() { return `<span style='color: red'>syscall;</span>\n` },
@@ -279,22 +298,3 @@ const L0Draw = {
       },
     
 }
-
-
-var node_stack = {
-    stack: [],
-
-    push(node) {
-        this.stack.push(node);
-    },
-
-    pop() {
-        if (this.stack.length == 0)
-            return "Underflow";
-        return this.stack.pop();
-    },
-
-    peek(){
-        return this.stack[this.stack.length-1];
-    }
-};

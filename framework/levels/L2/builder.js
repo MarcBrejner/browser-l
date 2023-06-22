@@ -26,20 +26,9 @@ class L2Emitter extends L1Emitter{
     frame_pointer = 112;
     in_scope = false;
 
-    Stack = {
-        items: [],
-    
-        push(element)
-        {
-            this.items.push(element);
-        },
-    
-        pop()
-        {
-            if (this.items.length == 0)
-                return "Underflow";
-            return this.items.pop();
-        }
+    constructor() {
+        super();
+        this._static_draws.L2 = L2Draw;
     }
 
     variable(var_name, var_size, expression) {
@@ -116,6 +105,22 @@ class L2Emitter extends L1Emitter{
             L2Draw,
             [snapshot]);
     }
+
+    Stack = {
+        items: [],
+    
+        push(element)
+        {
+            this.items.push(element);
+        },
+    
+        pop()
+        {
+            if (this.items.length == 0)
+                return "Underflow";
+            return this.items.pop();
+        }
+    }
 }
 
 
@@ -132,6 +137,8 @@ class StackFrame {
 
 
 const L2Draw = {
+
+    params: [],
 
     draw(params, vm) {
         var container = document.getElementById("lx-container");

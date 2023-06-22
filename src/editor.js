@@ -26,8 +26,7 @@ codeMirrorEditor.on('change', async function(cMirror) {
   var source_code = cMirror.getValue();
 
   //  Set content of prettyWindow to the pretty printed code
-  var code = await parse_and_pretty_print(source_code);
-  document.getElementById("prettyPretty").innerHTML = code;
+  await parse_and_pretty_print(source_code);
 
   //Fixes a bug with codemirror where added line classes persists too long
   clear_highlights();
@@ -55,7 +54,7 @@ async function parse_and_pretty_print(source_code) {
   var VM = get_virtual_machine(program);
   // parse_byte_code from pretty.js pretty prints the byte_code
   //var pretty_printer = get_pretty_printer(program);
-  return static_draw(VM);
+  static_draw(VM);
 }
 
 async function parse_and_read(source_code) {
@@ -101,12 +100,12 @@ async function debug() {
   document.querySelector('#debugbutton').disabled = true;
   document.querySelector('#exitdebug').disabled = false;
   document.querySelector('#stepbutton').disabled = false;
-  document.getElementById("prettyPretty").innerHTML = static_draw(VM);
+  static_draw(VM);
 }
 
 async function exit_debug() {
   reset_buttons_after_debug();
-  document.getElementById("prettyPretty").innerHTML = static_draw(VM);
+  static_draw(VM);
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
   var VM = get_virtual_machine(program);
@@ -122,10 +121,8 @@ function execute_all() {
 }
 
 function static_draw(VM) {
-  var draw_object = VM.program.ECS.static_draws[0];
-  var draw_parameters = VM.program.ECS.static_draw_params[0]
-  if(draw_object !== null && draw_object !== undefined){
-    return draw_object.draw(draw_parameters, VM)
+  for (key in VM.program.static_draws) {
+    VM.program.static_draws[key].draw(VM);
   }
 }
 
@@ -158,9 +155,7 @@ function color(program,pc){
 function execute_step(debugging = true) {
   var VM = get_virtual_machine();
   VM.execute_bytecode();
-  document.getElementById("prettyPretty").innerHTML = static_draw(VM);
-  //var pretty_printer = get_pretty_printer(VM.program);
-  //document.getElementById("prettyPretty").innerHTML = pretty_printer.print_program(VM.state);
+  static_draw(VM);
   show_results_in_html(VM.state);
 
   if (VM.state.registers['$!'] >= VM.program.instructions.length) {
@@ -256,7 +251,8 @@ function reset_buttons_after_debug() {
     document.querySelector('#exitdebug').disabled = true;
     document.querySelector('#stepbutton').disabled = true;
     if (document.querySelector('.highlight-line') != null) {
-      document.querySelector('.highlight-line').classList.remove('highlight-line');
+      var element = document.querySelector('.highlight-line');
+      element.classList.remove('highlight-line');
     }
 }
 
