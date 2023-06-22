@@ -25,6 +25,8 @@ class L2Emitter extends L1Emitter{
     stack_pointer = 112;
     frame_pointer = 112;
     in_scope = false;
+    draw_params = [];
+    draws = []
 
     constructor() {
         super();
@@ -53,8 +55,9 @@ class L2Emitter extends L1Emitter{
         this.frame_pointer -= variable_size;
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var writer = this.read_temp_var(var_name);
-        const snapshot = structuredClone(this.head.variables);
-        this.assignment(false, writer, expression);
+        const snapshot = [structuredClone(this.variables), structuredClone(this.head)];
+        this.draw_params.push(snapshot)
+        this.assignment(false, writer, expression,L2Draw, snapshot);
     }
 
     read_temp_var(var_name) {
@@ -97,13 +100,13 @@ class L2Emitter extends L1Emitter{
             memory_allocation += "0";
         }
         this._data[p_var] = memory_allocation;
-        const snapshot = structuredClone(this.variables);
+        const snapshot = [structuredClone(this.variables), null];
         this.assignment(
             false, 
             this.memory(this.data(p_var), get_datatype(var_size)), 
             expression,
             L2Draw,
-            [snapshot]);
+            snapshot);
     }
 
     Stack = {
@@ -133,9 +136,6 @@ class StackFrame {
     }
 }
 
-
-
-
 const L2Draw = {
 
     params: [],
@@ -143,21 +143,47 @@ const L2Draw = {
     draw(params, vm) {
         var container = document.getElementById("lx-container");
 
-        var existing_table = container.querySelector("L2-table")
-        if(existing_table){
-            container.removeChild(existing_table)
+        var existingContainer = document.getElementById("table-wrapper-container");
+        if (existingContainer) {
+          container.removeChild(existingContainer);
         }
 
-        var table = document.createElement("L2-table");
-        table.style.width = "50%";
-        table.style.border = "1p";
-        var variables = params[0];
+        var wrapperContainer = document.createElement("div");
+        wrapperContainer.id = "table-wrapper-container";
 
+        var variables = params[0];
+        this.create_wrapper(variables, vm, wrapperContainer)
+        var stack_head = params[1];
+        while (stack_head != null) {
+            this.create_wrapper(stack_head.variables, vm, wrapperContainer)
+            stack_head = stack_head.next;
+        }
+        
+        container.appendChild(wrapperContainer)
+
+    },
+
+    create_wrapper(variables, vm, container){
+        var table = this.create_table_from_variables(variables, vm)
+        var tableWrapper = document.createElement("L2Div");
+        tableWrapper.style.display = "inline-block";
+        tableWrapper.appendChild(table);
+        
+        tableWrapper.style.border = "1px solid black";
+        tableWrapper.style.padding = "10px";
+        tableWrapper.style.borderCollapse = "collapse";
+        container.appendChild(tableWrapper);
+    },
+
+    create_table_from_variables(variables, vm){
+        var table = document.createElement("L2Table");
         for(var name in variables){
             var row = document.createElement("tr");
 
             var nameCell = document.createElement("td");
             nameCell.textContent = name;
+            nameCell.style.borderRight = "2px solid black";
+            nameCell.style.paddingRight = "10px"
             row.appendChild(nameCell);
 
 
@@ -172,9 +198,11 @@ const L2Draw = {
             }
             
             valueCell.textContent = vm.read(memory_access);
+            valueCell.style.paddingLeft = "10px"
             row.appendChild(valueCell);
             table.appendChild(row);
         }
-        container.appendChild(table);
+
+        return table
     }
 }
