@@ -69,6 +69,12 @@ class L3Visitor extends L2Visitor {
 }
 
 class L3Emitter extends L2Emitter{
+    constructor() {
+        super();
+        this._step_draw['L3'] = L3Draw;
+        this._step_draw_state['L3'] = null;
+    }
+
     left_expression (left_expression, is_nested_expression ){
         if (is_nested_expression) {
             var bytesize = 'u8';
@@ -108,7 +114,7 @@ class L3Emitter extends L2Emitter{
 
 const L3Draw = {
 
-    draw() {
+    draw(params, vm) {
         return;
-    }
+    },
 }

@@ -25,12 +25,11 @@ class L2Emitter extends L1Emitter{
     stack_pointer = 112;
     frame_pointer = 112;
     in_scope = false;
-    draw_params = [];
-    draws = []
 
     constructor() {
         super();
-        this._static_draws.L2 = L2Draw;
+        this._step_draw['L2'] = L2Draw;
+        this._step_draw_state['L2']= null;
     }
 
     variable(var_name, var_size, expression) {
@@ -55,9 +54,8 @@ class L2Emitter extends L1Emitter{
         this.frame_pointer -= variable_size;
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var writer = this.read_temp_var(var_name);
-        const snapshot = [structuredClone(this.variables), structuredClone(this.head)];
-        this.draw_params.push(snapshot)
-        this.assignment(false, writer, expression,L2Draw, snapshot);
+        this._step_draw_state['L2'] = [structuredClone(this.variables), structuredClone(this.head)];
+        this.assignment(false, writer, expression);
     }
 
     read_temp_var(var_name) {
@@ -89,6 +87,7 @@ class L2Emitter extends L1Emitter{
         if (this.head === null) {
             this.in_scope = false;
         }
+        this._ECS.overwrite_drawstate('L2', [structuredClone(this.variables), structuredClone(this.head)]);
     }
 
     variable_declaration(var_name, var_size, expression) {
@@ -100,13 +99,11 @@ class L2Emitter extends L1Emitter{
             memory_allocation += "0";
         }
         this._data[p_var] = memory_allocation;
-        const snapshot = [structuredClone(this.variables), null];
+        this._step_draw_state['L2'] = [structuredClone(this.variables), null];
         this.assignment(
             false, 
             this.memory(this.data(p_var), get_datatype(var_size)), 
-            expression,
-            L2Draw,
-            snapshot);
+            expression);
     }
 
     Stack = {
@@ -124,6 +121,10 @@ class L2Emitter extends L1Emitter{
             return this.items.pop();
         }
     }
+
+    set_state() {
+
+    }
 }
 
 
@@ -137,9 +138,6 @@ class StackFrame {
 }
 
 const L2Draw = {
-
-    params: [],
-
     draw(params, vm) {
         var container = document.getElementById("lx-container");
 

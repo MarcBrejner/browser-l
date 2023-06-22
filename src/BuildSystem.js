@@ -8,8 +8,16 @@ function BuildSystem(tree) {
     console.log(tree.rootNode.toString())
     //builder.handle(tree.rootNode);
     visitor.visit(tree.rootNode);
-    return new Program(visitor._emitter._statements, visitor._emitter._ECS, visitor._emitter._data, visitor._emitter._const, visitor._emitter._labels, visitor._emitter._static_draws, error_msg);
-    
+    return new Program(
+      visitor._emitter._statements, 
+      visitor._emitter._ECS, 
+      visitor._emitter._data, 
+      visitor._emitter._const, 
+      visitor._emitter._labels, 
+      visitor._emitter._static_draws, 
+      visitor._emitter._step_draw, 
+      error_msg
+    );
 }
 
 function get_datatype(datatype_string){

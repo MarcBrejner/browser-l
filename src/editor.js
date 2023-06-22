@@ -133,10 +133,12 @@ function static_draw(VM) {
 
 function draw(VM){
   var pc = VM.state.registers['$!']-1;
-  var draw_object = VM.program.ECS.draws[pc];
-  var draw_parameters = VM.program.ECS.drawparams[pc]
-  if(draw_object !== null && draw_object !== undefined){
-    draw_object.draw(draw_parameters,VM)
+  for (key in VM.program.step_draws) {
+    var draw_object = VM.program.step_draws[key];
+    var draw_parameters = VM.program.ECS.drawparams[pc][key];
+    if(draw_object !== null && draw_object !== undefined){
+      draw_object.draw(draw_parameters,VM)
+    }
   }
 }
 
@@ -232,22 +234,6 @@ function get_virtual_machine(program) {
   _VirtualMachine.update_vm(program)
   return _VirtualMachine;
 }
-/*
-function get_pretty_printer(program) {
-  if (_PrettyPrinter == null) {
-    _PrettyPrinter = new PrettyPrinter();
-    _PrettyPrinter.update_program(program);
-    return _PrettyPrinter;
-  }
-
-  if (program === undefined) {
-    return _PrettyPrinter;
-  }
-
-  _PrettyPrinter.update_program(program)
-  return _PrettyPrinter;
-}
-*/
 
 function reset_buttons_after_debug() {
     document.querySelector('#debugbutton').disabled = false;
@@ -267,4 +253,12 @@ async function test_l(source_code){
   }
   get_virtual_machine(program);
   execute_all();
+}
+
+function getKeyByValueIfValueExists(object, value) {
+  if(Object.values(object).includes(value)){
+    return [true, Object.keys(object).find(key => object[key] === value)];
+  }else{
+    return [false, null];
+  }
 }

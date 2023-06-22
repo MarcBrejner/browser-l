@@ -109,9 +109,11 @@ class L0Emitter {
     _statements = [];
     _ECS = new ECS();
     _static_draws = {};
+    _step_draw = {};
+    _step_draw_state = {};
 
     constructor() {
-        this._static_draws.L0 = L0Draw;
+        this._static_draws['L0'] = L0Draw;
     }
 
     expression(reader){
@@ -174,15 +176,14 @@ class L0Emitter {
     }
 
 
-    assignment(is_conditional, writer, expression, drawfun = null, drawparams = null) {
-        this.push_statement(new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))), drawfun, drawparams);
+    assignment(is_conditional, writer, expression) {
+        this.push_statement(new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))));
     }
 
-    push_statement(byte_code, drawfun, drawparams) {
+    push_statement(byte_code) {
         this._statements.push(byte_code);
         this._ECS.nodes.push(this.node_stack.peek());
-        this._ECS.draws.push(drawfun);
-        this._ECS.drawparams.push(drawparams);
+        this._ECS.drawparams.push(structuredClone(this._step_draw_state));
     }
 
     node_stack = {
