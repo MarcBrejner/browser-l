@@ -81,6 +81,11 @@ async function run_all() {
 }
 
 async function debug() {
+  var container = document.getElementById("lx-container");
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
   outputSpan.innerHTML = '';
   for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
     codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
@@ -146,9 +151,7 @@ function clear_highlights(){
 }
 
 function color(program,pc){
-
   clear_highlights()
-  
   const start = {line: program.ECS.nodes[pc].startPosition.row , ch: program.ECS.nodes[pc].startPosition.column}
   const end = {line: program.ECS.nodes[pc].endPosition.row , ch: program.ECS.nodes[pc].endPosition.column}
   codeMirrorEditor.markText(start, end, { className: 'highlight-line' });

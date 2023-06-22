@@ -110,26 +110,6 @@ class L3Emitter extends L2Emitter{
 const L3Draw = {
 
     draw() {
-    var container = document.getElementById("lx-container");
-   
-    var table = document.createElement("L3-table");
-    table.style.width = "50%";
-    table.style.border = "1p";
-    var row = document.createElement("tr");
-    var nameCell = document.createElement("td");
-    nameCell.textContent = "l3hej";
-    row.appendChild(nameCell);
-
-
-    var valueCell = document.createElement("td");
-    var memory_access;
-    //Check if scoped
-
-    
-    valueCell.textContent = "yeet"
-    row.appendChild(valueCell);
-    table.appendChild(row);
-
-    container.appendChild(table);
+        return;
     }
 }

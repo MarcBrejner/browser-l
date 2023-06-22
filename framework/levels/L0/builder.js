@@ -1,5 +1,4 @@
 class L0Visitor {
-
     visit(node) {
         if ([';', '\n'].includes(node.type)) return;
         if (node.type === 'statement') node_stack.push(node);
@@ -24,7 +23,7 @@ class L0Visitor {
         return;
     }
 
-    expression(node) {
+    expression(node) {  
         switch (node.childCount) {
             case 1:
                 var reader = this.visit(node.child(0));
@@ -167,7 +166,7 @@ class L0Emitter{
         return new Content(CONTENT_TYPES.LABEL, label_id);
     }
 
-    syscall(node) {
+    syscall() {
         this.push_statement(new ByteCode(OP.SYSCALL));
     }
 
@@ -277,6 +276,8 @@ const L0Draw = {
         var result = exists ? `${this.wrap_label(label_key)}` : "";
         return result;
       },
+
+      
     
 }
 
