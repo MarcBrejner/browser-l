@@ -422,6 +422,7 @@ class L2Emitter extends L1Emitter{
             this.in_scope = false;
         }
         this._ECS.overwrite_drawstate('L2', [structuredClone(this.variables), structuredClone(this.head)]);
+        this._step_draw_state['L2'] = [structuredClone(this.variables), structuredClone(this.head)];
     }
 
     variable_declaration(var_name, var_size, expression) {
