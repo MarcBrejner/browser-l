@@ -487,9 +487,15 @@ const L2Draw = {
         var variables = params[0];
         this.create_wrapper(variables, vm, wrapperContainer)
         var stack_head = params[1];
+
+        // save the stack in an array in order to print it from the bottom of the stack
+        var temp_var_stack = [];
         while (stack_head != null) {
-            this.create_wrapper(stack_head.variables, vm, wrapperContainer)
+            temp_var_stack.push(stack_head);
             stack_head = stack_head.next;
+        }
+        for (var i = temp_var_stack.length-1; i >= 0; i--) {
+            this.create_wrapper(temp_var_stack[i].variables, vm, wrapperContainer)
         }
         
         container.appendChild(wrapperContainer)
@@ -499,11 +505,13 @@ const L2Draw = {
     create_wrapper(variables, vm, container){
         var table = this.create_table_from_variables(variables, vm)
         var tableWrapper = document.createElement("L2Div");
-        tableWrapper.style.display = "inline-block";
+        tableWrapper.style.display = "block";
         tableWrapper.appendChild(table);
         
         tableWrapper.style.border = "1px solid black";
         tableWrapper.style.padding = "10px";
+        tableWrapper.style.width = "150px";
+        tableWrapper.style.textAlign = "center";
         tableWrapper.style.borderCollapse = "collapse";
         container.appendChild(tableWrapper);
     },
