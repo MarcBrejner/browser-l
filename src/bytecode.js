@@ -85,14 +85,12 @@ class Expression {
 }
 
 class Program {
-  constructor(instructions, ecs, data, constants, labels, static_draws, step_draws, error_msg=null) {
+  constructor(instructions, data, constants, labels,  drawer, error_msg=null) {
     this.instructions = instructions;
-    this.ECS = ecs;
     this.data = data;
     this.constants = constants;
     this.labels = labels;
-    this.static_draws = static_draws;
-    this.step_draws = step_draws;
+    this.drawer = drawer;
     this.error_msg = error_msg;
   }
 }
@@ -100,11 +98,5 @@ class Program {
 class ECS {
   constructor() {
       this.nodes = new Array();
-      this.draws = new Array();
-      this.drawparams = new Array();
-  }
-
-  overwrite_drawstate(L, state) {
-    this.drawparams[this.drawparams.length - 1][L] = state;
   }
 }

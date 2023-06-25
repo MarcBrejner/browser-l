@@ -14,3 +14,14 @@ class L1Emitter extends L0Emitter{
             this.binary_expression(pos, '-', this.number(1)));
     }
 }
+
+class L1Draw extends L0Draw{
+    constructor(){
+        super();
+    }
+
+    draw(vm){
+        super.draw(vm);
+        return;
+    }
+}

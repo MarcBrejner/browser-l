@@ -71,6 +71,15 @@ document.getElementById('levels').value = 3;\n\n"""
             return new {}Visitor();""".format(level, filename)
     code += "\n}\n}\n"
     
+    code += """function get_drawer(level) {
+  switch (level) {"""
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        code += """
+        case {}:
+            return new {}Draw();""".format(level, filename)
+    code += "\n}\n}\n"
+    
     code += """function get_emitter(level) {
   switch (level) {"""
     for filename in os.listdir('levels'):

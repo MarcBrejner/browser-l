@@ -54,7 +54,7 @@ class L2Emitter extends L1Emitter{
         this.frame_pointer -= variable_size;
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var writer = this.read_temp_var(var_name);
-        this._step_draw_state['L2'] = [structuredClone(this.variables), structuredClone(this.head)];
+        this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), structuredClone(this.head)];
         this.assignment(false, writer, expression);
     }
 
@@ -87,8 +87,7 @@ class L2Emitter extends L1Emitter{
         if (this.head === null) {
             this.in_scope = false;
         }
-        this._ECS.overwrite_drawstate('L2', [structuredClone(this.variables), structuredClone(this.head)]);
-        this._step_draw_state['L2'] = [structuredClone(this.variables), structuredClone(this.head)];
+        this._drawer.variable_states[this._statements.length-1] = [structuredClone(this.variables), structuredClone(this.head)];
     }
 
     variable_declaration(var_name, var_size, expression) {
@@ -100,7 +99,7 @@ class L2Emitter extends L1Emitter{
             memory_allocation += "0";
         }
         this._data[p_var] = memory_allocation;
-        this._step_draw_state['L2'] = [structuredClone(this.variables), null];
+        this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), null];
         this.assignment(
             false, 
             this.memory(this.data(p_var), get_datatype(var_size)), 
@@ -138,8 +137,14 @@ class StackFrame {
     }
 }
 
-const L2Draw = {
-    draw(params, vm) {
+class L2Draw extends L1Draw{
+    constructor(){
+        super();
+        this.variable_states = {};
+    }
+
+    draw(vm) {
+        super.draw(vm);
         var container = document.getElementById("lx-container");
 
         var existingContainer = document.getElementById("table-wrapper-container");
@@ -147,12 +152,19 @@ const L2Draw = {
           container.removeChild(existingContainer);
         }
 
+        
+        var state = this.find_state(this.variable_states, vm.state.registers['$!']-1)
+        if(state === null){
+            return;
+        }
         var wrapperContainer = document.createElement("div");
         wrapperContainer.id = "table-wrapper-container";
 
-        var variables = params[0];
+        
+
+        var variables = state[0]
         this.create_wrapper(variables, vm, wrapperContainer)
-        var stack_head = params[1];
+        var stack_head = state[1];
 
         // save the stack in an array in order to print it from the bottom of the stack
         var temp_var_stack = [];
@@ -166,7 +178,7 @@ const L2Draw = {
         
         container.appendChild(wrapperContainer)
 
-    },
+    }
 
     create_wrapper(variables, vm, container){
         var table = this.create_table_from_variables(variables, vm)
@@ -180,7 +192,7 @@ const L2Draw = {
         tableWrapper.style.textAlign = "center";
         tableWrapper.style.borderCollapse = "collapse";
         container.appendChild(tableWrapper);
-    },
+    }
 
     create_table_from_variables(variables, vm){
         var table = document.createElement("L2Table");
@@ -212,4 +224,21 @@ const L2Draw = {
 
         return table
     }
+
+    find_state(map, key) {
+        let result = map[key];
+        let currentKey = key;
+
+        while(result === undefined){
+            currentKey -= 1;
+            result = map[currentKey];
+            if(currentKey <= 0){
+                result = null;
+                break;
+            }
+        }
+        return result;
+      }
+      
+
 }

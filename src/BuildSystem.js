@@ -2,20 +2,29 @@ function BuildSystem(tree) {
     var level = parseInt(chosenLevel.value);
     var emitter = get_emitter(level);
     var visitor = get_visitor(level);
+    var drawer = get_drawer(level);
     visitor._emitter = emitter;
-    //console.log(tree.rootNode.toString());
+    visitor._emitter._drawer = drawer;
+    
     var error_msg = find_error(tree.rootNode, new Array())[0];
+    if(error_msg !== undefined){
+      return new Program(
+        [],
+        [],
+        [],
+        [],
+        visitor._emitter._drawer,
+        error_msg);
+    }
     console.log(tree.rootNode.toString())
-    //builder.handle(tree.rootNode);
+    
     visitor.visit(tree.rootNode);
     return new Program(
       visitor._emitter._statements, 
-      visitor._emitter._ECS, 
       visitor._emitter._data, 
       visitor._emitter._const, 
       visitor._emitter._labels, 
-      visitor._emitter._static_draws, 
-      visitor._emitter._step_draw, 
+      visitor._emitter._drawer,
       error_msg
     );
 }
