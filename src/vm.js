@@ -38,7 +38,7 @@ function byte_array_to_number(byteArray, type) {
 
 class VirtualMachine {
 
-    memorySize = 112;
+    memorySize = 128;
 
     update_vm(program, memory = new Array(this.memorySize).fill('00'), registers = {'$!':0, '$?':0, '$x':0, '$y':0, '$n':0, '$m':0, '$fp': this.memorySize}) {
         this.program = program;
