@@ -113,7 +113,7 @@ class L0Emitter {
     _step_draw_state = {};
 
     constructor() {
-        this._static_draws['L0'] = L0Draw;
+        this._static_draws['L0'] = new L0Draw();
     }
 
     expression(reader){
@@ -182,8 +182,7 @@ class L0Emitter {
 
     push_statement(byte_code) {
         this._statements.push(byte_code);
-        this._ECS.nodes.push(this.node_stack.peek());
-        this._ECS.drawparams.push(structuredClone(this._step_draw_state));
+        this._drawer.node_ECS.push(this.node_stack.peek());
     }
 
     node_stack = {
@@ -205,26 +204,36 @@ class L0Emitter {
     };
 }
 
-const L0Draw = {
-    program: null,
-    state: null,
+class L0Draw {
+    constructor(){
+        this.node_ECS = new Array();
+    }
 
-    draw(vm) {
+    draw(vm){
+        this.pretty_print(vm);
+        this.color(vm);
+        this.show_results(vm.state)
+    }
+
+    pretty_print(vm) {
         this.program = vm.program;
         this.state = vm.state;
+        var pretty_window = document.getElementById("prettyPretty");
+        
         if(this.program.error_msg !== null){
-          return this.program.error_msg;
+          pretty_window.innerHTML = this.program.error_msg;
+          return;
         }
+
         var pretty_source_code = "";
         var instructions = this.program.instructions;
         var debugging = document.querySelector('#debugbutton').disabled;
         for (var i = 0; i < instructions.length; i++) {
-          var one_indexed = i;
-          var res = `<span id=line-number>${one_indexed} </span>` + instructions[i].handle(this) + this.print_label(i) +`<br>`;
+          var res = `<span id=line-number>${i} </span>` + instructions[i].handle(this) + this.print_label(i) +`<br>`;
           if (!debugging || this.state === undefined) {
             pretty_source_code += res;
           } else {
-            if (one_indexed === this.state.registers['$!']) {
+            if (i === this.state.registers['$!']) {
               pretty_source_code +=
                   `<span class=highlight-line>${res}</span>`
             } else {
@@ -232,45 +241,45 @@ const L0Draw = {
             }
           }
         }
-        document.getElementById("prettyPretty").innerHTML = pretty_source_code;
-      },
+        pretty_window.innerHTML = pretty_source_code;
+      }
     
-      syscall() { return `<span style='color: red'>syscall;</span>\n` },
+      syscall() { return `<span style='color: red'>syscall;</span>\n` }
     
       assign_binary(conditional, writer, reader1, opr, reader2) {
         var cond = conditional ? '?=' : ':=';
         return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_content(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_content(reader2))}${this.wrap_semicolon()}\n`
-      },
+      }
     
       assign_unary(conditional, writer, opr, reader) {
         var cond = conditional ? '?=' : ':=';
         return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_content(reader))}${this.wrap_semicolon()}\n`
-      },
+      }
     
       assign(conditional, writer, reader) {
         var cond = conditional ? '?=' : ':=';
         return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_content(reader))}${this.wrap_semicolon()}\n`
-      },
+      }
     
       wrap_assign(assign) {
         return `<span id=assign>${assign}</span>`;
-      },
+      }
     
       wrap_opr(opr) {
         return `<span id=opr>${opr}</span>`;
-      },
+      }
     
       wrap_semicolon() {
         return `<span id=semicolon>;</span>`;
-      },
+      }
     
       wrap_const(constant) {
         return `<span id=constant>${constant}</span>`;
-      },
+      }
     
       wrap_label(label) {
         return `<span id=label>${label}</span>`;
-      },
+      }
     
       print_content(content){
         if (content.type === CONTENT_TYPES.CONSTANT){
@@ -280,7 +289,7 @@ const L0Draw = {
         }else{
           return `${content.id}`
         }
-      },
+      }
     
       print_memory(content) {
         if (content.id.type === CONTENT_TYPES.BIN_EXPRESSION) {
@@ -289,14 +298,70 @@ const L0Draw = {
         else {
           return `[${content.get_text()},${content.datatype.type}${content.datatype.size}]`
         }
-      },
+      }
     
       print_label(i){
         var [exists, label_key] = getKeyByValueIfValueExists(this.program.labels, i);
         var result = exists ? `${this.wrap_label(label_key)}` : "";
         return result;
-      },
+      }
 
+      
+      color(vm){
+        var pc = vm.state.registers["$!"];
+        if(pc >= vm.program.instructions.length){
+            return;
+        }
+        clear_highlights()
+        const start = {line: this.node_ECS[pc].startPosition.row , ch: this.node_ECS[pc].startPosition.column}
+        const end = {line: this.node_ECS[pc].endPosition.row , ch: this.node_ECS[pc].endPosition.column}
+        codeMirrorEditor.markText(start, end, { className: 'highlight-line' });
+      }
+
+      show_results(state) {
+        
+        registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
+        var rows = ""
+        var rowText = "";
+        for (var i = 0; i < state.memory.length; i += 16) {
+          rowText = "";
+          // Print the actual memory
+          var row = `<td>${i.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})}--</td>`
+          for (var j = i; j < state.memory.length && j < i + 16; j += 1) {
+              row += `<td class='show-memory-id-on-hover' memory-id='${state.memory_id[j]}'>${state.memory[j]}</td>`
+          }
+          // Print the memory string representation to the right of each row
+          for (var k = i; k < state.memory.length && k < i + 16; k += 1) {
+            if (state.memory[k] === '00') {
+              rowText += " ";
+            } else {
+              rowText += `${String.fromCharCode(parseInt(state.memory[k],16))}`
+            }
+          }
+          row += `<td>|   ${rowText}</td>`
+          rows += `<tr>${row}</tr>`
+        }
+        memoryDiv.innerHTML = `<table id=memory-table>${rows}</table>`
+      
+        const tooltips = document.querySelectorAll(".show-memory-id-on-hover:not([memory-id=''])");
+      
+        tooltips.forEach(tooltip => {
+          tooltip.addEventListener('mouseover', () => {
+            const tooltipText = tooltip.getAttribute('memory-id');
+            tooltips.forEach(el => {
+              if (el.getAttribute('memory-id') === tooltipText) {
+                el.classList.add('highlight-memory-id');
+              }
+            });
+          });
+      
+          tooltip.addEventListener('mouseout', () => {
+            tooltips.forEach(el => {
+              el.classList.remove('highlight-memory-id');
+            });
+          });
+        });
+      }
       
     
 }

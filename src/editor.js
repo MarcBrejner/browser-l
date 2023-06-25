@@ -22,9 +22,7 @@ chosenLevel.onchange = function(){
 
 // Fires whenever the editable window changes
 codeMirrorEditor.on('change', async function(cMirror) {
-
   var source_code = cMirror.getValue();
-
   //  Set content of prettyWindow to the pretty printed code
   await parse_and_pretty_print(source_code);
 
@@ -49,18 +47,16 @@ async function initialize_parser() {
 // Pretty print input sourcecode
 async function parse_and_pretty_print(source_code) {
   let parsers = await initialize_parser();
-  let tree_L0 = parsers[chosenLevel.value].parse(source_code);
-  let program = BuildSystem(tree_L0);
+  let AST = parsers[chosenLevel.value].parse(source_code);
+  let program = BuildSystem(AST);
   var VM = get_virtual_machine(program);
-  // parse_byte_code from pretty.js pretty prints the byte_code
-  //var pretty_printer = get_pretty_printer(program);
-  static_draw(VM);
+  draw(VM);
 }
 
 async function parse_and_read(source_code) {
   var parsers = await initialize_parser();
-  let tree_L0 = parsers[chosenLevel.value].parse(source_code);
-  let program = BuildSystem(tree_L0);
+  let AST = parsers[chosenLevel.value].parse(source_code);
+  let program = BuildSystem(AST);
   return program;
 }
 
@@ -80,41 +76,28 @@ async function run_all() {
 }
 
 async function debug() {
-  var container = document.getElementById("lx-container");
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
-  }
-
   outputSpan.innerHTML = '';
-  for (let i = 0; i <= codeMirrorEditor.lastLine(); i++) {
-    codeMirrorEditor.removeLineClass(i, 'background', 'highlight-line');
-  }
-  
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
-  //codeMirrorEditor.addLineClass(program.ECS.nodes[0].startPosition.row, 'background', 'highlight-line');
   
   if(program.error_msg !== null){
     console.log(program.error_msg);
     return;
   }
-  color(program, 0)
-  var VM = get_virtual_machine(program);
-  show_results_in_html(VM.state);
-
   document.querySelector('#debugbutton').disabled = true;
   document.querySelector('#exitdebug').disabled = false;
   document.querySelector('#stepbutton').disabled = false;
-  static_draw(VM);
+
+  var VM = get_virtual_machine(program);
+  draw(VM)
 }
 
 async function exit_debug() {
   reset_buttons_after_debug();
-  static_draw(VM);
   var source_code = await codeMirrorEditor.getValue();
   var program = await parse_and_read(source_code);
   var VM = get_virtual_machine(program);
-  show_results_in_html(VM.state);
+  draw(VM)
 }
 
 function execute_all() {
@@ -125,43 +108,13 @@ function execute_all() {
   }
 }
 
-function static_draw(VM) {
-  for (key in VM.program.static_draws) {
-    VM.program.static_draws[key].draw(VM);
-  }
-}
-
 function draw(VM){
-  var pc = VM.state.registers['$!']-1;
-  for (key in VM.program.step_draws) {
-    var draw_object = VM.program.step_draws[key];
-    var draw_parameters = VM.program.ECS.drawparams[pc][key];
-    if(draw_object !== null && draw_object !== undefined){
-      draw_object.draw(draw_parameters,VM)
-    }
-  }
-}
-
-function clear_highlights(){
-  const marks = codeMirrorEditor.getAllMarks();
-  marks.forEach(mark => {
-    mark.clear();
-  });
-}
-
-function color(program,pc){
-  clear_highlights()
-  const start = {line: program.ECS.nodes[pc].startPosition.row , ch: program.ECS.nodes[pc].startPosition.column}
-  const end = {line: program.ECS.nodes[pc].endPosition.row , ch: program.ECS.nodes[pc].endPosition.column}
-  codeMirrorEditor.markText(start, end, { className: 'highlight-line' });
-
+  VM.program.drawer.draw(VM);
 }
 
 function execute_step(debugging = true) {
   var VM = get_virtual_machine();
   VM.execute_bytecode();
-  static_draw(VM);
-  show_results_in_html(VM.state);
 
   if (VM.state.registers['$!'] >= VM.program.instructions.length) {
     console.log("EOF");
@@ -170,55 +123,11 @@ function execute_step(debugging = true) {
     return -1;
   }
   if(debugging){
-    color(VM.program, VM.state.registers['$!'])
     draw(VM)
   }
-
 }
 
-function show_results_in_html(state) {
-  registerDiv.innerHTML = "Registers: " + JSON.stringify(state.registers, undefined, 2).replaceAll("\"", "");
-  var rows = ""
-  var rowText = "";
-  for (var i = 0; i < state.memory.length; i += 16) {
-    rowText = "";
-    // Print the actual memory
-    var row = `<td>${i.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})}--</td>`
-    for (var j = i; j < state.memory.length && j < i + 16; j += 1) {
-        row += `<td class='show-memory-id-on-hover' memory-id='${state.memory_id[j]}'>${state.memory[j]}</td>`
-    }
-    // Print the memory string representation to the right of each row
-    for (var k = i; k < state.memory.length && k < i + 16; k += 1) {
-      if (state.memory[k] === '00') {
-        rowText += " ";
-      } else {
-        rowText += `${String.fromCharCode(parseInt(state.memory[k],16))}`
-      }
-    }
-    row += `<td>|   ${rowText}</td>`
-    rows += `<tr>${row}</tr>`
-  }
-  memoryDiv.innerHTML = `<table id=memory-table>${rows}</table>`
 
-  const tooltips = document.querySelectorAll(".show-memory-id-on-hover:not([memory-id=''])");
-
-  tooltips.forEach(tooltip => {
-    tooltip.addEventListener('mouseover', () => {
-      const tooltipText = tooltip.getAttribute('memory-id');
-      tooltips.forEach(el => {
-        if (el.getAttribute('memory-id') === tooltipText) {
-          el.classList.add('highlight-memory-id');
-        }
-      });
-    });
-
-    tooltip.addEventListener('mouseout', () => {
-      tooltips.forEach(el => {
-        el.classList.remove('highlight-memory-id');
-      });
-    });
-  });
-}
 
 function get_virtual_machine(program) {
   if (_VirtualMachine == null) {
@@ -261,4 +170,12 @@ function getKeyByValueIfValueExists(object, value) {
   }else{
     return [false, null];
   }
+}
+
+
+function clear_highlights(){
+  const marks = codeMirrorEditor.getAllMarks();
+  marks.forEach(mark => {
+    mark.clear();
+  });
 }

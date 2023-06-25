@@ -112,9 +112,13 @@ class L3Emitter extends L2Emitter{
     }
 }
 
-const L3Draw = {
+class L3Draw extends L2Draw {
+    constructor(){
+        super();
+    }
 
-    draw(params, vm) {
+    draw(vm) {
+        super.draw(vm);
         return;
-    },
+    }
 }
