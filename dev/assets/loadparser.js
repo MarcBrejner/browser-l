@@ -14,12 +14,15 @@ function decode(encoded) {
 var encoded_levels = new Array();
 class L0Visitor {
     visit(node) {
-        if (node.type === "statement") this._emitter.node_stack.push(node);
+        //if (node.type === "statement") this._emitter.node_stack.push(node);
+        this._emitter.node_stack.push(node);
         if (this[node.type] === undefined) {
             var r = this.default(node);
+            this._emitter.node_stack.pop();
             return r;
         } else {
             var r = this[node.type](node);
+            this._emitter.node_stack.pop();
             return r;
         }
     }
@@ -121,14 +124,6 @@ class L0Emitter {
     _const = {};
     _labels = {};
     _statements = [];
-    _ECS = new ECS();
-    _static_draws = {};
-    _step_draw = {};
-    _step_draw_state = {};
-
-    constructor() {
-        this._static_draws['L0'] = new L0Draw();
-    }
 
     expression(reader){
         return new Expression(CONTENT_TYPES.EXPRESSION, reader);
@@ -233,7 +228,7 @@ class L0Draw {
         this.program = vm.program;
         this.state = vm.state;
         var pretty_window = document.getElementById("prettyPretty");
-        
+
         if(this.program.error_msg !== null){
           pretty_window.innerHTML = this.program.error_msg;
           return;
@@ -436,12 +431,6 @@ class L2Emitter extends L1Emitter{
     frame_pointer = 112;
     in_scope = false;
 
-    constructor() {
-        super();
-        this._step_draw['L2'] = L2Draw;
-        this._step_draw_state['L2']= null;
-    }
-
     variable(var_name, var_size, expression) {
         if (this.in_scope) {
             this.create_temp_var(var_name, var_size, expression);
@@ -490,14 +479,22 @@ class L2Emitter extends L1Emitter{
         this.Stack.push(this.frame_pointer);
     }
 
-    end_scope() {
+    end_scope(update_final_state = true) {
         var offset = this.Stack.pop() - this.frame_pointer;
         this.head = this.head.next;
         this.frame_pointer += offset;
         if (this.head === null) {
             this.in_scope = false;
         }
-        this._drawer.variable_states[this._statements.length-1] = [structuredClone(this.variables), structuredClone(this.head)];
+
+        //Because exiting the scope is not part of the bytecode instruction, the new variables are only reflected when the next instruction is drawn.
+        //To fix this, the state of the previous instruction, which is the final instruction before the scope ends, is updated to reflect this change.
+        if(update_final_state){
+            this._drawer.variable_states[this._statements.length - 1] = [structuredClone(this.variables), structuredClone(this.head)];
+        }else{
+            this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), structuredClone(this.head)];
+        }
+        
     }
 
     variable_declaration(var_name, var_size, expression) {
@@ -508,6 +505,7 @@ class L2Emitter extends L1Emitter{
         for (var i = 0; i < get_variable_bytesize(var_size); i++) {
             memory_allocation += "0";
         }
+
         this._data[p_var] = memory_allocation;
         this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), null];
         this.assignment(
@@ -583,7 +581,9 @@ class L2Draw extends L1Draw{
             stack_head = stack_head.next;
         }
         for (var i = temp_var_stack.length-1; i >= 0; i--) {
-            this.create_wrapper(temp_var_stack[i].variables, vm, wrapperContainer)
+            if(Object.keys(temp_var_stack[i].variables).length > 0){
+                this.create_wrapper(temp_var_stack[i].variables, vm, wrapperContainer)
+            }
         }
         
         container.appendChild(wrapperContainer)
@@ -610,7 +610,12 @@ class L2Draw extends L1Draw{
             var row = document.createElement("tr");
 
             var nameCell = document.createElement("td");
-            nameCell.textContent = name;
+            var newName = name;
+            if(!isNaN(name)){
+                var offset = vm.memorySize-parseInt(name);
+                newName = "$fp - "+offset;
+            }
+            nameCell.textContent = newName;
             nameCell.style.borderRight = "2px solid black";
             nameCell.style.paddingRight = "10px"
             row.appendChild(nameCell);
@@ -621,7 +626,7 @@ class L2Draw extends L1Draw{
             var memory_access;
             //Check if scoped
             if(Array.isArray(value)){
-                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, 112-value[0]), get_datatype(value[1]));
+                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, vm.memorySize-value[0]), get_datatype(value[1]));
             }else{
                 memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, name), get_datatype(value));
             }
@@ -677,29 +682,30 @@ class L3Visitor extends L2Visitor {
         var right_child = get_right_child(node);
 
         //Handle left side
-        this._emitter.node_stack.push(left_child);
         var left_expression = this.visit(left_child);
         
+
         var is_nested_expression = right_child.type === 'expression';
+        this._emitter.node_stack.push(left_child);
         left_expression = this._emitter.left_expression(left_expression, is_nested_expression);
+        this._emitter.node_stack.pop();
 
         //Handle right side
         var right_expression = this.visit(right_child);
         if(this.is_binary_expression(right_child)){
+        //    this._emitter.node_stack.push(right_child);
             this._emitter.node_stack.push(right_child);
             this._emitter.save_to_register_x(right_expression)
+            this._emitter.node_stack.pop();
         }
 
         //Sum both sides
-        this._emitter.node_stack.push(node)
+        //this._emitter.node_stack.push(node)
         var operator = get_operator(node).text;
         var full_expression = this._emitter.full_expression(left_expression, operator, right_expression);
-        this._emitter.end_scope();
+        this._emitter.end_scope(false);
 
         var result = this._emitter.result(full_expression);
-        if(!this._emitter.in_scope){
-            this.clean_stack()
-        }
         return result;
     }
 
@@ -716,19 +722,9 @@ class L3Visitor extends L2Visitor {
         return node.childCount >= 3;
     }
 
-    clean_stack(){
-        while(this._emitter.node_stack.peek().type !== 'statement'){
-            this._emitter.node_stack.pop()
-        }
-    }
 }
 
 class L3Emitter extends L2Emitter{
-    constructor() {
-        super();
-        this._step_draw['L3'] = L3Draw;
-        this._step_draw_state['L3'] = null;
-    }
 
     left_expression (left_expression, is_nested_expression ){
         if (is_nested_expression) {

@@ -22,29 +22,30 @@ class L3Visitor extends L2Visitor {
         var right_child = get_right_child(node);
 
         //Handle left side
-        this._emitter.node_stack.push(left_child);
         var left_expression = this.visit(left_child);
         
+
         var is_nested_expression = right_child.type === 'expression';
+        this._emitter.node_stack.push(left_child);
         left_expression = this._emitter.left_expression(left_expression, is_nested_expression);
+        this._emitter.node_stack.pop();
 
         //Handle right side
         var right_expression = this.visit(right_child);
         if(this.is_binary_expression(right_child)){
+        //    this._emitter.node_stack.push(right_child);
             this._emitter.node_stack.push(right_child);
             this._emitter.save_to_register_x(right_expression)
+            this._emitter.node_stack.pop();
         }
 
         //Sum both sides
-        this._emitter.node_stack.push(node)
+        //this._emitter.node_stack.push(node)
         var operator = get_operator(node).text;
         var full_expression = this._emitter.full_expression(left_expression, operator, right_expression);
-        this._emitter.end_scope();
+        this._emitter.end_scope(false);
 
         var result = this._emitter.result(full_expression);
-        if(!this._emitter.in_scope){
-            this.clean_stack()
-        }
         return result;
     }
 
@@ -61,19 +62,9 @@ class L3Visitor extends L2Visitor {
         return node.childCount >= 3;
     }
 
-    clean_stack(){
-        while(this._emitter.node_stack.peek().type !== 'statement'){
-            this._emitter.node_stack.pop()
-        }
-    }
 }
 
 class L3Emitter extends L2Emitter{
-    constructor() {
-        super();
-        this._step_draw['L3'] = L3Draw;
-        this._step_draw_state['L3'] = null;
-    }
 
     left_expression (left_expression, is_nested_expression ){
         if (is_nested_expression) {

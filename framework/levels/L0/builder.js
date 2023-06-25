@@ -1,11 +1,14 @@
 class L0Visitor {
     visit(node) {
-        if (node.type === "statement") this._emitter.node_stack.push(node);
+        //if (node.type === "statement") this._emitter.node_stack.push(node);
+        this._emitter.node_stack.push(node);
         if (this[node.type] === undefined) {
             var r = this.default(node);
+            this._emitter.node_stack.pop();
             return r;
         } else {
             var r = this[node.type](node);
+            this._emitter.node_stack.pop();
             return r;
         }
     }
@@ -107,14 +110,6 @@ class L0Emitter {
     _const = {};
     _labels = {};
     _statements = [];
-    _ECS = new ECS();
-    _static_draws = {};
-    _step_draw = {};
-    _step_draw_state = {};
-
-    constructor() {
-        this._static_draws['L0'] = new L0Draw();
-    }
 
     expression(reader){
         return new Expression(CONTENT_TYPES.EXPRESSION, reader);
@@ -219,7 +214,7 @@ class L0Draw {
         this.program = vm.program;
         this.state = vm.state;
         var pretty_window = document.getElementById("prettyPretty");
-        
+
         if(this.program.error_msg !== null){
           pretty_window.innerHTML = this.program.error_msg;
           return;

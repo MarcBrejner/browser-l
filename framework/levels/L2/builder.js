@@ -26,12 +26,6 @@ class L2Emitter extends L1Emitter{
     frame_pointer = 112;
     in_scope = false;
 
-    constructor() {
-        super();
-        this._step_draw['L2'] = L2Draw;
-        this._step_draw_state['L2']= null;
-    }
-
     variable(var_name, var_size, expression) {
         if (this.in_scope) {
             this.create_temp_var(var_name, var_size, expression);
@@ -80,14 +74,22 @@ class L2Emitter extends L1Emitter{
         this.Stack.push(this.frame_pointer);
     }
 
-    end_scope() {
+    end_scope(update_final_state = true) {
         var offset = this.Stack.pop() - this.frame_pointer;
         this.head = this.head.next;
         this.frame_pointer += offset;
         if (this.head === null) {
             this.in_scope = false;
         }
-        this._drawer.variable_states[this._statements.length-1] = [structuredClone(this.variables), structuredClone(this.head)];
+
+        //Because exiting the scope is not part of the bytecode instruction, the new variables are only reflected when the next instruction is drawn.
+        //To fix this, the state of the previous instruction, which is the final instruction before the scope ends, is updated to reflect this change.
+        if(update_final_state){
+            this._drawer.variable_states[this._statements.length - 1] = [structuredClone(this.variables), structuredClone(this.head)];
+        }else{
+            this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), structuredClone(this.head)];
+        }
+        
     }
 
     variable_declaration(var_name, var_size, expression) {
@@ -98,6 +100,7 @@ class L2Emitter extends L1Emitter{
         for (var i = 0; i < get_variable_bytesize(var_size); i++) {
             memory_allocation += "0";
         }
+
         this._data[p_var] = memory_allocation;
         this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), null];
         this.assignment(
@@ -173,7 +176,9 @@ class L2Draw extends L1Draw{
             stack_head = stack_head.next;
         }
         for (var i = temp_var_stack.length-1; i >= 0; i--) {
-            this.create_wrapper(temp_var_stack[i].variables, vm, wrapperContainer)
+            if(Object.keys(temp_var_stack[i].variables).length > 0){
+                this.create_wrapper(temp_var_stack[i].variables, vm, wrapperContainer)
+            }
         }
         
         container.appendChild(wrapperContainer)
@@ -200,7 +205,12 @@ class L2Draw extends L1Draw{
             var row = document.createElement("tr");
 
             var nameCell = document.createElement("td");
-            nameCell.textContent = name;
+            var newName = name;
+            if(!isNaN(name)){
+                var offset = vm.memorySize-parseInt(name);
+                newName = "$fp - "+offset;
+            }
+            nameCell.textContent = newName;
             nameCell.style.borderRight = "2px solid black";
             nameCell.style.paddingRight = "10px"
             row.appendChild(nameCell);
@@ -211,7 +221,7 @@ class L2Draw extends L1Draw{
             var memory_access;
             //Check if scoped
             if(Array.isArray(value)){
-                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, 112-value[0]), get_datatype(value[1]));
+                memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.NUMBER, vm.memorySize-value[0]), get_datatype(value[1]));
             }else{
                 memory_access = new Content(CONTENT_TYPES.MEMORY, new Content(CONTENT_TYPES.DATA, name), get_datatype(value));
             }
