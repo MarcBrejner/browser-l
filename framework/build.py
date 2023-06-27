@@ -46,7 +46,7 @@ var encoded_levels = new Array();
     #define directory paths
     for filename in os.listdir('levels'):
         level = filename.replace('L', '')
-        with open("levels/{}/builder.js".format(filename),"r") as emit_function:
+        with open("levels/{}/compiler-module.js".format(filename),"r") as emit_function:
             code+= "{}\n".format(emit_function.read())
         compile_L_level(level)
         with open("./temp/tree-sitter-l{}.wasm".format(level),"rb") as wasm_file:

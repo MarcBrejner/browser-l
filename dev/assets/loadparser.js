@@ -427,8 +427,8 @@ class L2Visitor extends L1Visitor {
 class L2Emitter extends L1Emitter{
     variables = {}
     head = null
-    stack_pointer = 112;
-    frame_pointer = 112;
+    stack_pointer = 128;
+    frame_pointer = 128;
     in_scope = false;
 
     variable(var_name, var_size, expression) {
