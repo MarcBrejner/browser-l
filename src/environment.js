@@ -48,7 +48,7 @@ async function initialize_parser() {
 async function parse_and_pretty_print(source_code) {
   let parsers = await initialize_parser();
   let AST = parsers[chosenLevel.value].parse(source_code);
-  let program = BuildSystem(AST);
+  let program = Compile(AST);
   var VM = get_virtual_machine(program);
   draw(VM);
 }
@@ -56,7 +56,7 @@ async function parse_and_pretty_print(source_code) {
 async function parse_and_read(source_code) {
   var parsers = await initialize_parser();
   let AST = parsers[chosenLevel.value].parse(source_code);
-  let program = BuildSystem(AST);
+  let program = Compile(AST);
   return program;
 }
 

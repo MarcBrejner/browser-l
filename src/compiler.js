@@ -1,4 +1,4 @@
-function BuildSystem(tree) {
+function Compile(tree) {
     var level = parseInt(chosenLevel.value);
     var emitter = get_emitter(level);
     var visitor = get_visitor(level);
