@@ -153,6 +153,7 @@ class L2Draw extends L1Draw{
 
     draw(vm) {
         super.draw(vm);
+
         var container = document.getElementById("lx-container");
 
         var existingContainer = document.getElementById("table-wrapper-container");
@@ -160,9 +161,8 @@ class L2Draw extends L1Draw{
           container.removeChild(existingContainer);
         }
 
-        
         var state = this.find_state(this.variable_states, vm.state.registers['$!']-1)
-        if(state === null){
+        if(this.is_empty_state(state)){
             return;
         }
         var wrapperContainer = document.createElement("div");
@@ -171,7 +171,9 @@ class L2Draw extends L1Draw{
         
 
         var variables = state[0]
-        this.create_wrapper(variables, vm, wrapperContainer)
+        if (Object.keys(variables).length !== 0) {
+            this.create_wrapper(variables, vm, wrapperContainer)
+        }
         var stack_head = state[1];
 
         // save the stack in an array in order to print it from the bottom of the stack
@@ -255,5 +257,32 @@ class L2Draw extends L1Draw{
         return result;
       }
       
+    is_empty_state(state) {
+        if (state == null) {
+            return true;
+        }
 
+        if (Object.keys(state[0]).length !== 0) {
+            return false;
+        }
+
+        if (this.is_empty_stack(state[1])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    is_empty_stack(stack) {
+        var current = stack;
+        var is_empty = true;
+        while (current != null) {
+            if (Object.keys(current.variables).length !== 0) {
+                is_empty = false;
+                break;
+            }   
+            current = current.next;
+        }
+        return is_empty;
+    }
 }
