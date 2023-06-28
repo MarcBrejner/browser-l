@@ -334,10 +334,10 @@ class L0Draw {
     
       print_memory(content) {
         if (content.id.type === CONTENT_TYPES.BIN_EXPRESSION) {
-          return `[${content.id.reader1.get_text()} ${content.id.opr} ${content.id.reader2.get_text()},${content.datatype.type}${content.datatype.size}]`
+          return `<span id=memory>[${content.id.reader1.get_text()} ${content.id.opr} ${content.id.reader2.get_text()},${content.datatype.type}${content.datatype.size}]</span>`
         }
         else {
-          return `[${content.get_text()},${content.datatype.type}${content.datatype.size}]`
+          return `<span id=memory>[${content.get_text()},${content.datatype.type}${content.datatype.size}]</span>`
         }
       }
     
