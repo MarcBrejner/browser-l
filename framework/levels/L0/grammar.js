@@ -42,14 +42,15 @@ module.exports = grammar({
 			),
 
 		assignment: $ =>
-			seq($.writer, choice(':=',"?="), $.expression),
+			seq($.writer, choice(':=',"?="), optional('!'), $.expression),
 
 		expression: $ =>
 			choice(
 				seq($.reader, $.operator, $.reader),
-				seq($.operator, $.reader),
+				seq('-', $.reader),
 				$.reader
 			),
+			
 				
 		reader: $ =>
 			choice(

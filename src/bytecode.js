@@ -46,14 +46,14 @@ class ByteCode {
       case OP.SYSCALL:
         return handler.syscall();
       case OP.ASSIGN_BIN:
-        var [conditional, w, reader1, opr, reader2] = this.operands;
-        return handler.assign_binary(conditional, w, reader1, opr, reader2);
+        var [conditional, has_not, w, reader1, opr, reader2] = this.operands;
+        return handler.assign_binary(conditional, has_not, w, reader1, opr, reader2);
       case OP.ASSIGN_UN:
-        var [conditional, w, opr, r] = this.operands;
-        return handler.assign_unary(conditional, w, opr, r);
+        var [conditional, has_not, w, opr, r] = this.operands;
+        return handler.assign_unary(conditional, has_not, w, opr, r);
       case OP.ASSIGN:
-        var [conditional, w, r] = this.operands;
-        return handler.assign(conditional, w, r);
+        var [conditional, has_not, w, r] = this.operands;
+        return handler.assign(conditional, has_not, w, r);
       default:
         throw new Error("Unknown Opcode");
     }

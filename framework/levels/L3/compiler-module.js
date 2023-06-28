@@ -80,7 +80,7 @@ class L3Emitter extends L2Emitter{
     }
 
     save_to_register_x(expression){
-        this.assignment(false, this.register('$x'), expression, L3Draw,[]);
+        this.assignment(this.register('$x'), expression);
     }
 
     full_expression(left_expression, operator, right_expression) {
