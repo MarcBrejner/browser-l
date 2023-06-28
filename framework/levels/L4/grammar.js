@@ -79,29 +79,33 @@ module.exports = grammar({
 			seq($.variable_name, ":", $.type, "=", optional('!'), $.expression),
 
 		expression: $ =>
-            choice(
+			choice(
+				prec.left(2, seq('(', $.expression, ')', $.logical_operator, '(', $.expression, ')')),
 				prec.left(2, seq('(', $.expression, ')', '*', '(', $.expression, ')')),
 				prec.left(2, seq('(', $.expression, ')', '/', '(', $.expression, ')')),
 				prec.left(1, seq('(', $.expression, ')', '+', '(', $.expression, ')')),
 				prec.left(1, seq('(', $.expression, ')', '-', '(', $.expression, ')')),
 
+				prec.left(2, seq('(', $.expression, ')', $.logical_operator, $.reader)),
 				prec.left(2, seq('(', $.expression, ')', '*', $.reader)),
 				prec.left(2, seq('(', $.expression, ')', '/', $.reader)),
 				prec.left(1, seq('(', $.expression, ')', '+', $.reader)),
 				prec.left(1, seq('(', $.expression, ')', '-', $.reader)),
 
+				prec.left(2, seq($.reader, $.logical_operator, '(', $.expression, ')')),
 				prec.left(2, seq($.reader, '*', '(', $.expression, ')')),
 				prec.left(2, seq($.reader, '/', '(', $.expression, ')')),
 				prec.left(1, seq($.reader, '+', '(', $.expression, ')')),
 				prec.left(1, seq($.reader, '-', '(', $.expression, ')')),
 
+				prec.left(2, seq($.reader, $.logical_operator, $.reader)),
 				prec.left(2, seq($.reader, '*', $.reader)),
 				prec.left(2, seq($.reader, '/', $.reader)),
 				prec.left(1, seq($.reader, '+', $.reader)),
 				prec.left(1, seq($.reader, '-', $.reader)),
-                seq('-', $.reader),
-                $.reader,
-            ),
+				seq('-', $.reader),
+				$.reader,
+			),
 				
 		reader: $ =>
 			choice(
@@ -149,7 +153,7 @@ module.exports = grammar({
 
 		operator: () => /[+-/\*]/,
 
-		logical_operator: () => /[|&><=]+/,
+		logical_operator: () => /\||&|<|>|>=|<=|==/,
 
 		number: () => /[0-9]+/,
 
