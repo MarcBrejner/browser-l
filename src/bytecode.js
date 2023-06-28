@@ -85,20 +85,18 @@ class Expression {
 }
 
 class Program {
-  constructor(instructions, ecs, data, constants, labels, error_msg=null) {
+  constructor(instructions, data, constants, labels,  drawer, error_msg=null) {
     this.instructions = instructions;
-    this.ECS = ecs;
     this.data = data;
     this.constants = constants;
     this.labels = labels;
-    this.error_msg = error_msg
+    this.drawer = drawer;
+    this.error_msg = error_msg;
   }
 }
 
 class ECS {
   constructor() {
       this.nodes = new Array();
-      this.draws = new Array();
-      this.drawparams = new Array();
   }
 }

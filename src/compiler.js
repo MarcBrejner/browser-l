@@ -1,11 +1,32 @@
-function BuildSystem(tree) {
-    var builder = get_builder(parseInt(chosenLevel.value));
-    //console.log(tree.rootNode.toString());
-    var error_msg = find_error(tree.rootNode, new Array())[0];
-    //builder.handle(tree.rootNode);
-    builder.visit(tree.rootNode);
-    return new Program(builder._statements, builder._ECS, builder._data, builder._const, builder._labels, error_msg);
+function Compile(tree) {
+    var level = parseInt(chosenLevel.value);
+    var emitter = get_emitter(level);
+    var visitor = get_visitor(level);
+    var drawer = get_drawer(level);
+    visitor._emitter = emitter;
+    visitor._emitter._drawer = drawer;
     
+    var error_msg = find_error(tree.rootNode, new Array())[0];
+    if(error_msg !== undefined){
+      return new Program(
+        [],
+        [],
+        [],
+        [],
+        visitor._emitter._drawer,
+        error_msg);
+    }
+    console.log(tree.rootNode.toString())
+    
+    visitor.visit(tree.rootNode);
+    return new Program(
+      visitor._emitter._statements, 
+      visitor._emitter._data, 
+      visitor._emitter._const, 
+      visitor._emitter._labels, 
+      visitor._emitter._drawer,
+      error_msg
+    );
 }
 
 function get_datatype(datatype_string){

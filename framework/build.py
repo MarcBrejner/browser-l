@@ -46,7 +46,7 @@ var encoded_levels = new Array();
     #define directory paths
     for filename in os.listdir('levels'):
         level = filename.replace('L', '')
-        with open("levels/{}/builder.js".format(filename),"r") as emit_function:
+        with open("levels/{}/compiler-module.js".format(filename),"r") as emit_function:
             code+= "{}\n".format(emit_function.read())
         compile_L_level(level)
         with open("./temp/tree-sitter-l{}.wasm".format(level),"rb") as wasm_file:
@@ -62,14 +62,33 @@ var encoded_levels = new Array();
 }
 document.getElementById('levels').value = 3;\n\n"""
 
-    code += """function get_builder(level) {
+    code += """function get_visitor(level) {
   switch (level) {"""
     for filename in os.listdir('levels'):
         level = filename.replace('L', '')
         code += """
         case {}:
-            return new {}Builder();""".format(level, filename)
+            return new {}Visitor();""".format(level, filename)
+    code += "\n}\n}\n"
+    
+    code += """function get_drawer(level) {
+  switch (level) {"""
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        code += """
+        case {}:
+            return new {}Draw();""".format(level, filename)
+    code += "\n}\n}\n"
+    
+    code += """function get_emitter(level) {
+  switch (level) {"""
+    for filename in os.listdir('levels'):
+        level = filename.replace('L', '')
+        code += """
+        case {}:
+            return new {}Emitter();""".format(level, filename)
     code += "\n}\n}"
+
 
     
 
