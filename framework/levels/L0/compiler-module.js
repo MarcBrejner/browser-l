@@ -148,7 +148,7 @@ class L0Emitter {
         return new Content(CONTENT_TYPES.DATA, data_id);
     }
 
-    register(register_id) {;
+    register(register_id) {
         return new Content(CONTENT_TYPES.REGISTER, register_id);
     }
 
@@ -301,6 +301,8 @@ class L0Draw {
       print_content(content){
         if (content.type === CONTENT_TYPES.CONSTANT){
           return `${this.wrap_const(`${content.id} (${this.program.constants[content.id]})`)}`
+        } else if (content.type == CONTENT_TYPES.LABEL) {
+          return this.wrap_label(content.id);
         }else if(content.type == CONTENT_TYPES.MEMORY){
           return this.print_memory(content);
         }else{
@@ -321,6 +323,14 @@ class L0Draw {
         var [exists, label_key] = getKeyByValueIfValueExists(this.program.labels, i);
         var result = exists ? `${this.wrap_label(label_key)}` : "";
         return result;
+      }
+
+      print_labels_after_instructions(i) {
+        for (key,value in this.program.labels) {
+          if (value > i) {
+			return this.print_label(value);
+		  }
+        }
       }
 
       
