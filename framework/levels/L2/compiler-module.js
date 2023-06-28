@@ -8,8 +8,14 @@ class L2Visitor extends L1Visitor {
     variable(node)  {
         var var_name = node.child(0).text;
         var var_size = node.child(2).text;
-        var expression = this.visit(node.child(4));
-        return this._emitter.variable(var_name, var_size, expression);
+        var has_not = node.child(4).text === '!' ? true : false;
+        var expression = null;
+        if (has_not) {
+            var expression = this.visit(node.child(5));
+          } else {
+            var expression = this.visit(node.child(4));
+          }
+        return this._emitter.variable(var_name, var_size, expression, has_not);
     }
 
     variable_name(node) {
@@ -26,11 +32,11 @@ class L2Emitter extends L1Emitter{
     frame_pointer = 128;
     in_scope = false;
 
-    variable(var_name, var_size, expression) {
+    variable(var_name, var_size, expression, has_not = false) {
         if (this.in_scope) {
-            this.create_temp_var(var_name, var_size, expression);
+            this.create_temp_var(var_name, var_size, expression, has_not);
         } else {
-            this.variable_declaration(var_name, var_size, expression)
+            this.variable_declaration(var_name, var_size, expression, has_not)
         }
     }
 
@@ -43,13 +49,13 @@ class L2Emitter extends L1Emitter{
         }
     }
 
-    create_temp_var(var_name, var_size, expression) {
+    create_temp_var(var_name, var_size, expression, has_not) {
         var variable_size = get_variable_bytesize(var_size);
         this.frame_pointer -= variable_size;
         this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
         var writer = this.read_temp_var(var_name);
         this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), structuredClone(this.head)];
-        this.assignment(false, writer, expression);
+        this.assignment(writer, expression, false, has_not);
     }
 
     read_temp_var(var_name) {
@@ -92,7 +98,7 @@ class L2Emitter extends L1Emitter{
         
     }
 
-    variable_declaration(var_name, var_size, expression) {
+    variable_declaration(var_name, var_size, expression, has_not) {
         var p_var = '&_' + var_name;
         this.variables[p_var] = var_size;
         var memory_allocation = "";
@@ -104,9 +110,8 @@ class L2Emitter extends L1Emitter{
         this._data[p_var] = memory_allocation;
         this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), null];
         this.assignment(
-            false, 
             this.memory(this.data(p_var), get_datatype(var_size)), 
-            expression);
+            expression, false, has_not);
     }
 
     Stack = {
