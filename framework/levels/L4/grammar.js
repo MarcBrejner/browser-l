@@ -56,7 +56,7 @@ module.exports = grammar({
 
 		if: $ => 
 			seq(
-				'if', $.expression, $.scope, optional($.else)
+				'if', '(', $.expression, ')', $.scope, optional($.else)
 			),
 
 		else: $ =>
