@@ -79,24 +79,33 @@ class VirtualMachine {
         this.state.registers['$!']++;
     }
 
-    assign_binary(cond, writer, reader1, opr, reader2) {
+    assign_binary(cond, not, writer, reader1, opr, reader2) {
         if (cond && this.check_condition())
         return;
         let RHS = this.evaluate_binary(reader1, opr, reader2);
+        if (not) {
+            RHS = this.handle_not(RHS);
+        }
         this.write(writer, RHS);
     }
 
-    assign_unary(cond, writer, opr, reader) {
+    assign_unary(cond, not, writer, opr, reader) {
         if (cond && this.check_condition())
         return;
         let RHS = this.evaluate_unary(opr, reader);
+        if (not) {
+            RHS = this.handle_not(RHS);
+        }
         this.write(writer, RHS);
     }
 
-    assign(cond, writer, reader) {
+    assign(cond, not, writer, reader) {
         if (cond && this.check_condition())
         return;
         let RHS = this.read(reader);
+        if (not) {
+            RHS = this.handle_not(RHS);
+        }
         this.write(writer, RHS);
     }
 
@@ -204,4 +213,11 @@ class VirtualMachine {
                 break;
         }
     }
+    
+    handle_not(RHS) {
+        if (RHS == 0) {
+            return 1;
+        } 
+        return 0;
+    } 
 }

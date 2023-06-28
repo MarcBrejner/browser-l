@@ -28,11 +28,11 @@ class L0Visitor {
     expression(node) {  
         switch (node.childCount) {
             case 1:
-                var reader = this.visit(node.child(0));
+                var reader = this.visit(get_left_child(node));
                 return this._emitter.expression(reader)
             case 2:
-                var oper = node.child(0).text;
-                var reader =  this.visit(node.child(1));
+                var oper = get_operator(node).text;
+                var reader =  this.visit(get_left_child(node));
                 return this._emitter.unary_expression(oper, reader)
             case 3:
                 var left_reader = this.visit(get_left_child(node));
@@ -74,9 +74,15 @@ class L0Visitor {
 
     assignment(node) {
         var is_conditional = node.child(1).text === "?=" ? true : false;
+        var has_not = node.child(2).text === '!' ? true : false;
         var writer = this.visit(node.child(0));
-        var expression = this.visit(node.child(2));
-        this._emitter.assignment(is_conditional, writer, expression);
+        var expression = null
+        if (has_not) {
+          var expression = this.visit(node.child(3));
+        } else {
+          var expression = this.visit(node.child(2));
+        }
+        this._emitter.assignment(writer, expression, is_conditional, has_not);
     }
 
     constant_declaration(node) {
@@ -121,8 +127,8 @@ class L0Emitter {
 
     binary_expression(left_reader, oper, right_reader){
         if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
-            this.assignment(false, this.register('$x'), left_reader);
-            this.assignment(false, this.register('$y'), right_reader);
+            this.assignment(this.register('$x'), left_reader);
+            this.assignment(this.register('$y'), right_reader);
             left_reader = this.register('$x');
             right_reader = this.register('$y');
         }
@@ -171,8 +177,8 @@ class L0Emitter {
     }
 
 
-    assignment(is_conditional, writer, expression) {
-        this.push_statement(new ByteCode(get_opcode(expression), [is_conditional, writer].concat(convert_content_to_array(expression))));
+    assignment(writer, expression, is_conditional=false, has_not=false) {
+        this.push_statement(new ByteCode(get_opcode(expression), [is_conditional, has_not, writer].concat(convert_content_to_array(expression))));
     }
 
     push_statement(byte_code) {
@@ -241,19 +247,31 @@ class L0Draw {
     
       syscall() { return `<span style='color: red'>syscall;</span>\n` }
     
-      assign_binary(conditional, writer, reader1, opr, reader2) {
+      assign_binary(conditional, has_not, writer, reader1, opr, reader2) {
         var cond = conditional ? '?=' : ':=';
-        return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_content(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_content(reader2))}${this.wrap_semicolon()}\n`
+        var not = "";
+        if (has_not) {
+          not = this.wrap_not();
+        }
+        return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${not} ${this.wrap_assign(this.print_content(reader1))} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_content(reader2))}${this.wrap_semicolon()}\n`
       }
     
-      assign_unary(conditional, writer, opr, reader) {
+      assign_unary(conditional, has_not, writer, opr, reader) {
         var cond = conditional ? '?=' : ':=';
-        return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_content(reader))}${this.wrap_semicolon()}\n`
+        var not = "";
+        if (has_not) {
+          not = this.wrap_not();
+        }
+        return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${not} ${this.wrap_opr(opr)} ${this.wrap_assign(this.print_content(reader))}${this.wrap_semicolon()}\n`
       }
     
-      assign(conditional, writer, reader) {
+      assign(conditional, has_not, writer, reader) {
         var cond = conditional ? '?=' : ':=';
-        return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${this.wrap_assign(this.print_content(reader))}${this.wrap_semicolon()}\n`
+        var not = "";
+        if (has_not) {
+          not = this.wrap_not();
+        }
+        return `${this.wrap_assign(this.print_content(writer))} ${this.wrap_opr(cond)} ${not} ${this.wrap_assign(this.print_content(reader))}${this.wrap_semicolon()}\n`
       }
     
       wrap_assign(assign) {
@@ -274,6 +292,10 @@ class L0Draw {
     
       wrap_label(label) {
         return `<span id=label>${label}</span>`;
+      }
+
+      wrap_not() {
+        return `<span id=not>!</span>`
       }
     
       print_content(content){
