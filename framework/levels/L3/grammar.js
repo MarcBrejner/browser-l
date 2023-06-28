@@ -28,8 +28,13 @@ module.exports = grammar({
 			repeat1(
 				seq(
 					optional($.label),
-					$.statement, 
-					';', 
+					choice(
+						seq(
+							$.statement, 
+							';', 
+						),
+						$.statement_block
+					),
 					optional($.comment),
 					optional('\n')
 				)
@@ -41,9 +46,13 @@ module.exports = grammar({
 				$.assignment,
 				$.goto,
 				$.variable,
+			),
+
+		statement_block: $ =>
+			choice(
 				$.scope
 			),
-		
+
 		scope: $ =>
 			seq('{',
 				$.statements

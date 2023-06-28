@@ -1,5 +1,5 @@
 module.exports = grammar({
-	name: 'L2',
+	name: 'L4',
 	
 	rules: {
 		source_file: $ => seq(optional($.declarations), $.statements),
@@ -50,9 +50,20 @@ module.exports = grammar({
 
 		statement_block: $ =>
 			choice(
-				$.scope
+				$.scope,
+				$.if
 			),
-		
+
+		if: $ => 
+			seq(
+				'if', $.expression, $.scope, optional($.else)
+			),
+
+		else: $ =>
+			seq(
+				'else', $.scope
+			),
+			
 		scope: $ =>
 			seq('{',
 				$.statements
@@ -68,11 +79,29 @@ module.exports = grammar({
 			seq($.variable_name, ":", $.type, "=", $.expression),
 
 		expression: $ =>
-			choice(
-				seq($.reader, $.operator, $.reader),
-				seq($.operator, $.reader),
-				$.reader
-			),
+            choice(
+				prec.left(2, seq('(', $.expression, ')', '*', '(', $.expression, ')')),
+				prec.left(2, seq('(', $.expression, ')', '/', '(', $.expression, ')')),
+				prec.left(1, seq('(', $.expression, ')', '+', '(', $.expression, ')')),
+				prec.left(1, seq('(', $.expression, ')', '-', '(', $.expression, ')')),
+
+				prec.left(2, seq('(', $.expression, ')', '*', $.reader)),
+				prec.left(2, seq('(', $.expression, ')', '/', $.reader)),
+				prec.left(1, seq('(', $.expression, ')', '+', $.reader)),
+				prec.left(1, seq('(', $.expression, ')', '-', $.reader)),
+
+				prec.left(2, seq($.reader, '*', '(', $.expression, ')')),
+				prec.left(2, seq($.reader, '/', '(', $.expression, ')')),
+				prec.left(1, seq($.reader, '+', '(', $.expression, ')')),
+				prec.left(1, seq($.reader, '-', '(', $.expression, ')')),
+
+				prec.left(2, seq($.reader, '*', $.reader)),
+				prec.left(2, seq($.reader, '/', $.reader)),
+				prec.left(1, seq($.reader, '+', $.reader)),
+				prec.left(1, seq($.reader, '-', $.reader)),
+                seq('-', $.reader),
+                $.reader,
+            ),
 				
 		reader: $ =>
 			choice(
@@ -118,7 +147,9 @@ module.exports = grammar({
 
 		syscall: () => 'syscall',
 
-		operator: () => /[+-/\*|&><=]+/,
+		operator: () => /[+-/\*]/,
+
+		logical_operator: () => /[|&><=]+/,
 
 		number: () => /[0-9]+/,
 
