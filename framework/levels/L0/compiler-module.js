@@ -28,11 +28,11 @@ class L0Visitor {
     expression(node) {  
         switch (node.childCount) {
             case 1:
-                var reader = this.visit(node.child(0));
+                var reader = this.visit(get_left_child(node));
                 return this._emitter.expression(reader)
             case 2:
-                var oper = node.child(0).text;
-                var reader =  this.visit(node.child(1));
+                var oper = get_operator(node).text;
+                var reader =  this.visit(get_left_child(node));
                 return this._emitter.unary_expression(oper, reader)
             case 3:
                 var left_reader = this.visit(get_left_child(node));
@@ -75,8 +75,14 @@ class L0Visitor {
     assignment(node) {
         var is_conditional = node.child(1).text === "?=" ? true : false;
         var writer = this.visit(node.child(0));
-        var expression = this.visit(node.child(2));
-        this._emitter.assignment(is_conditional, writer, expression);
+        var expression = null
+        if (node.child(2).type == '!') {
+          has_not = true;
+          var expression = this.visit(node.child(3));
+        } else {
+          var expression = this.visit(node.child(2));
+        }
+        this._emitter.assignment(is_conditional, has_not, writer, expression);
     }
 
     constant_declaration(node) {
@@ -111,15 +117,15 @@ class L0Emitter {
     _labels = {};
     _statements = [];
 
-    expression(reader){
-        return new Expression(CONTENT_TYPES.EXPRESSION, reader);
+    expression(reader, not = false){
+        return new Expression(CONTENT_TYPES.EXPRESSION, not, reader);
     }
 
-    unary_expression(oper, reader){
-        return new Expression(CONTENT_TYPES.UN_EXPRESSION, reader, oper);
+    unary_expression(oper, reader, not = false){
+        return new Expression(CONTENT_TYPES.UN_EXPRESSION, not, reader, oper);
     }
 
-    binary_expression(left_reader, oper, right_reader){
+    binary_expression(left_reader, oper, right_reader, not = false){
         if (left_reader.type === CONTENT_TYPES.MEMORY && right_reader.type === CONTENT_TYPES.MEMORY) {
             this.assignment(false, this.register('$x'), left_reader);
             this.assignment(false, this.register('$y'), right_reader);
@@ -127,7 +133,7 @@ class L0Emitter {
             right_reader = this.register('$y');
         }
 
-        return new Expression(CONTENT_TYPES.BIN_EXPRESSION, left_reader, oper,  right_reader);
+        return new Expression(CONTENT_TYPES.BIN_EXPRESSION, not, left_reader, oper,  right_reader);
     }
 
     number(number) {
