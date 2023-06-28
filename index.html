@@ -27,21 +27,23 @@
       <div id="prettyPretty"></div>
     </div>
 
-    <button class="button" id="runbutton" onclick="run_all()" >
-      RUN
-    </button>
-
-    <button class="button" id="debugbutton" onclick="debug()" >
-      DEBUG
-    </button>
-
-    <button class="button" id="exitdebug" onclick="exit_debug()">
-      STOP DEBUG
-    </button>
-
-    <button class="button" id="stepbutton" onclick="execute_step()">
-      STEP
-    </button>
+    <div id="button-div">
+      <button class="button" id="runbutton" onclick="run_all()" >
+        RUN
+      </button>
+  
+      <button class="button" id="debugbutton" onclick="debug()" >
+        DEBUG
+      </button>
+  
+      <button class="button" id="exitdebug" onclick="exit_debug()">
+        STOP DEBUG
+      </button>
+  
+      <button class="button" id="stepbutton" onclick="execute_step()">
+        STEP
+      </button>
+    </div>
     <div id="lx-container"></div>
     <script>
       document.querySelector('#stepbutton').disabled = true;

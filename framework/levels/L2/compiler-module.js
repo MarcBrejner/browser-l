@@ -155,6 +155,7 @@ class L2Draw extends L1Draw{
         super.draw(vm);
 
         var container = document.getElementById("lx-container");
+        container.style.display = "inline-block";
 
         var existingContainer = document.getElementById("table-wrapper-container");
         if (existingContainer) {
