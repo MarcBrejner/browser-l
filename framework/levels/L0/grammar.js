@@ -103,6 +103,6 @@ module.exports = grammar({
 
 		string: () => /".+"/,
 
-		comment: () => /\/\/[a-zA-Z0-9 ]+/,
+		comment: () => /\/\/[a-zA-Z0-9]+/,
 	}
 });

@@ -51,7 +51,19 @@ module.exports = grammar({
 		statement_block: $ =>
 			choice(
 				$.scope,
-				$.if
+				$.if,
+				$.while,
+				$.for
+			),
+
+		while: $ => 
+			seq(
+				'while', '(', $.expression, ')', $.scope
+			),
+
+		for: $ => 
+			seq( 
+				'for', '(', $.variable, ';', $.expression, ';', $.expression, ')', $.scope
 			),
 
 		if: $ => 

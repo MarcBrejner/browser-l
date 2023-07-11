@@ -42,23 +42,46 @@ class L2Emitter extends L1Emitter{
 
     variable_name(var_name) {
         if (this.in_scope) {
-            return this.read_temp_var(var_name);
+            return this.read_var_name(var_name);
         } else {
             var p_var = '&_' + var_name;
             return this.memory(this.data(p_var), get_datatype(this.variables[p_var]));
         }
     }
 
+    variable_declaration(var_name, var_size, expression, has_not) {
+        var p_var = '&_' + var_name;
+        var byte_size = get_variable_bytesize(var_size)
+        var writer = this.read_var(p_var, var_size);
+        if (writer === null) {
+            this.variables[p_var] = var_size;
+            var memory_allocation = "";
+            for (var i = 0; i < byte_size; i++) {
+                memory_allocation += "0";
+            }
+
+            this._data[p_var] = memory_allocation;
+        }
+        
+        this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), null];
+        this.assignment(
+            this.memory(this.data(p_var), get_datatype(var_size)), 
+            expression, false, has_not);
+    }
+
     create_temp_var(var_name, var_size, expression, has_not) {
         var variable_size = get_variable_bytesize(var_size);
-        this.frame_pointer -= variable_size;
-        this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
-        var writer = this.read_temp_var(var_name);
+        var writer = this.read_var(var_name, var_size);
+        if (writer === null) {
+            this.frame_pointer -= variable_size;
+            this.head.variables[var_name] = [this.stack_pointer - this.frame_pointer, var_size];
+            var writer = this.read_var(var_name, var_size);
+        }
         this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), structuredClone(this.head)];
         this.assignment(writer, expression, false, has_not);
     }
 
-    read_temp_var(var_name) {
+    read_var_name(var_name) {
         var current = this.head;
         while (current != null) {
             if (var_name in current.variables) {
@@ -66,9 +89,32 @@ class L2Emitter extends L1Emitter{
             }   
             current = current.next;
         }
-        // TODO: check if node.text is in variable dict otherwise return error
         var p_var = '&_' + var_name;
-        return this.memory(this.data(p_var), get_datatype(this.variables[p_var]));
+        if (Object.keys(this.variables).find(key => key == p_var) !== undefined) {
+            return this.memory(this.data(p_var), get_datatype(this.variables[p_var]));
+        }
+        // TODO: check if node.text is in variable dict otherwise return error
+        return null;
+    }
+
+    read_var(var_name, var_size) {
+        var current = this.head;
+        while (current != null) {
+            if (var_name in current.variables) {
+                if (current.variables[var_name][1] === var_size) {
+                    return this.memory(this.binary_expression(this.register('$fp'), '-', this.number(current.variables[var_name][0])), get_datatype(current.variables[var_name][1]))
+                }   
+            }   
+            current = current.next;
+        }
+
+        var p_var = '&_' + var_name;
+        if (Object.entries(this.variables).find(variable => variable[0] === p_var && variable[1] === var_size) !== undefined) {
+            return this.memory(this.data(p_var), get_datatype(this.variables[p_var]));
+        }
+        
+        // TODO: check if node.text is in variable dict otherwise return error
+        return null;
     }
 
     start_scope() {
@@ -96,22 +142,6 @@ class L2Emitter extends L1Emitter{
             this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), structuredClone(this.head)];
         }
         
-    }
-
-    variable_declaration(var_name, var_size, expression, has_not) {
-        var p_var = '&_' + var_name;
-        this.variables[p_var] = var_size;
-        var memory_allocation = "";
-
-        for (var i = 0; i < get_variable_bytesize(var_size); i++) {
-            memory_allocation += "0";
-        }
-
-        this._data[p_var] = memory_allocation;
-        this._drawer.variable_states[this._statements.length] = [structuredClone(this.variables), null];
-        this.assignment(
-            this.memory(this.data(p_var), get_datatype(var_size)), 
-            expression, false, has_not);
     }
 
     Stack = {
