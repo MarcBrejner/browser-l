@@ -7,11 +7,11 @@ class L1Visitor extends L0Visitor {
 }
 
 class L1Emitter extends L0Emitter{
-    goto(pos){
+    goto(pos, conditional=true){
         this.assignment(
             this.register('$!'), 
             this.binary_expression(pos, '-', this.number(1)),
-            true);
+            conditional);
     }
 }
 
