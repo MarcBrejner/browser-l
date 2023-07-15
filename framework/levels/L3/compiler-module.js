@@ -70,7 +70,7 @@ class L3Emitter extends L2Emitter{
         if (is_nested_expression) {
             var bytesize = 'u8';
             this.create_temp_var(this.frame_pointer - get_variable_bytesize(bytesize), bytesize, left_expression);
-            return this.read_temp_var(`${this.frame_pointer}`);
+            return this.read_var(`${this.frame_pointer}`, bytesize);
         }
         // Else we can just write it directly into $x
         else {

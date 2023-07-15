@@ -110,7 +110,15 @@ class VirtualMachine {
     }
 
     evaluate_binary(v1, opr, v2) {
-        return eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
+        var result = eval(`${this.read(v1)} ${opr} ${this.read(v2)}`);
+        if (typeof result == "boolean") {
+            if (result) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        return result;
     }
 
     evaluate_unary(opr, v) { return eval(`${opr} ${this.read(v)}`); }

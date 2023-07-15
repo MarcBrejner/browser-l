@@ -1,6 +1,5 @@
 class L0Visitor {
     visit(node) {
-        //if (node.type === "statement") this._emitter.node_stack.push(node);
         this._emitter.node_stack.push(node);
         if (this[node.type] === undefined) {
             var r = this.default(node);
@@ -148,7 +147,7 @@ class L0Emitter {
         return new Content(CONTENT_TYPES.DATA, data_id);
     }
 
-    register(register_id) {;
+    register(register_id) {
         return new Content(CONTENT_TYPES.REGISTER, register_id);
     }
 
@@ -228,9 +227,10 @@ class L0Draw {
 
         var pretty_source_code = "";
         var instructions = this.program.instructions;
+
         var debugging = document.querySelector('#debugbutton').disabled;
         for (var i = 0; i < instructions.length; i++) {
-          var res = `<span id=line-number>${i} </span>` + instructions[i].handle(this) + this.print_label(i) +`<br>`;
+          var res = `<span id=line-number>${i} </span>` + instructions[i].handle(this) + this.print_labels(i) +`<br>`;
           if (!debugging || this.state === undefined) {
             pretty_source_code += res;
           } else {
@@ -242,7 +242,29 @@ class L0Draw {
             }
           }
         }
+        var result = this.get_labels_after_statements(instructions.length);
+        var unique_result = [...new Set(result)]
+        var res = ""
+        unique_result.forEach(label => {
+          res = `<span id=line-number>${label}</span> ` + this.print_labels(label) +`<br>`;
+          if (!debugging || this.state === undefined) {
+            pretty_source_code += res;
+          } else {
+            if (label === this.state.registers['$!']) {
+              pretty_source_code +=
+                  `<span class=highlight-line>${res}</span>`
+            } else {
+              pretty_source_code += res
+            }
+          }
+        })
+        
         pretty_window.innerHTML = pretty_source_code;
+      }
+
+      get_labels_after_statements(last_instruction_index) {
+        var result = Object.values(this.program.labels).filter(value => value >= last_instruction_index);
+        return result; 
       }
     
       syscall() { return `<span style='color: red'>syscall;</span>\n` }
@@ -301,6 +323,8 @@ class L0Draw {
       print_content(content){
         if (content.type === CONTENT_TYPES.CONSTANT){
           return `${this.wrap_const(`${content.id} (${this.program.constants[content.id]})`)}`
+        } else if (content.type == CONTENT_TYPES.LABEL) {
+          return this.wrap_label(content.id);
         }else if(content.type == CONTENT_TYPES.MEMORY){
           return this.print_memory(content);
         }else{
@@ -310,19 +334,23 @@ class L0Draw {
     
       print_memory(content) {
         if (content.id.type === CONTENT_TYPES.BIN_EXPRESSION) {
-          return `[${content.id.reader1.get_text()} ${content.id.opr} ${content.id.reader2.get_text()},${content.datatype.type}${content.datatype.size}]`
+          return `<span id=memory>[${content.id.reader1.get_text()} ${content.id.opr} ${content.id.reader2.get_text()},${content.datatype.type}${content.datatype.size}]</span>`
         }
         else {
-          return `[${content.get_text()},${content.datatype.type}${content.datatype.size}]`
+          return `<span id=memory>[${content.get_text()},${content.datatype.type}${content.datatype.size}]</span>`
         }
       }
     
-      print_label(i){
-        var [exists, label_key] = getKeyByValueIfValueExists(this.program.labels, i);
-        var result = exists ? `${this.wrap_label(label_key)}` : "";
+      print_labels(i){
+        var labels = getKeyByValueIfValueExists(this.program.labels, i);
+        if (labels.length === 0) return "";
+        var result = "<span id=label>";
+        labels.forEach(label => {
+          result += `${label} `
+        })
+        result += "</span>";
         return result;
       }
-
       
       color(vm){
         var pc = vm.state.registers["$!"];

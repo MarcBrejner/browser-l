@@ -28,8 +28,13 @@ module.exports = grammar({
 			repeat1(
 				seq(
 					optional($.label),
-					$.statement, 
-					';', 
+					choice(
+						seq(
+							$.statement, 
+							';', 
+						),
+						$.statement_block
+					),
 					optional($.comment),
 					optional('\n')
 				)
@@ -41,6 +46,10 @@ module.exports = grammar({
 				$.assignment,
 				$.goto,
 				$.variable,
+			),
+
+		statement_block: $ =>
+			choice(
 				$.scope
 			),
 		
@@ -60,8 +69,8 @@ module.exports = grammar({
 
 		expression: $ =>
 			choice(
-				seq($.reader, $.operator, $.reader),
-				seq($.operator, $.reader),
+				seq($.reader, choice($.operator, $.logical_operator), $.reader),
+				seq('-', $.reader),
 				$.reader
 			),
 				
@@ -109,7 +118,9 @@ module.exports = grammar({
 
 		syscall: () => 'syscall',
 
-		operator: () => /[+-/\*|&><=]+/,
+		operator: () => /[+-/\*]/,
+
+		logical_operator: () => /\||&|<|>|>=|<=|==/,
 
 		number: () => /[0-9]+/,
 

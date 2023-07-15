@@ -1,5 +1,5 @@
 module.exports = grammar({
-	name: 'L3',
+	name: 'L4',
 	
 	rules: {
 		source_file: $ => seq(optional($.declarations), $.statements),
@@ -50,9 +50,32 @@ module.exports = grammar({
 
 		statement_block: $ =>
 			choice(
-				$.scope
+				$.scope,
+				$.if,
+				$.while,
+				$.for
 			),
 
+		while: $ => 
+			seq(
+				'while', '(', $.expression, ')', $.scope
+			),
+
+		for: $ => 
+			seq( 
+				'for', '(', $.variable, ';', $.expression, ';', $.expression, ')', $.scope
+			),
+
+		if: $ => 
+			seq(
+				'if', '(', $.expression, ')', $.scope, optional($.else)
+			),
+
+		else: $ =>
+			seq(
+				'else', $.scope
+			),
+			
 		scope: $ =>
 			seq('{',
 				$.statements
@@ -68,7 +91,7 @@ module.exports = grammar({
 			seq($.variable_name, ":", $.type, "=", optional('!'), $.expression),
 
 		expression: $ =>
-            choice(
+			choice(
 				prec.left(2, seq('(', $.expression, ')', $.logical_operator, '(', $.expression, ')')),
 				prec.left(2, seq('(', $.expression, ')', '*', '(', $.expression, ')')),
 				prec.left(2, seq('(', $.expression, ')', '/', '(', $.expression, ')')),
@@ -92,9 +115,9 @@ module.exports = grammar({
 				prec.left(2, seq($.reader, '/', $.reader)),
 				prec.left(1, seq($.reader, '+', $.reader)),
 				prec.left(1, seq($.reader, '-', $.reader)),
-                seq('-', $.reader),
-                $.reader,
-            ),
+				seq('-', $.reader),
+				$.reader,
+			),
 				
 		reader: $ =>
 			choice(

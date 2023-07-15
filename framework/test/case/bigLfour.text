@@ -1,0 +1,47 @@
+data &FOR_VALUE "for: ";
+data &WHILE_VALUE "while: ";
+data &COMMA ", ";
+data &FOR_TWO "FOR FOUND TWO!";
+data &BOTH "THEY ARE BOTH TWO!";
+g:u32=2;
+f:u32=1;
+i:u8 = ((f*g)+(g/g))-f;
+while (i > 0) {
+	for (j:u8=0; j <= 10; j+1) {
+        if ((j == 2) & (i == 2)) {
+            $x:=1;
+            $y:=&BOTH;
+            syscall;
+            $y:=&COMMA;
+            syscall;
+        } else {
+        	if (j == 2) {
+              $x:=1;
+              $y:=&FOR_TWO;
+              syscall;
+              $y:=&COMMA;
+              syscall;
+          	} else {
+                $x:=1;
+                $y:=&FOR_VALUE;
+                syscall;
+                $x:=0;
+                $y:=j;
+                syscall;
+                $x:=1;
+                $y:=&COMMA;
+                syscall;
+                $x:=1;
+                $y:=&WHILE_VALUE;
+                syscall;
+                $x:=0;
+                $y:=i;
+                syscall;
+                $x:=1;
+                $y:=&COMMA;
+                syscall;
+          	}
+        } 
+    }
+	i:u8=i-1;
+}

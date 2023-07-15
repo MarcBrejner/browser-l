@@ -46,7 +46,7 @@ module.exports = grammar({
 
 		expression: $ =>
 			choice(
-				seq($.reader, $.operator, $.reader),
+				seq($.reader, choice($.operator, $.logical_operator), $.reader),
 				seq('-', $.reader),
 				$.reader
 			),
@@ -95,12 +95,14 @@ module.exports = grammar({
 
 		syscall: () => 'syscall',
 
-		operator: () => /[+-/\*|&><=]+/,
+		operator: () => /[+-/\*]/,
 
+		logical_operator: () => /\||&|<|>|>=|<=|==/,
+		
 		number: () => /[0-9]+/,
 
 		string: () => /".+"/,
 
-		comment: () => /\/\/[a-zA-Z0-9 ]+/,
+		comment: () => /\/\/[a-zA-Z0-9]+/,
 	}
 });

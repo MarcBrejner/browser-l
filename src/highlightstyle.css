@@ -16,6 +16,10 @@ body {
     cursor: default;
 }
 
+#button-div {
+    display: block;
+}
+
 .button {
     margin-top: 10px;
     font-family: monospace;
@@ -90,6 +94,10 @@ body {
 
 #constant {
     color:brown;
+}
+
+#assign > #memory {
+    color: #C8A2C8;
 }
 
 .highlight-line {

@@ -165,11 +165,7 @@ async function test_l(source_code){
 }
 
 function getKeyByValueIfValueExists(object, value) {
-  if(Object.values(object).includes(value)){
-    return [true, Object.keys(object).find(key => object[key] === value)];
-  }else{
-    return [false, null];
-  }
+  return Object.keys(object).filter(key => object[key] === value);
 }
 
 
