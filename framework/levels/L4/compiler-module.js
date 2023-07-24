@@ -26,6 +26,7 @@ class L4Visitor extends L3Visitor {
         this._emitter.start_while();
         this.visit(node.child(4));
         this._emitter.end_while(guard_expression);
+        this._emitter.current_while.pop();
     }
 
     for(node) {
@@ -42,6 +43,7 @@ class L4Visitor extends L3Visitor {
         var incrementor = this.visit(node.child(6));
         this._emitter.end_for(condition, acc_var_name, acc_var_size, incrementor);
         this._emitter.end_scope();
+        this._emitter.current_for.pop();
     }
 
     has_else(node) {

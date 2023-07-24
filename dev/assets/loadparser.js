@@ -612,10 +612,6 @@ class L2Emitter extends L1Emitter{
             return this.items.pop();
         }
     }
-
-    set_state() {
-
-    }
 }
 
 
