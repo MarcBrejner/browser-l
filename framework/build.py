@@ -138,8 +138,8 @@ def download_codemirror():
     with ZipFile(codemirror_path + '/codemirror.zip', 'r') as zip_ref:
         zip_ref.extractall(path=codemirror_path)
 
-    shutil.move(codemirror_path + "/codemirror-5.65.13/lib/codemirror.css", codemirror_path + "/codemirror.css")
-    shutil.move(codemirror_path + "/codemirror-5.65.13/lib/codemirror.js", codemirror_path + "/codemirror.js")
+    shutil.move(codemirror_path + "/codemirror-5.65.14/lib/codemirror.css", codemirror_path + "/codemirror.css")
+    shutil.move(codemirror_path + "/codemirror-5.65.14/lib/codemirror.js", codemirror_path + "/codemirror.js")
 
 def delete_codemirror():
     os.chdir('./framework')

@@ -26,6 +26,7 @@ class L4Visitor extends L3Visitor {
         this._emitter.start_while();
         this.visit(node.child(4));
         this._emitter.end_while(guard_expression);
+        this._emitter.current_while.pop();
     }
 
     for(node) {
@@ -42,6 +43,7 @@ class L4Visitor extends L3Visitor {
         var incrementor = this.visit(node.child(6));
         this._emitter.end_for(condition, acc_var_name, acc_var_size, incrementor);
         this._emitter.end_scope();
+        this._emitter.current_for.pop();
     }
 
     has_else(node) {
@@ -67,16 +69,14 @@ class L4Emitter extends L3Emitter{
 
     end_if(has_else) {
         if (has_else) {
-            this.assignment(this.register('$?'), this.number(1), false, false);
-            this.goto(this.get_label(`#END_IF_${this.current_if.peek()}`))
+            this.goto(this.get_label(`#END_IF_${this.current_if.peek()}`), false)
         } else {
             this.set_label(`#END_IF_${this.current_if.peek()}`)
         }
     }
 
     start_while() {
-        this.assignment(this.register('$?'), this.number(1), false, false);
-        this.goto(this.get_label(`#WHILE_GUARD_${this.current_while.peek()}`));
+        this.goto(this.get_label(`#WHILE_GUARD_${this.current_while.peek()}`), false);
         this.set_label(`#WHILE_CONTENT_${this.current_while.peek()}`);   
     }
 
@@ -87,8 +87,7 @@ class L4Emitter extends L3Emitter{
     }
 
     start_for () {
-        this.assignment(this.register('$?'), this.number(1), false, false);
-        this.goto(this.get_label(`#FOR_GUARD_${this.current_for.peek()}`));
+        this.goto(this.get_label(`#FOR_GUARD_${this.current_for.peek()}`), false);
         this.set_label(`#FOR_CONTENT_${this.current_for.peek()}`);  
     }
 
