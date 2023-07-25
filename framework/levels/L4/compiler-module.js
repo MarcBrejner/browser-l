@@ -4,9 +4,13 @@ class L4Visitor extends L3Visitor {
         this._emitter.current_if.push(this._emitter.number_of_if);
         var guard_expression = this.visit(node.child(2));
         var has_else = this.has_else(node);
+        this._emitter.node_stack.push(node.child(2))    // Push guard expression for highlight
         this._emitter.start_if(guard_expression, has_else);
+        this._emitter.node_stack.pop();
         this.visit(node.child(4));
+        this._emitter.node_stack.push(node.child(2));   // Highlight guard after the if statements
         this._emitter.end_if(has_else)
+        this._emitter.node_stack.pop();
         if (has_else) {
             this.visit(node.child(5))
         }
@@ -23,9 +27,13 @@ class L4Visitor extends L3Visitor {
         this._emitter.number_of_while++;
         this._emitter.current_while.push(this._emitter.number_of_while);
         var guard_expression = this.visit(node.child(2));
+        this._emitter.node_stack.push(node.child(2));
         this._emitter.start_while();
+        this._emitter.node_stack.pop();
         this.visit(node.child(4));
+        this._emitter.node_stack.push(node.child(2));
         this._emitter.end_while(guard_expression);
+        this._emitter.node_stack.pop();
         this._emitter.current_while.pop();
     }
 
@@ -33,15 +41,22 @@ class L4Visitor extends L3Visitor {
         this._emitter.number_of_for++;
         this._emitter.current_for.push(this._emitter.number_of_for);
         this._emitter.start_scope();
+        this._emitter.node_stack.push(node.child(2));
         this.visit(node.child(2));  // declare the variable used as accumulator
         this._emitter.start_for();
+        this._emitter.node_stack.pop();
         this.visit(node.child(8));  // visit statements inside forloop
 
         var condition = this.visit(node.child(4));
         var acc_var_name = node.child(2).child(0).text;
         var acc_var_size = node.child(2).child(2).text;
         var incrementor = this.visit(node.child(6));
-        this._emitter.end_for(condition, acc_var_name, acc_var_size, incrementor);
+        this._emitter.node_stack.push(node.child(6));
+        this._emitter.for_increment_acc(acc_var_name, acc_var_size, incrementor);
+        this._emitter.node_stack.pop();
+        this._emitter.node_stack.push(node.child(4));
+        this._emitter.end_for(condition);
+        this._emitter.node_stack.pop();
         this._emitter.end_scope();
         this._emitter.current_for.pop();
     }
@@ -91,9 +106,12 @@ class L4Emitter extends L3Emitter{
         this.set_label(`#FOR_CONTENT_${this.current_for.peek()}`);  
     }
 
-    end_for(condition, var_name, var_size, expression) {
-        this.set_label(`#FOR_GUARD_${this.current_for.peek()}`);
+    for_increment_acc(var_name, var_size, expression) {
         this.variable(var_name, var_size, expression);
+    }
+
+    end_for(condition) {
+        this.set_label(`#FOR_GUARD_${this.current_for.peek()}`);
         this.assignment(this.register('$?'), condition, false, false);
         this.goto(this.get_label(`#FOR_CONTENT_${this.current_for.peek()}`));
     }
